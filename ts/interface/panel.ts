@@ -9,7 +9,6 @@ export class Panel extends DomElement<'div'> {
         this.child('div', {
             text: name,
             style: {
-                'font-size': '20px',
                 'color': 'white'
             }
         })

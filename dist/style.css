@@ -1,3 +1,7 @@
+:root {
+    --radius: 5px;
+}
+
 button.button {
     all: unset;
 }
@@ -23,18 +27,16 @@ body {
         align-items: center;
         background: #4c4aa9;
         margin-right: 8px;
-        border-radius: 5px;
+        border-radius: var(--radius);
         padding: 2px 7px;
         cursor: pointer;
         transition: opacity 0.2s;
         line-height: 1.1.2em;
-        
-        &:hover{
+
+        &:hover {
             opacity: 0.7
-        } 
-        &>span {
-            font-size: 16px
         }
+
         &>.icon {
             margin-right: 4px
         }
@@ -42,13 +44,16 @@ body {
     }
 
     header#toolbar {
-        height: 32px;
-        padding: 5px;
+        height: 45px;
+        padding: 9px;
         background-color: #121217;
     }
-    
+
     .content {
         height: 100%;
+        display: flex;
+        flex-direction: column;
+
 
         .section {
             background: #121217;
@@ -102,7 +107,7 @@ body {
                     height: 100%;
                     transition: opacity 0.2s, width 0.2s, height 0.2s, margin 0.2s;
                     display: block;
-                    opacity: 0.9;
+                    opacity: 0;
                     border-radius: 10px;
                 }
 
@@ -145,15 +150,18 @@ body {
         }
 
         &>.section {
-            height: 100%;
+            /* height: 100%; */
+            flex-grow: 1;
             width: 100%;
-            padding: 3px;
+            padding: 0 9px 9px 9px;
         }
 
         .panel {
             height: 100%;
             width: 100%;
             background: #1c1d29;
+            padding: 8px 15px;
+            border-radius: var(--radius);
         }
 
         .v>.section_content {

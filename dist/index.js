@@ -411,7 +411,6 @@ var Panel = class extends DomElement {
     this.child("div", {
       text: name,
       style: {
-        "font-size": "20px",
         "color": "white"
       }
     });
