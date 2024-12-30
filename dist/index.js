@@ -1,41 +1,84 @@
+var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b || (b = {}))
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    }
+  return a;
+};
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+
 // ts/dom/domElement.ts
-var DomElement = class {
-  set visible(b) {
-    this.setStyleProperty("display", b ? void 0 : "none", true);
-  }
+var DomElement = class _DomElement {
   constructor(type, properties = {}) {
+    this.type = type;
+    var _a, _b;
+    this.props = __spreadValues(__spreadValues({}, {
+      style: {},
+      attr: {}
+    }), properties);
     this.domElement = document.createElement(type);
     this.domElement.setAttribute("draggable", "false");
     this.domElement.addEventListener("click", this.click.bind(this));
-    if (properties.style)
-      Object.entries(properties == null ? void 0 : properties.style).forEach(([k, v]) => {
-        this.setStyleProperty(
+    if (this.props.style)
+      Object.entries((_a = this.props) == null ? void 0 : _a.style).forEach(([k, v]) => {
+        this.setStyle(
           k,
           typeof v === "string" ? v : v[0],
           typeof v === "string" ? false : v[1]
         );
       });
-    if (properties.attr)
-      Object.entries(properties == null ? void 0 : properties.attr).forEach(([k, v]) => {
+    if (this.props.attr)
+      Object.entries((_b = this.props) == null ? void 0 : _b.attr).forEach(([k, v]) => {
         this.domElement.setAttribute(k, v);
       });
-    if (properties.text)
-      this.domElement.innerHTML = properties.text;
-    if (properties.className)
-      this.domElement.className = properties.className;
-    if (properties.id)
-      this.domElement.id = properties.id;
+    if (this.props.text)
+      this.domElement.innerHTML = this.props.text;
+    if (this.props.className)
+      this.domElement.className = this.props.className;
+    if (this.props.id)
+      this.domElement.id = this.props.id;
+    if (this.props.onClick)
+      this.onClick = this.props.onClick;
   }
-  setStyleProperty(k, v, i = false) {
+  get onClick() {
+    return this._onClick;
+  }
+  set onClick(func) {
+    this._onClick = func;
+  }
+  set visible(b) {
+    this.setStyle("display", b ? void 0 : "none", true);
+  }
+  setStyle(k, v, i = false) {
     if (v) {
       this.domElement.style.setProperty(k, v, i ? "important" : "");
+      this.props.style[k] = [v, i];
     } else {
       this.domElement.style.removeProperty(k);
+      delete this.props.style[k];
     }
+  }
+  setAttribute(k, v) {
+    this.domElement.setAttribute(k, v);
+    this.props.attr[k] = v;
   }
   append(d) {
     this.domElement.appendChild(d.domElement);
     return d;
+  }
+  child(type, properties = {}) {
+    return this.append(new _DomElement(type, properties));
   }
   click() {
     var _a;
@@ -46,6 +89,57 @@ var DomElement = class {
       this.domElement.removeChild(d.domElement);
     } catch (error) {
     }
+  }
+  clone() {
+    return new _DomElement(this.type, __spreadValues({}, this.props));
+  }
+};
+
+// ts/dom/icon.ts
+var Icon = class extends DomElement {
+  constructor(properties) {
+    var _a;
+    super("span", {
+      text: properties.name,
+      className: "icon material-symbols-outlined",
+      style: {
+        "font-weight": String((_a = properties.weight) != null ? _a : 400)
+      }
+    });
+  }
+};
+
+// ts/dom/button.ts
+var Button = class extends DomElement {
+  constructor(properties = {}) {
+    var _a;
+    super("button", __spreadValues(__spreadValues({}, properties), {
+      text: void 0,
+      className: ((_a = properties.className) != null ? _a : "") + " button"
+    }));
+    this._enabled = true;
+    this._active = false;
+    if (properties.icon)
+      this.append(new Icon(properties.icon));
+    this.child("span", {
+      text: properties.text
+    });
+    if (properties.enabled)
+      this.enabled = properties.enabled;
+  }
+  get enabled() {
+    return this._enabled;
+  }
+  set enabled(b) {
+    this._enabled = b;
+    this.domElement.classList[b ? "remove" : "add"]("disabled");
+  }
+  get active() {
+    return this._active;
+  }
+  set active(b) {
+    this._active = b;
+    this.domElement.classList[b ? "add" : "remove"]("active");
   }
 };
 
@@ -89,12 +183,31 @@ var Util = class {
 
 // ts/interface/section.ts
 var Section = class _Section extends DomElement {
+  static getEmpty() {
+    return {
+      type: "empty"
+    };
+  }
+  static getPanel(n) {
+    return {
+      type: "panel",
+      panel: glob.panels.getPanel(n)
+    };
+  }
+  static getSplit(c, d = "h", p = 50) {
+    return {
+      type: "split",
+      direction: d,
+      sections: c,
+      percentage: p
+    };
+  }
   get dragging() {
     return this._dragging;
   }
   set dragging(value) {
     this._dragging = value;
-    this.dragger.setStyleProperty("pointerEvents", value ? "none" : "auto");
+    this.dragger.setStyle("pointerEvents", value ? "none" : "auto");
     this.dragger.domElement.classList[value ? "add" : "remove"]("dragging");
   }
   get direction() {
@@ -111,41 +224,38 @@ var Section = class _Section extends DomElement {
   set percentage(value) {
     this._percentage = Util.clamp(value, 5, 95);
     if (this.sections && this.direction) {
-      this.sections[0].setStyleProperty(this.direction === "h" ? "width" : "height", "calc(".concat(this._percentage, "% - 3px)"));
-      this.sections[1].setStyleProperty(this.direction === "h" ? "width" : "height", "calc(".concat(100 - this._percentage, "% - 3px)"));
-      this.sections[0].setStyleProperty(this.direction === "h" ? "height" : "width", "100%");
-      this.sections[1].setStyleProperty(this.direction === "h" ? "height" : "width", "100%");
-      this.dragger.setStyleProperty("left", this.direction === "h" ? "calc(".concat(this._percentage, "% - 3px)") : "4px");
-      this.dragger.setStyleProperty("top", this.direction === "v" ? "calc(".concat(this._percentage, "% - 3px)") : "4px");
+      this.sections[0].setStyle(this.direction === "h" ? "width" : "height", "calc(".concat(this._percentage, "% - 3px)"));
+      this.sections[1].setStyle(this.direction === "h" ? "width" : "height", "calc(".concat(100 - this._percentage, "% - 3px)"));
+      this.sections[0].setStyle(this.direction === "h" ? "height" : "width", "100%");
+      this.sections[1].setStyle(this.direction === "h" ? "height" : "width", "100%");
+      this.dragger.setStyle("left", this.direction === "h" ? "calc(".concat(this._percentage, "% - 3px)") : "4px");
+      this.dragger.setStyle("top", this.direction === "v" ? "calc(".concat(this._percentage, "% - 3px)") : "4px");
     }
   }
   get activePanel() {
     return this.panel;
   }
   setMode(m, a, b) {
-    var _a;
     const oldPanel = this.panel;
-    this.empty();
-    this.mode = m;
-    if (this.mode === "panel") {
-      this.domElement.classList.remove("s_split");
-      this.domElement.classList.add("s_panel");
-      this.panel = glob.panels.getPanel(a);
-      glob.panels.assign(this.panel, this);
-      this.panelSwitch.value((_a = this.panel) == null ? void 0 : _a.id);
-      this.dragger.visible = false;
+    if (m === "panel") {
+      this.fill({
+        type: "panel",
+        panel: glob.panels.getPanel(a)
+      });
       return this.panel;
     } else {
-      this.domElement.classList.remove("s_panel");
-      this.domElement.classList.add("s_split");
-      this.sections = [
-        new _Section(this),
-        new _Section(this)
-      ];
-      this.sections[0].setMode("panel", oldPanel == null ? void 0 : oldPanel.name);
-      this.direction = a;
-      this.percentage = b;
-      this.dragger.visible = true;
+      this.fill({
+        type: "split",
+        sections: [
+          {
+            type: "panel",
+            panel: oldPanel
+          },
+          _Section.getEmpty()
+        ],
+        percentage: b,
+        direction: a
+      });
       return this.sections;
     }
   }
@@ -165,10 +275,34 @@ var Section = class _Section extends DomElement {
     this.sections = void 0;
     this.percentage = void 0;
     if (del) {
-      (_b = this.parent) == null ? void 0 : _b.remove(this);
+      (_b = this.parent) == null ? void 0 : _b.contentWrap.remove(this);
     }
   }
-  constructor(parent) {
+  fill(content) {
+    var _a;
+    this.empty();
+    if (content && content.type !== "empty") {
+      this.mode = content.type;
+      if (content.type === "panel") {
+        this.domElement.classList.remove("s_split");
+        this.domElement.classList.add("s_panel");
+        this.panel = content.panel;
+        glob.panels.assign(this.panel, this);
+        this.panelSwitch.value((_a = this.panel) == null ? void 0 : _a.id);
+        this.dragger.visible = false;
+      } else {
+        this.domElement.classList.remove("s_panel");
+        this.domElement.classList.add("s_split");
+        this.sections = content.sections.map((d) => new _Section(this, d));
+        this.direction = content.direction || (this.parent.direction === "v" ? "h" : "v");
+        this.percentage = content.percentage || 50;
+        this.dragger.visible = true;
+      }
+    } else {
+      this.setMode("panel", "empty");
+    }
+  }
+  constructor(parent, content) {
     super("div", {
       className: "section"
     });
@@ -177,19 +311,19 @@ var Section = class _Section extends DomElement {
       this.parent.contentWrap.append(this);
     }
     this.build();
-    this.setMode("panel", void 0);
+    this.fill(content);
   }
   build() {
-    this.contentWrap = this.append(new DomElement("div", { className: "section_content" }));
-    this.append(new DomElement("div", {
+    this.contentWrap = this.child("div", { className: "section_content" });
+    this.child("div", {
       className: "section_outline"
-    }));
-    this.dragger = this.append(new DomElement("span", {
+    });
+    this.dragger = this.child("span", {
       className: "section_dragger"
-    }));
-    this.dragger.append(new DomElement("div", {
+    });
+    this.dragger.child("div", {
       className: "section_dragger_collapse"
-    }));
+    });
     this.domElement.addEventListener("mousemove", this.resize.bind(this));
     this.dragger.domElement.addEventListener("mousedown", () => this.dragging = true);
     this.dragger.domElement.addEventListener("mouseup", () => this.dragging = false);
@@ -214,26 +348,54 @@ var Section = class _Section extends DomElement {
 };
 
 // ts/interface/interface.ts
-var Interface = class extends DomElement {
-  constructor() {
+var WorkSpace = class extends DomElement {
+  constructor(presets) {
     super("div", {
       className: "content"
     });
-    this.mainSection = new Section();
-    this.append(this.mainSection);
+    this.buildToolbar(presets);
+    this.mainSection = this.append(new Section());
+    this.setPreset(presets ? Object.keys(presets)[0] : "empty");
   }
-  build() {
-    this.setPreset();
+  buildToolbar(presets) {
+    const p = { empty: { name: "Empty", data: [0] } };
+    if (presets)
+      Object.assign(p, presets);
+    this.header = this.child("header", {
+      id: "toolbar"
+    });
+    this.presets = Object.fromEntries(Object.entries(p).map(([k, v]) => {
+      return [
+        k,
+        __spreadProps(__spreadValues({}, v), {
+          button: this.header.append(new Button({
+            text: v.name,
+            onClick: () => this.setPreset(k),
+            icon: { name: "dashboard", weight: 200 }
+          }))
+        })
+      ];
+    }));
   }
-  setPreset() {
-    this.mainSection.empty();
-    const [t, b] = this.mainSection.setMode("split", "v", 50);
-    const [tl, tr] = t.setMode("split", "h", 70);
-    const [trt, trb] = tr.setMode("split", "v", 50);
-    b.setMode("panel", "timeline");
-    tl.setMode("panel", "main");
-    trt.setMode("panel", "outliner");
-    trb.setMode("panel", "properties");
+  setPreset(n) {
+    if (!this.presets[n])
+      return;
+    this.mainSection.fill(this.presetMap(this.presets[n].data));
+  }
+  presetMap(d) {
+    if (!d)
+      return Section.getEmpty();
+    return [
+      Section.getEmpty(),
+      Section.getSplit(
+        [this.presetMap(d[3]) || Section.getEmpty(), this.presetMap(d[4]) || Section.getEmpty()],
+        d[1],
+        d[2]
+      ),
+      Section.getPanel(
+        d[1]
+      )
+    ][d[0]];
   }
 };
 
@@ -246,6 +408,13 @@ var Panel = class extends DomElement {
     });
     this.id = id;
     this.name = name;
+    this.child("div", {
+      text: name,
+      style: {
+        "font-size": "20px",
+        "color": "white"
+      }
+    });
   }
 };
 
@@ -389,11 +558,15 @@ var Main = class {
       new PropertiesPanel(),
       new TimelinePanel()
     ]);
-    glob.interface = new Interface();
+    glob.interface = new WorkSpace({
+      default: {
+        name: "Default",
+        data: [1, "v", 50, [1, "h", 70, [2, "main"], [1, "v", 50, [2, "outliner"], [2, "properties"]]], [2, "timeline"]]
+      }
+    });
     this.build();
   }
   build() {
-    glob.interface.build();
   }
   tick() {
   }

@@ -1,4 +1,4 @@
-import { Interface } from './interface/interface';
+import { WorkSpace } from './interface/interface';
 import { MainPanel } from './interface/panels/main';
 import { NodeEditorPanel } from './interface/panels/node';
 import { OutlinerPanel } from './interface/panels/outliner';
@@ -9,7 +9,7 @@ import { Ticker } from './utilities/ticker';
 
 export class Glob {
     public main: Main;
-    public interface: Interface ;
+    public interface: WorkSpace ;
     public panels: PanelManager;
 };
 export var glob = new Glob;
@@ -28,12 +28,16 @@ export class Main {
             new PropertiesPanel(),
             new TimelinePanel(),
         ])
-        glob.interface = new Interface()
+        glob.interface = new WorkSpace({
+            default: {
+                name: 'Default',
+                data: [1, 'v', 50, [1, 'h', 70, [2, 'main'], [1, 'v', 50, [2, 'outliner'], [2, 'properties']]], [2, 'timeline']]
+            }
+        })
         this.build();
     }
 
     private build() {
-        glob.interface.build();
     }
 
     public tick() {

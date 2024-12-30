@@ -8,52 +8,76 @@ export interface DomElementProperties {
 }
 export class DomElement<T extends keyof HTMLElementTagNameMap> {
     public domElement: HTMLElementTagNameMap[T];
-    public onClick?: ()=>void;
+    private _onClick?: () => void;
+    public get onClick(): () => void {
+        return this._onClick;
+    }
+    public set onClick(func: () => void|undefined) {
+        this._onClick = func;
+    }
+    private props: DomElementProperties
 
     public set visible(b: boolean) {
-        this.setStyleProperty('display', b?undefined: 'none', true)
+        this.setStyle('display', b?undefined: 'none', true)
     }
 
-    public constructor(type: T, properties: DomElementProperties = {}) {
+    public constructor(protected type: T, properties: DomElementProperties = {}) {
+        this.props = {...{
+            style: {},
+            attr: {},
+        }, ...properties};
         this.domElement = document.createElement(type);
         this.domElement.setAttribute('draggable', 'false');
         this.domElement.addEventListener('click', this.click.bind(this))
-        if (properties.style) Object.entries(properties?.style).forEach(([k,v])=>{
-            this.setStyleProperty(
+        if (this.props.style) Object.entries(this.props?.style).forEach(([k,v])=>{
+            this.setStyle(
                 k, 
                 typeof v === 'string'?v:v[0], 
                 typeof v === 'string'?false:v[1]
             )
         })
-        if (properties.attr) Object.entries(properties?.attr).forEach(([k,v])=>{
+        if (this.props.attr) Object.entries(this.props?.attr).forEach(([k,v])=>{
             this.domElement.setAttribute(k,v)
         })
-        if (properties.text) this.domElement.innerHTML = properties.text
-        if (properties.className) this.domElement.className = properties.className
-        if (properties.id) this.domElement.id = properties.id
+        if (this.props.text) this.domElement.innerHTML = this.props.text
+        if (this.props.className) this.domElement.className = this.props.className
+        if (this.props.id) this.domElement.id = this.props.id
+        if (this.props.onClick) this.onClick = this.props.onClick
     }
 
-    public setStyleProperty(k:string,v:string|undefined,i:boolean = false) {
+    public setStyle(k:string,v:string|undefined,i:boolean = false) {
         if (v){
             this.domElement.style.setProperty(k,v,i?'important':'')
+            this.props.style[k] = [v,i]
         } else {
             this.domElement.style.removeProperty(k)
+            delete this.props.style[k]
         }
     }
+    public setAttribute(k:string,v:string) {
+        this.domElement.setAttribute(k,v);
+        this.props.attr[k] = v
+    }
 
-    public append<T extends keyof HTMLElementTagNameMap>(d: DomElement<T>): DomElement<T> {
+    public append<T2 extends keyof HTMLElementTagNameMap>(d: DomElement<T2>): typeof d {
         this.domElement.appendChild(d.domElement);
         return d; 
+    }
+
+    public child<T3 extends keyof HTMLElementTagNameMap>(type: T3, properties: DomElementProperties = {}): DomElement<T3> {
+        return this.append(new DomElement(type, properties)) as DomElement<T3>
     }
 
     private click() {
         this.onClick?.()
     }
-
-
     public remove(d: DomElement<any>) {
         try {
             this.domElement.removeChild(d.domElement)
         } catch (error) {}
+    }
+
+    public clone() {
+        return new DomElement(this.type, {...this.props})
     }
 }

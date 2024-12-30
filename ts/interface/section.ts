@@ -4,7 +4,42 @@ import { glob } from '../main';
 import { Util } from '../utilities/utils';
 import { Panel } from './panel';
 
+export interface sectionContentEmpty {
+    type: 'empty',
+}
+export interface sectionContentPanel {
+    type: 'panel',
+    panel: Panel,
+}
+export interface sectionContentSplit {
+    type: 'split',
+    percentage?: number,
+    direction?: typeof this.direction,
+    sections: [SectionContent, SectionContent];
+}
+export type SectionContent = sectionContentEmpty | sectionContentPanel | sectionContentSplit;
+
+
 export class Section extends DomElement<'div'> {
+    static getEmpty(): sectionContentEmpty {
+        return {
+            type: 'empty',
+        };
+    }
+    static getPanel(n: string): sectionContentPanel {
+        return {
+            type: 'panel',
+            panel: glob.panels.getPanel(n)
+        };
+    }
+    static getSplit(c: [SectionContent,SectionContent],d: 'v'|'h' = 'h',p: number = 50): sectionContentSplit {
+        return {
+            type: 'split',
+            direction: d,
+            sections: c,
+            percentage: p,
+        };
+    }
     protected parent: Section | undefined;
     public contentWrap: DomElement<"div">;
     protected dragger: DomElement<"span">;
@@ -19,7 +54,7 @@ export class Section extends DomElement<'div'> {
     }
     public set dragging(value: boolean) {
         this._dragging = value;
-        this.dragger.setStyleProperty('pointerEvents', value ? 'none' : 'auto');
+        this.dragger.setStyle('pointerEvents', value ? 'none' : 'auto');
         this.dragger.domElement.classList[value ? 'add' : 'remove']('dragging');
     }
     protected get direction(): 'v' | 'h' | undefined {
@@ -38,13 +73,13 @@ export class Section extends DomElement<'div'> {
     protected set percentage(value: number | undefined) {
         this._percentage = Util.clamp(value, 5, 95);
         if (this.sections && this.direction) {
-            this.sections[0].setStyleProperty(this.direction === 'h' ? 'width' : 'height', `calc(${this._percentage}% - 3px)`);
-            this.sections[1].setStyleProperty(this.direction === 'h' ? 'width' : 'height', `calc(${100 - this._percentage}% - 3px)`);
-            this.sections[0].setStyleProperty(this.direction === 'h' ? 'height' : 'width', `100%`);
-            this.sections[1].setStyleProperty(this.direction === 'h' ? 'height' : 'width', `100%`);
+            this.sections[0].setStyle(this.direction === 'h' ? 'width' : 'height', `calc(${this._percentage}% - 3px)`);
+            this.sections[1].setStyle(this.direction === 'h' ? 'width' : 'height', `calc(${100 - this._percentage}% - 3px)`);
+            this.sections[0].setStyle(this.direction === 'h' ? 'height' : 'width', `100%`);
+            this.sections[1].setStyle(this.direction === 'h' ? 'height' : 'width', `100%`);
 
-            this.dragger.setStyleProperty('left', this.direction === 'h' ? `calc(${this._percentage}% - 3px)` : '4px');
-            this.dragger.setStyleProperty('top', this.direction === 'v' ? `calc(${this._percentage}% - 3px)` : '4px');
+            this.dragger.setStyle('left', this.direction === 'h' ? `calc(${this._percentage}% - 3px)` : '4px');
+            this.dragger.setStyle('top', this.direction === 'v' ? `calc(${this._percentage}% - 3px)` : '4px');
         }
     }
 
@@ -56,31 +91,26 @@ export class Section extends DomElement<'div'> {
     public setMode(m: 'split', a: typeof this.direction, b: number): [Section, Section];
     public setMode(m: typeof this.mode, a: string | undefined | typeof this.direction, b?: number): [Section, Section] | Panel {
         const oldPanel = this.panel;
-        this.empty();
-        this.mode = m;
 
-        if (this.mode === 'panel') {
-            this.domElement.classList.remove('s_split');
-            this.domElement.classList.add('s_panel');
-
-            this.panel = glob.panels.getPanel(a);
-            glob.panels.assign(this.panel, this);
-
-            this.panelSwitch.value(this.panel?.id);
-            this.dragger.visible = false;
+        if (m === 'panel') {
+            this.fill({
+                type: 'panel',
+                panel: glob.panels.getPanel(a)
+            });
             return this.panel;
         } else {
-            this.domElement.classList.remove('s_panel');
-            this.domElement.classList.add('s_split');
-
-            this.sections = [
-                new Section(this),
-                new Section(this)
-            ];
-            this.sections[0].setMode('panel', oldPanel?.name);
-            this.direction = a as typeof this.direction;
-            this.percentage = b;
-            this.dragger.visible = true;
+            this.fill({
+                type: 'split',
+                sections: [
+                    {
+                        type: 'panel',
+                        panel: oldPanel
+                    },
+                    Section.getEmpty()
+                ],
+                percentage: b,
+                direction: a
+            });
             return this.sections;
         }
     }
@@ -102,11 +132,38 @@ export class Section extends DomElement<'div'> {
         this.percentage = undefined;
 
         if (del) {
-            this.parent?.remove(this);
+            this.parent?.contentWrap.remove(this);
         }
     }
 
-    constructor(parent?: Section) {
+    public fill(content?: SectionContent): void {
+        this.empty();
+        if (content && content.type !== 'empty') {
+            this.mode = content.type;
+            if (content.type === 'panel') {
+                this.domElement.classList.remove('s_split');
+                this.domElement.classList.add('s_panel');
+
+                this.panel = content.panel;
+                glob.panels.assign(this.panel, this);
+                this.panelSwitch.value(this.panel?.id);
+
+                this.dragger.visible = false;
+            } else {
+                this.domElement.classList.remove('s_panel');
+                this.domElement.classList.add('s_split');
+
+                this.sections = content.sections.map((d) => new Section(this, d)) as typeof this.sections;
+                this.direction = content.direction || (this.parent.direction === 'v' ? 'h' : 'v');
+                this.percentage = content.percentage || 50;
+
+                this.dragger.visible = true;
+            }
+        } else {
+            this.setMode('panel', 'empty');
+        }
+    }
+    constructor(parent?: Section, content?: SectionContent) {
         super('div', {
             className: 'section'
         });
@@ -115,20 +172,21 @@ export class Section extends DomElement<'div'> {
             this.parent.contentWrap.append(this);
         }
         this.build();
-        this.setMode('panel', undefined);
+        this.fill(content as unknown as Parameters<Section["fill"]>[0]);
+
     }
 
     private build() {
-        this.contentWrap = this.append(new DomElement('div', { className: 'section_content' }));
-        this.append(new DomElement('div', {
+        this.contentWrap = this.child('div', { className: 'section_content' });
+        this.child('div', {
             className: 'section_outline'
-        })) as Select;
-        this.dragger = this.append(new DomElement('span', {
+        });
+        this.dragger = this.child('span', {
             className: 'section_dragger'
-        }));
-        this.dragger.append(new DomElement('div', {
+        });
+        this.dragger.child('div', {
             className: 'section_dragger_collapse'
-        }));
+        });
 
 
         this.domElement.addEventListener('mousemove', this.resize.bind(this));
@@ -152,4 +210,5 @@ export class Section extends DomElement<'div'> {
             if (v !== 0) this.percentage = Util.clamp(v, 0, 100);
         }
     }
+
 }

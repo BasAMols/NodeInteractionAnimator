@@ -1,3 +1,7 @@
+button.button {
+    all: unset;
+}
+
 * {
     box-sizing: border-box;
     position: relative;
@@ -13,10 +17,42 @@ body {
     overflow: hidden;
     width: 100vw;
 
+    button.button {
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        background: #4c4aa9;
+        margin-right: 8px;
+        border-radius: 5px;
+        padding: 2px 7px;
+        cursor: pointer;
+        transition: opacity 0.2s;
+        line-height: 1.1.2em;
+        
+        &:hover{
+            opacity: 0.7
+        } 
+        &>span {
+            font-size: 16px
+        }
+        &>.icon {
+            margin-right: 4px
+        }
+
+    }
+
+    header#toolbar {
+        height: 32px;
+        padding: 5px;
+        background-color: #121217;
+    }
+    
     .content {
         height: 100%;
 
         .section {
+            background: #121217;
+
             >.section_content {
                 width: 100%;
                 height: 100%;
@@ -41,7 +77,6 @@ body {
             }
 
             &.s_split {
-                background: #121217;
                 overflow: hidden;
 
                 >.select {
@@ -129,7 +164,5 @@ body {
             flex-direction: row;
         }
     }
-
-
 
 }
