@@ -54,16 +54,47 @@ export class PanelManager {
         d.section = section;
         d.section.contentWrap.append(d.panel);
     }
-    public getSelectObject(key: string = 'panel', onChange: (v:string)=>void): MenuButton {
-        return {
-            key: 'panel',
+    public getSelectObject(
+        key: string = 'panel',
+        switchPanel?: (v: string) => void,
+        close?: () => void,
+        splitH?: () => void,
+        splitV?: () => void,
+    ): MenuButton[] {
+        let buttons: MenuButton[] = [];
+        if (switchPanel) buttons.push({
+            key: key,
             label: 'Panel',
             icon: { name: 'dashboard', weight: 200 },
             type: 'Select',
-            onChange,
-            data: [[{key: 'empty', name: 'Empty'}, ...Object.entries(this.list).map(([k, v]) => {
-                return {key: k, name: v.panel.name};
+            onChange: switchPanel,
+            data: [[{ key: 'empty', name: 'Empty' }, ...Object.entries(this.list).map(([k, v]) => {
+                return { key: k, name: v.panel.name };
             })]]
-        };
+        });
+        if (splitH) buttons.push({
+            key: 'splitH',
+            label: '',
+            icon: { name: 'splitscreen_add', weight: 200 },
+            type: 'Action',
+            onClick: splitH,
+        });
+        if (splitV) buttons.push({
+            key: 'splitV',
+            label: '',
+            icon: { name: 'splitscreen_vertical_add', weight: 200 },
+            type: 'Action',
+            onClick: splitV,
+        });
+        if (close) buttons.push({
+            key: 'close',
+            label: '',
+            icon: { name: 'close', weight: 200 },
+            type: 'Action',
+            onClick: close,
+        });
+        
+
+        return buttons;
     }
 }

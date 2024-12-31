@@ -8,6 +8,7 @@
     --color-blue2: #444362;
     --color-blue3: #5c5aa9;
 }
+
 button.button {
     all: unset;
 }
@@ -20,7 +21,7 @@ button.button {
     font-weight: 350;
     font-size: 15px;
     color: var(--color-text);
-    font-variation-settings: "wdth" 85;
+    font-variation-settings: "wdth" 90;
 }
 
 body {
@@ -40,59 +41,59 @@ body {
         cursor: pointer;
         transition: background 0.2s, opacity 0.2s;
         line-height: 1.1.2em;
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         &>.icon {
@@ -127,13 +128,9 @@ body {
         display: flex;
         flex-direction: column;
         background: var(--color-dark);
-        
-
 
         .section {
             background: var(--color-dark);
-            
-
 
             >.section_content {
                 width: 100%;
@@ -141,8 +138,6 @@ body {
                 display: flex !important;
                 justify-content: space-between;
                 position: relative;
-                
-                
 
                 &:empty {
                     display: flex;
@@ -173,7 +168,7 @@ body {
                 top: 4px;
                 right: 4px;
 
-                .button.open {
+                >*>.button.open {
                     display: none;
                 }
 
@@ -182,7 +177,7 @@ body {
                     position: absolute;
                     top: 4px;
                     right: 4px;
-       
+
                 }
             }
 
@@ -224,16 +219,6 @@ body {
                     width: 20px;
                     margin-left: -7px;
                     cursor: e-resize;
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
 
                     &:after {
                         width: 2px;
@@ -293,15 +278,15 @@ body {
             border-radius: var(--radius);
             box-shadow: var(--shadow);
 
-            &.open{
+            &.open {
                 display: flex;
             }
-            
+
             .menu_column {
                 min-width: 75px;
                 display: flex;
                 flex-direction: column;
-       
+
                 &.icons {
                     min-width: 100px;
 
@@ -334,7 +319,7 @@ body {
                     align-items: center;
                     line-height: 1.7em;
                     padding-left: 4px;
-      
+
                     &>span {
                         font-weight: 350;
                     }
@@ -372,14 +357,19 @@ body {
     z-index: 9;
 }
 
-.section>.input.select button.menu_button.button {
+.section>.menu button.button {
     background: transparent;
+    padding: 4px 0px 4px 4px;
+
+    &>span{
+        margin-right: 6px;
+        &:empty {
+            display: none;
+        }
+    }
 }
 
 header>.menu>.menu_wrap .menu_panel {
     top: 44px;
     left: 9px;
-}
-.select>.menu button.menu_button.button.open {
-    display: none;
 }

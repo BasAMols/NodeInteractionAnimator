@@ -342,6 +342,24 @@ var Util = class {
   }
 };
 
+// ts/interface/panel.ts
+var Panel = class extends DomElement {
+  constructor(id, name) {
+    super("div", {
+      className: "panel",
+      id
+    });
+    this.id = id;
+    this.name = name;
+    this.child("div", {
+      text: name,
+      style: {
+        "color": "white"
+      }
+    });
+  }
+};
+
 // ts/interface/section.ts
 var Section = class _Section extends DomElement {
   static getEmpty() {
@@ -396,29 +414,24 @@ var Section = class _Section extends DomElement {
   get activePanel() {
     return this.panel;
   }
-  setMode(m, a, b) {
-    const oldPanel = this.panel;
-    if (m === "panel") {
-      this.fill({
-        type: "panel",
-        panel: glob.panels.getPanel(a)
-      });
-      return this.panel;
-    } else {
-      this.fill({
-        type: "split",
-        sections: [
-          {
-            type: "panel",
-            panel: oldPanel
-          },
-          _Section.getEmpty()
-        ],
-        percentage: b,
-        direction: a
-      });
-      return this.sections;
-    }
+  setPanel(panel = "empty") {
+    this.fill({
+      type: "panel",
+      panel: panel instanceof Panel ? panel : glob.panels.getPanel(panel)
+    });
+    return this.panel;
+  }
+  setSplit(direction, percentage = 50, data) {
+    this.fill({
+      type: "split",
+      sections: data ? data : [
+        _Section.getEmpty(),
+        _Section.getEmpty()
+      ],
+      percentage,
+      direction
+    });
+    return this.sections;
   }
   removePanel() {
     if (this.panel) {
@@ -460,7 +473,7 @@ var Section = class _Section extends DomElement {
         this.dragger.visible = true;
       }
     } else {
-      this.setMode("panel", "empty");
+      this.setPanel();
     }
   }
   constructor(parent, content) {
@@ -489,11 +502,54 @@ var Section = class _Section extends DomElement {
     this.dragger.domElement.addEventListener("mousedown", () => this.dragging = true);
     this.dragger.domElement.addEventListener("mouseup", () => this.dragging = false);
     this.domElement.addEventListener("mouseup", () => this.dragging = false);
-    this.sectionMenu = this.append(new Menu([
-      glob.panels.getSelectObject("panel", (v) => {
-        this.setMode("panel", v);
-      })
-    ]));
+    if (this.parent) {
+      this.sectionMenu = this.append(new Menu([
+        ...glob.panels.getSelectObject(
+          "panel",
+          (v) => {
+            this.setPanel(v);
+          },
+          () => {
+            if (this.parent)
+              this.parent.setPanel(this.panel);
+          },
+          () => {
+            this.setSplit("v", 50, [
+              { type: "panel", panel: this.panel },
+              _Section.getEmpty()
+            ]);
+          },
+          () => {
+            this.setSplit("h", 50, [
+              { type: "panel", panel: this.panel },
+              _Section.getEmpty()
+            ]);
+          }
+        )
+      ]));
+    } else {
+      this.sectionMenu = this.append(new Menu([
+        ...glob.panels.getSelectObject(
+          "panel",
+          (v) => {
+            this.setPanel(v);
+          },
+          void 0,
+          () => {
+            this.setSplit("v", 50, [
+              { type: "panel", panel: this.panel },
+              _Section.getEmpty()
+            ]);
+          },
+          () => {
+            this.setSplit("h", 50, [
+              { type: "panel", panel: this.panel },
+              _Section.getEmpty()
+            ]);
+          }
+        )
+      ]));
+    }
     this.panelSwitch = this.sectionMenu.getButton("panel").panel;
   }
   resize(e) {
@@ -649,35 +705,44 @@ var PanelManager = class {
     d.section = section;
     d.section.contentWrap.append(d.panel);
   }
-  getSelectObject(key = "panel", onChange) {
-    return {
-      key: "panel",
-      label: "Panel",
-      icon: { name: "dashboard", weight: 200 },
-      type: "Select",
-      onChange,
-      data: [[{ key: "empty", name: "Empty" }, ...Object.entries(this.list).map(([k, v]) => {
-        return { key: k, name: v.panel.name };
-      })]]
-    };
-  }
-};
-
-// ts/interface/panel.ts
-var Panel = class extends DomElement {
-  constructor(id, name) {
-    super("div", {
-      className: "panel",
-      id
-    });
-    this.id = id;
-    this.name = name;
-    this.child("div", {
-      text: name,
-      style: {
-        "color": "white"
-      }
-    });
+  getSelectObject(key = "panel", switchPanel, close, splitH, splitV) {
+    let buttons = [];
+    if (switchPanel)
+      buttons.push({
+        key,
+        label: "Panel",
+        icon: { name: "dashboard", weight: 200 },
+        type: "Select",
+        onChange: switchPanel,
+        data: [[{ key: "empty", name: "Empty" }, ...Object.entries(this.list).map(([k, v]) => {
+          return { key: k, name: v.panel.name };
+        })]]
+      });
+    if (splitH)
+      buttons.push({
+        key: "splitH",
+        label: "",
+        icon: { name: "splitscreen_add", weight: 200 },
+        type: "Action",
+        onClick: splitH
+      });
+    if (splitV)
+      buttons.push({
+        key: "splitV",
+        label: "",
+        icon: { name: "splitscreen_vertical_add", weight: 200 },
+        type: "Action",
+        onClick: splitV
+      });
+    if (close)
+      buttons.push({
+        key: "close",
+        label: "",
+        icon: { name: "close", weight: 200 },
+        type: "Action",
+        onClick: close
+      });
+    return buttons;
   }
 };
 
