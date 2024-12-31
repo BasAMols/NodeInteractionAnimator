@@ -144,13 +144,17 @@ export class Menu extends DomElement<'div'> {
 
     togglePanel(k: string, b: boolean = !this.panels[k].open) {
         this.closePanels();
-        this.panels[k].element.visible = b;
-        this.panels[k].button.active = b;
-        this.panels[k].open = b;
+        if (b){
+            this.panels[k].button.domElement.classList.add('open');
+            this.panels[k].element.visible = true;
+            this.panels[k].button.active = true;
+            this.panels[k].open = true;
+        }
     }
     closePanels() {
         Object.values(this.panels).forEach((p) => {
             p.element.visible = false;
+            p.button.domElement.classList.remove('open');
             p.button.active = false;
             p.open = false;
         });

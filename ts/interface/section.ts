@@ -31,7 +31,7 @@ export class Section extends DomElement<'div'> {
             panel: glob.panels.getPanel(n)
         };
     }
-    static getSplit(c: [SectionContent,SectionContent],d: 'v'|'h' = 'h',p: number = 50): sectionContentSplit {
+    static getSplit(c: [SectionContent, SectionContent], d: 'v' | 'h' = 'h', p: number = 50): sectionContentSplit {
         return {
             type: 'split',
             direction: d,
@@ -200,12 +200,10 @@ export class Section extends DomElement<'div'> {
     }
     private resize(e: MouseEvent) {
         if (this.dragging) {
-            let v;
-            if (this.direction === 'v') {
-                v = (e.y - this.domElement.offsetTop) / this.domElement.offsetHeight * 100;
-            } else {
-                v = (e.x - this.domElement.offsetLeft) / this.domElement.offsetWidth * 100;
-            }
+            let v = this.direction === 'v' ?
+                (e.y - this.domElement.getBoundingClientRect().y) / this.domElement.offsetHeight * 100 :
+                (e.x - this.domElement.getBoundingClientRect().x) / this.domElement.offsetWidth * 100;
+
             if (v !== 0) this.percentage = Util.clamp(v, 0, 100);
         }
     }

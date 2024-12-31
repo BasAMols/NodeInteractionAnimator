@@ -274,13 +274,17 @@ var Menu = class extends DomElement {
   }
   togglePanel(k, b = !this.panels[k].open) {
     this.closePanels();
-    this.panels[k].element.visible = b;
-    this.panels[k].button.active = b;
-    this.panels[k].open = b;
+    if (b) {
+      this.panels[k].button.domElement.classList.add("open");
+      this.panels[k].element.visible = true;
+      this.panels[k].button.active = true;
+      this.panels[k].open = true;
+    }
   }
   closePanels() {
     Object.values(this.panels).forEach((p) => {
       p.element.visible = false;
+      p.button.domElement.classList.remove("open");
       p.button.active = false;
       p.open = false;
     });
@@ -479,12 +483,7 @@ var Section = class _Section extends DomElement {
   }
   resize(e) {
     if (this.dragging) {
-      let v;
-      if (this.direction === "v") {
-        v = (e.y - this.domElement.offsetTop) / this.domElement.offsetHeight * 100;
-      } else {
-        v = (e.x - this.domElement.offsetLeft) / this.domElement.offsetWidth * 100;
-      }
+      let v = this.direction === "v" ? (e.y - this.domElement.getBoundingClientRect().y) / this.domElement.offsetHeight * 100 : (e.x - this.domElement.getBoundingClientRect().x) / this.domElement.offsetWidth * 100;
       if (v !== 0)
         this.percentage = Util.clamp(v, 0, 100);
     }
