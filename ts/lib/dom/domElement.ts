@@ -4,7 +4,8 @@ export interface DomElementProperties {
     className?: string;
     id?: string;
     attr?: Record<string, string>;
-    onClick?: ()=>void
+    onClick?: ()=>void;
+    visible?: boolean,
 }
 export class DomElement<T extends keyof HTMLElementTagNameMap> {
     public domElement: HTMLElementTagNameMap[T];
@@ -39,10 +40,11 @@ export class DomElement<T extends keyof HTMLElementTagNameMap> {
         if (this.props.attr) Object.entries(this.props?.attr).forEach(([k,v])=>{
             this.domElement.setAttribute(k,v)
         })
-        if (this.props.text) this.domElement.innerHTML = this.props.text
+        if (this.props.text) this.setText(this.props.text);
         if (this.props.className) this.domElement.className = this.props.className
         if (this.props.id) this.domElement.id = this.props.id
         if (this.props.onClick) this.onClick = this.props.onClick
+        if (this.props.visible !== undefined) this.visible = this.props.visible
     }
 
     public setStyle(k:string,v:string|undefined,i:boolean = false) {
@@ -57,6 +59,9 @@ export class DomElement<T extends keyof HTMLElementTagNameMap> {
     public setAttribute(k:string,v:string) {
         this.domElement.setAttribute(k,v);
         this.props.attr[k] = v
+    }
+    public setText(t: string) {
+        this.domElement.innerText = t;
     }
 
     public append<T2 extends keyof HTMLElementTagNameMap>(d: DomElement<T2>): typeof d {

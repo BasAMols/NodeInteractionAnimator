@@ -1,4 +1,4 @@
-import { Panel } from '../panel';
+import { Panel } from '../interface/panel';
 
 export class NodeEditorPanel extends Panel {
     constructor() {

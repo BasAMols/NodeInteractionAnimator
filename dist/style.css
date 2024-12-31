@@ -9,10 +9,11 @@ button.button {
 * {
     box-sizing: border-box;
     position: relative;
-    font-family: "Nunito Sans", sans-serif;
+    font-family: "Figtree", serif;
     user-select: none;
-    font-weight: 600;
-    font-size: 14px;
+    font-weight: 400;
+    font-size: 15px;
+    color: #f9f8fc;
 }
 
 body {
@@ -21,32 +22,44 @@ body {
     overflow: hidden;
     width: 100vw;
 
-    button.button {
+    button.button:not(.unstyle) {
         color: white;
         display: inline-flex;
         align-items: center;
-        background: #4c4aa9;
-        margin-right: 8px;
+        background: #454466;
+        margin-left: 8px;
         border-radius: var(--radius);
-        padding: 2px 7px;
+        padding: 3px 8px;
         cursor: pointer;
-        transition: opacity 0.2s;
+        transition: background 0.2s, opacity 0.2s;
         line-height: 1.1.2em;
 
-        &:hover {
-            opacity: 0.7
-        }
 
         &>.icon {
-            margin-right: 4px
+            margin-right: 4px;
+            font-size: 19px;
+            font-weight: 300 !important;
+        }
+
+        &:hover,
+        &.active {
+            background: #5a58a4;
+        }
+
+        &.disabled {
+            background: #525058;
+            opacity: 0.5;
         }
 
     }
 
     header#toolbar {
-        height: 45px;
-        padding: 9px;
-        background-color: #121217;
+        height: 40px;
+        padding: 0px 5px;
+        background-color: #202023;
+        z-index: 3;
+        align-items: center;
+        display: flex;
     }
 
     .content {
@@ -56,7 +69,8 @@ body {
 
 
         .section {
-            background: #121217;
+            background: #202023;
+
 
             >.section_content {
                 width: 100%;
@@ -64,20 +78,18 @@ body {
                 display: flex !important;
                 justify-content: space-between;
 
-                &:empty:before {
-                    content: 'empty';
-                    /* border: 3px dashed #30334b; */
-                    font-size: 30px;
-                    color: #30334b;
-                    position: absolute;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    top: 0;
-                    font-family: monospace;
-                    text-transform: uppercase;
-                    padding: 3px 5px;
-                    font-weight: bold;
+                &:empty {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+
+                    &:before {
+                        content: '...';
+                        font-size: 50px;
+                        position: absolute;
+                        padding: 3px 5px;
+                        font-weight: 10;
+                    }
                 }
             }
 
@@ -150,17 +162,16 @@ body {
         }
 
         &>.section {
-            /* height: 100%; */
             flex-grow: 1;
             width: 100%;
-            padding: 0 9px 9px 9px;
+            padding: 0 5px 5px 5px;
         }
 
         .panel {
             height: 100%;
             width: 100%;
-            background: #1c1d29;
-            padding: 8px 15px;
+            background: #3e424e;
+            padding: 10px 14px;
             border-radius: var(--radius);
         }
 
@@ -172,5 +183,110 @@ body {
             flex-direction: row;
         }
     }
+}
 
+.menu {
+    display: inline-block;
+    position: static;
+    display: inline-flex;
+    margin-right: auto;
+
+    .menu_wrap {
+        display: block;
+        width: max-content;
+        position: static;
+
+        .menu_panel {
+            position: absolute;
+            background: #202023;
+            top: 40px;
+            padding: 9px 9px 19px;
+            display: flex;
+            border-radius: 0 0 var(--radius) var(--radius);
+            box-shadow: 0px 0px 13px #00000054;
+            margin-left: -6px;
+
+            .menu_column {
+                min-width: 70px;
+                display: flex;
+                flex-direction: column;
+
+                &.icons {
+                    min-width: 100px;
+
+                    &>button.button {
+                        padding-left: 29px;
+                    }
+                }
+
+                span.spacer {
+                    height: 12px;
+                    z-index: 3;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin: 5px 0 1px;
+                }
+
+                span.spacer:after {
+                    border-radius: 30px;
+                    content: '';
+                    width: 100%;
+                    height: 1px;
+                    background: #9292c263;
+                    display: block;
+                }
+
+                &>button.button {
+                    padding: 0;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    line-height: 1.7em;
+
+                    &>span {
+                        font-weight: 400;
+                    }
+
+                    &.active>span {
+                        color: #b0afd1;
+                    }
+
+                    &>.icon {
+                        position: absolute;
+                        left: 0;
+                        font-size: 21px;
+                        font-weight: 300 !important;
+                    }
+
+                    /* &.active {
+                        position: absolute;
+                        left: 0;
+                        font-size: 21px;
+                        font-weight: 300 !important;
+                    } */
+                }
+
+                &>span:not(.spacer) {
+                    color: white;
+                    font-size: 15px;
+                    margin-bottom: 10px;
+
+                    &:empty {
+                        display: none
+                    }
+                }
+            }
+        }
+    }
+}
+
+.select>.menu>.menu_wrap>.menu_panel {
+    right: 0;
+    top: 25px;
+    border-radius: var(--radius) var(--radius);
+}
+
+.section>.input.select button.menu_button.button {
+    background: #5a58a4;
 }

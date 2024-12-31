@@ -1,6 +1,6 @@
-import { Select } from '../../dom/select';
-import { Panel } from '../panel';
-import { Section } from '../section';
+import { Select } from './select';
+import { Panel } from './panel';
+import { Section } from './section';
 
 export interface PanelData {
     id: string,
@@ -56,8 +56,9 @@ export class PanelManager {
     }
     public getSelectObject() {
         return new Select({
+            icon: {name: 'dashboard', weight:200},
             options:
-                Object.fromEntries([['empty', ''], ...Object.entries(this.list).map(([k, v]) => {
+                Object.fromEntries([['empty', '...'], ...Object.entries(this.list).map(([k, v]) => {
                     return [k, v.panel.name];
                 })])
         });

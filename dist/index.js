@@ -18,7 +18,7 @@ var __spreadValues = (a, b) => {
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 
-// ts/dom/domElement.ts
+// ts/lib/dom/domElement.ts
 var DomElement = class _DomElement {
   constructor(type, properties = {}) {
     this.type = type;
@@ -43,13 +43,15 @@ var DomElement = class _DomElement {
         this.domElement.setAttribute(k, v);
       });
     if (this.props.text)
-      this.domElement.innerHTML = this.props.text;
+      this.setText(this.props.text);
     if (this.props.className)
       this.domElement.className = this.props.className;
     if (this.props.id)
       this.domElement.id = this.props.id;
     if (this.props.onClick)
       this.onClick = this.props.onClick;
+    if (this.props.visible !== void 0)
+      this.visible = this.props.visible;
   }
   get onClick() {
     return this._onClick;
@@ -73,6 +75,9 @@ var DomElement = class _DomElement {
     this.domElement.setAttribute(k, v);
     this.props.attr[k] = v;
   }
+  setText(t) {
+    this.domElement.innerText = t;
+  }
   append(d) {
     this.domElement.appendChild(d.domElement);
     return d;
@@ -95,7 +100,7 @@ var DomElement = class _DomElement {
   }
 };
 
-// ts/dom/icon.ts
+// ts/lib/dom/icon.ts
 var Icon = class extends DomElement {
   constructor(properties) {
     var _a;
@@ -107,9 +112,15 @@ var Icon = class extends DomElement {
       }
     });
   }
+  static make(n, w) {
+    return {
+      name: n || "",
+      weight: w || 200
+    };
+  }
 };
 
-// ts/dom/button.ts
+// ts/lib/dom/button.ts
 var Button = class extends DomElement {
   constructor(properties = {}) {
     var _a;
@@ -121,7 +132,9 @@ var Button = class extends DomElement {
     this._active = false;
     if (properties.icon)
       this.append(new Icon(properties.icon));
-    this.child("span", {
+    if (properties.unstyle)
+      this.domElement.classList.add("unstyle");
+    this.span = this.child("span", {
       text: properties.text
     });
     if (properties.enabled)
@@ -141,9 +154,140 @@ var Button = class extends DomElement {
     this._active = b;
     this.domElement.classList[b ? "add" : "remove"]("active");
   }
+  setText(t) {
+    this.span.setText(t);
+  }
 };
 
-// ts/utilities/utils.ts
+// ts/interface/menu.ts
+var Menu = class extends DomElement {
+  constructor(d) {
+    super("div", { className: "menu" });
+    this.panels = {};
+    this.iterator = 0;
+    if (d)
+      d.forEach(([panel, options]) => {
+        this.registerPanel(panel[0], panel[1], [""]);
+        options.forEach((o) => {
+          if (o.length === 0) {
+            this.registerSpacer({
+              panelKey: panel[0],
+              columnIndex: 0
+            });
+          } else {
+            this.registerOption({
+              panelKey: panel[0],
+              columnIndex: 0,
+              key: o[0],
+              name: o[1],
+              onClick: () => {
+              },
+              icon: o[2]
+            });
+          }
+        });
+      });
+  }
+  registerPanel(key, name, columns, icon) {
+    const menuWrap = this.child("div", { className: "menu_wrap" });
+    const panel = menuWrap.child("div", { className: "menu_panel", visible: false });
+    this.panels[key] = {
+      name,
+      open: false,
+      element: panel,
+      columns: columns.map((label) => {
+        const column = panel.child("div", { className: "menu_column" });
+        column.child("span", { text: label });
+        return {
+          element: column,
+          label,
+          options: {}
+        };
+      }),
+      button: menuWrap.append(new Button({
+        className: "menu_button",
+        text: name,
+        icon,
+        onClick: () => {
+          this.togglePanel(key);
+        }
+      }))
+    };
+  }
+  getOption({ panelKey, columnIndex = 0, key }) {
+    if (!this.panels[panelKey])
+      return void 0;
+    const panel = this.panels[panelKey];
+    if (panel.columns.length < columnIndex)
+      return void 0;
+    const column = panel.columns[columnIndex];
+    if (!key)
+      return [panel, column];
+    if (!column.options[key])
+      return void 0;
+    return [panel, column, column.options[key]];
+  }
+  registerSpacer({ panelKey, columnIndex = 0, key = String(this.iterator++), name: text }) {
+    const o = this.getOption({ panelKey, columnIndex });
+    if (!o)
+      return;
+    const [panel, column] = o;
+    const element = column.element.child("span", { className: "spacer", text });
+    if (column.options[key])
+      this.removeOption({ panelKey, columnIndex, key });
+    column.options[key] = {
+      type: "spacer",
+      element,
+      text
+    };
+  }
+  registerOption({ panelKey, columnIndex = 0, key = String(this.iterator++), name, onClick, icon }) {
+    const o = this.getOption({ panelKey, columnIndex });
+    if (!o)
+      return;
+    const [panel, column] = o;
+    const click = () => {
+      onClick();
+      this.closePanels();
+    };
+    const element = column.element.append(new Button({ text: name, onClick: click, unstyle: true, icon }));
+    if (column.options[key])
+      this.removeOption({ panelKey, columnIndex, key });
+    column.options[key] = {
+      type: "option",
+      element,
+      name,
+      onClick: click
+    };
+    if (icon) {
+      column.element.domElement.classList.add("icons");
+    }
+    return column.options[key];
+  }
+  removeOption({ panelKey, columnIndex = 0, key }) {
+    const o = this.getOption({ panelKey, columnIndex, key });
+    if (!o)
+      return;
+    const [panel, column, button] = o;
+    column.element.remove(button.element);
+    delete column.options[key];
+  }
+  togglePanel(k, b = !this.panels[k].open) {
+    this.closePanels();
+    this.panels[k].element.visible = b;
+    this.panels[k].button.active = b;
+    this.panels[k].open = b;
+  }
+  closePanels() {
+    Object.values(this.panels).forEach((p) => {
+      p.element.visible = false;
+      p.button.active = false;
+      p.open = false;
+    });
+  }
+};
+
+// ts/lib/utilities/utils.ts
 var Util = class {
   static clamp(value, min, max) {
     return Math.max(Math.min(value, max), min);
@@ -364,6 +508,25 @@ var WorkSpace = class extends DomElement {
     this.header = this.child("header", {
       id: "toolbar"
     });
+    this.header.append(new Menu([
+      [["file", "File"], [
+        ["new", "New", Icon.make("library_add")],
+        ["open", "Open...", Icon.make("folder_open")],
+        ["recover", "Recover", Icon.make("restore_page")],
+        [],
+        ["save", "Save", Icon.make("save")],
+        ["saveas", "Save As...", Icon.make("file_save")],
+        ["import", "Import...", Icon.make("file_open")],
+        ["export", "Export", Icon.make("file_export")],
+        [],
+        ["reset", "Reset", Icon.make("reset_image")]
+      ]],
+      [["edit", "Edit"], [
+        ["undo", "Undo", Icon.make("undo")],
+        ["redo", "Redo", Icon.make("redo")],
+        ["options", "Options...", Icon.make("settings")]
+      ]]
+    ]));
     this.presets = Object.fromEntries(Object.entries(p).map(([k, v]) => {
       return [
         k,
@@ -381,6 +544,9 @@ var WorkSpace = class extends DomElement {
     if (!this.presets[n])
       return;
     this.mainSection.fill(this.presetMap(this.presets[n].data));
+    Object.entries(this.presets).forEach(([k, v]) => {
+      v.button.active = k === n;
+    });
   }
   presetMap(d) {
     if (!d)
@@ -399,78 +565,57 @@ var WorkSpace = class extends DomElement {
   }
 };
 
-// ts/interface/panel.ts
-var Panel = class extends DomElement {
-  constructor(id, name) {
-    super("div", {
-      className: "panel",
-      id
-    });
-    this.id = id;
-    this.name = name;
-    this.child("div", {
-      text: name,
-      style: {
-        "color": "white"
-      }
-    });
-  }
-};
-
-// ts/interface/panels/main.ts
-var MainPanel = class extends Panel {
-  constructor() {
-    super("main", "Main");
-  }
-};
-
-// ts/interface/panels/node.ts
-var NodeEditorPanel = class extends Panel {
-  constructor() {
-    super("node", "Node");
-  }
-};
-
-// ts/interface/panels/outliner.ts
-var OutlinerPanel = class extends Panel {
-  constructor() {
-    super("outliner", "Outliner");
-  }
-};
-
-// ts/dom/select.ts
+// ts/interface/select.ts
 var Select = class extends DomElement {
   constructor(props = {}) {
     super("div", { className: "input select" });
-    this.select = this.append(new DomElement("select"));
+    this.options = {};
+    this.menu = this.append(new Menu());
+    this.menu.registerPanel("panel", "Panel", [""], props.icon);
     this.onChange = props.onChange;
     if (props.options)
       Object.entries(props.options).forEach(([k, v]) => {
-        this.addOption(k, v, props.default === k);
+        this.addOption(k, v);
       });
-    this.select.domElement.addEventListener("change", () => {
-      this.change(this.select.domElement.value);
-    });
+  }
+  setName(n) {
+    this.menu.panels["panel"].button.setText(n);
   }
   value(v) {
-    this.select.domElement.value = v;
+    if (!v)
+      return;
+    let found;
+    Object.entries(this.options).forEach(([k, value]) => {
+      value.option.element.active = k === v;
+      value.active = k === v;
+      if (k === v)
+        found = k;
+    });
+    if (found)
+      this.setName(this.options[found].label);
   }
   change(v) {
     var _a;
     (_a = this.onChange) == null ? void 0 : _a.call(this, v);
+    this.value(v);
   }
-  addOption(k, v, d = false) {
-    this.select.append(new DomElement("option", {
-      attr: {
-        value: k,
-        selected: d ? "" : void 0
-      },
-      text: v
-    }));
+  addOption(k, v) {
+    this.options[k] = {
+      active: false,
+      label: v,
+      option: this.menu.registerOption({
+        panelKey: "panel",
+        key: k,
+        name: v,
+        onClick: () => {
+          this.change(k);
+        }
+      })
+    };
   }
 };
 
-// ts/interface/panels/panelManager.ts
+// ts/interface/panelManager.ts
 var PanelManager = class {
   constructor(panels) {
     this.list = {};
@@ -521,21 +666,61 @@ var PanelManager = class {
   }
   getSelectObject() {
     return new Select({
-      options: Object.fromEntries([["empty", ""], ...Object.entries(this.list).map(([k, v]) => {
+      icon: { name: "dashboard", weight: 200 },
+      options: Object.fromEntries([["empty", "..."], ...Object.entries(this.list).map(([k, v]) => {
         return [k, v.panel.name];
       })])
     });
   }
 };
 
-// ts/interface/panels/properties.ts
+// ts/interface/panel.ts
+var Panel = class extends DomElement {
+  constructor(id, name) {
+    super("div", {
+      className: "panel",
+      id
+    });
+    this.id = id;
+    this.name = name;
+    this.child("div", {
+      text: name,
+      style: {
+        "color": "white"
+      }
+    });
+  }
+};
+
+// ts/panels/main.ts
+var MainPanel = class extends Panel {
+  constructor() {
+    super("main", "Main");
+  }
+};
+
+// ts/panels/node.ts
+var NodeEditorPanel = class extends Panel {
+  constructor() {
+    super("node", "Node");
+  }
+};
+
+// ts/panels/outliner.ts
+var OutlinerPanel = class extends Panel {
+  constructor() {
+    super("outliner", "Outliner");
+  }
+};
+
+// ts/panels/properties.ts
 var PropertiesPanel = class extends Panel {
   constructor() {
     super("properties", "Properties");
   }
 };
 
-// ts/interface/panels/timeline.ts
+// ts/panels/timeline.ts
 var TimelinePanel = class extends Panel {
   constructor() {
     super("timeline", "Timeline");
@@ -543,12 +728,8 @@ var TimelinePanel = class extends Panel {
 };
 
 // ts/main.ts
-var Glob = class {
-};
-var glob = new Glob();
 var Main = class {
   constructor() {
-    this.glob = glob;
     glob.main = this;
     glob.panels = new PanelManager([
       new MainPanel(),
@@ -572,8 +753,12 @@ var Main = class {
 };
 
 // ts/index.ts
+var Glob = class {
+};
+window.glob = new Glob();
+window.log = console.log;
 document.addEventListener("DOMContentLoaded", async () => {
   const g = new Main();
-  document.body.appendChild(g.glob.interface.domElement);
+  document.body.appendChild(glob.interface.domElement);
 });
 //# sourceMappingURL=index.js.map

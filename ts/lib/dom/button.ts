@@ -4,9 +4,11 @@ import { Icon, IconProperties } from './icon';
 export type ButtonProperties = DomElementProperties & {
     enabled?: boolean,
     icon?: IconProperties
+    unstyle?: boolean
 }
 export class Button extends DomElement<'button'> {
     private _enabled: boolean = true;
+    span: DomElement<"span">;
     public get enabled (){
         return this._enabled;
     }
@@ -30,9 +32,14 @@ export class Button extends DomElement<'button'> {
             className: (properties.className ?? '') + ' button'
         }});
         if (properties.icon) this.append(new Icon(properties.icon));
-        this.child('span', {
+        if (properties.unstyle) this.domElement.classList.add('unstyle');
+        this.span = this.child('span', {
             text: properties.text
         })
         if (properties.enabled) this.enabled = properties.enabled;
+    }
+
+    public setText(t: string): void {
+        this.span.setText(t);
     }
 }

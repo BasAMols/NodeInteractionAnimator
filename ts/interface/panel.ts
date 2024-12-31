@@ -1,4 +1,4 @@
-import { DomElement } from '../dom/domElement';
+import { DomElement } from '../lib/dom/domElement';
 
 export class Panel extends DomElement<'div'> {
     constructor(public readonly id: string, public readonly name: string) {

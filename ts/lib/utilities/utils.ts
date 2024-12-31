@@ -41,5 +41,4 @@ export abstract class Util {
     public static degToRad(d: number) {
         return d * Math.PI / 180;
     }
-
 }

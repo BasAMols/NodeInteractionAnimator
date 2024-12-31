@@ -1,7 +1,6 @@
-import { DomElement } from '../dom/domElement';
-import { Select } from '../dom/select';
-import { glob } from '../main';
-import { Util } from '../utilities/utils';
+import { DomElement } from '../lib/dom/domElement';
+import { Select } from './select';
+import { Util } from '../lib/utilities/utils';
 import { Panel } from './panel';
 
 export interface sectionContentEmpty {

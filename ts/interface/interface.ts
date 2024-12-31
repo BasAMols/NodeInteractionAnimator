@@ -1,5 +1,7 @@
-import { Button } from '../dom/button';
-import { DomElement } from '../dom/domElement';
+import { Button } from '../lib/dom/button';
+import { DomElement } from '../lib/dom/domElement';
+import { Icon, IconProperties } from '../lib/dom/icon';
+import { Menu } from './menu';
 import { Section, SectionContent } from './section';
 
 export type WorkspacePresetEmpty = [0];
@@ -34,12 +36,36 @@ export class WorkSpace extends DomElement<'div'> {
         this.setPreset(presets ? Object.keys(presets)[0] : 'empty');
     }
     private buildToolbar(presets?: Record<string, WorkspacePreset>) {
+
+        
         const p = { empty: { name: 'Empty', data: [0] } };
         if (presets) Object.assign(p, presets);
-
+        
         this.header = this.child('header', {
             id: 'toolbar',
         });
+        this.header.append(new Menu([
+            [['file', 'File'],[
+                ['new', 'New', Icon.make('library_add')],
+                ['open', 'Open...', Icon.make('folder_open')],
+                ['recover', 'Recover', Icon.make('restore_page')],
+                [],
+                ['save', 'Save', Icon.make('save')],
+                ['saveas', 'Save As...', Icon.make('file_save')],
+                ['import', 'Import...', Icon.make('file_open')],
+                ['export', 'Export', Icon.make('file_export')],
+                [],
+                ['reset', 'Reset', Icon.make('reset_image')],
+            ]],
+            [['edit', 'Edit'],[
+                ['undo', 'Undo', Icon.make('undo')],
+                ['redo', 'Redo', Icon.make('redo')],
+                ['options', 'Options...', Icon.make('settings')],
+            ]],
+        ] as [
+            [string,string],
+            [string?, string?, IconProperties?][]
+        ][]))
 
         this.presets = Object.fromEntries(Object.entries(p).map(([k, v]) => {
             return [k,
@@ -58,6 +84,10 @@ export class WorkSpace extends DomElement<'div'> {
     public setPreset(n: string) {
         if (!this.presets[n]) return
         this.mainSection.fill(this.presetMap(this.presets[n].data));
+
+        Object.entries(this.presets).forEach(([k,v])=>{
+            v.button.active = k===n
+        })
     }
     private presetMap(d: WorkspacePresetData): SectionContent {
         if (!d) return Section.getEmpty();

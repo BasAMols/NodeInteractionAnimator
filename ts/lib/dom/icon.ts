@@ -14,4 +14,10 @@ export class Icon extends DomElement<'span'> {
             }
         });
     }
+    public static make(n?:string, w?:number) {
+        return {
+            name: n || '',
+            weight: w || 200
+        } as IconProperties
+    }
 }
