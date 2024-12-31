@@ -6,11 +6,11 @@ export class Panel extends DomElement<'div'> {
             className: `panel`,
             id
         })
-        this.child('div', {
-            text: name,
-            style: {
-                'color': 'white'
-            }
-        })
+        // this.child('div', {
+        //     text: name,
+        //     style: {
+        //         'color': 'white'
+        //     }
+        // })
     }
 }

@@ -4,7 +4,7 @@ import { Icon, IconProperties } from './icon';
 export type ButtonProperties = DomElementProperties & {
     enabled?: boolean,
     icon?: IconProperties
-    unstyle?: boolean
+    design?: 'default' | 'unset' | 'icon' | 'inline'
 }
 export class Button extends DomElement<'button'> {
     private _enabled: boolean = true;
@@ -29,11 +29,10 @@ export class Button extends DomElement<'button'> {
     public constructor(properties: ButtonProperties = {}) {
         super('button', {...properties, ...{
             text: undefined,
-            className: (properties.className ?? '') + ' button'
+            className: ` button ${properties.className ?? ''} ${properties.design || 'default'}`
         }});
         if (properties.icon) this.append(new Icon(properties.icon));
-        if (properties.unstyle) this.domElement.classList.add('unstyle');
-        this.span = this.child('span', {
+        if (properties.text) this.span = this.child('span', {
             text: properties.text
         })
         if (properties.enabled) this.enabled = properties.enabled;

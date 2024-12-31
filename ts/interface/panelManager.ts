@@ -1,3 +1,4 @@
+import { Icon, IconProperties } from '../lib/dom/icon';
 import { MenuButton } from './menu';
 import { Panel } from './panel';
 import { Section } from './section';
@@ -62,38 +63,75 @@ export class PanelManager {
         splitV?: () => void,
     ): MenuButton[] {
         let buttons: MenuButton[] = [];
+        let subMenu: {
+            key: string,
+            name: string,
+            onClick: () => void,
+            icon: IconProperties;
+        }[] = [];
+
+                
         if (switchPanel) buttons.push({
             key: key,
-            label: 'Panel',
-            icon: { name: 'dashboard', weight: 200 },
+            name: 'Panel',
             type: 'Select',
             onChange: switchPanel,
-            data: [[{ key: 'empty', name: 'Empty' }, ...Object.entries(this.list).map(([k, v]) => {
+            icon: Icon.make('grid_view'),
+            data: [[{ key: 'empty', name: '' }, ...Object.entries(this.list).map(([k, v]) => {
                 return { key: k, name: v.panel.name };
             })]]
         });
-        if (splitH) buttons.push({
-            key: 'splitH',
-            label: '',
-            icon: { name: 'splitscreen_add', weight: 200 },
-            type: 'Action',
-            onClick: splitH,
-        });
+
         if (splitV) buttons.push({
-            key: 'splitV',
-            label: '',
-            icon: { name: 'splitscreen_vertical_add', weight: 200 },
             type: 'Action',
+            key: 'splitV',
+            icon: { name: 'splitscreen_vertical_add', weight: 200 },
+            design: 'icon',
             onClick: splitV,
         });
-        if (close) buttons.push({
-            key: 'close',
-            label: '',
-            icon: { name: 'close', weight: 200 },
+        if (splitH) buttons.push({
             type: 'Action',
+            key: 'splitH',
+            icon: { name: 'splitscreen_add', weight: 200 },
+            design: 'icon',
+            onClick: splitH,
+        });
+        if (close) buttons.push({
+            type: 'Action',
+            key: 'close',
+            icon: { name: 'close', weight: 200 },
+            design: 'icon',
             onClick: close,
         });
-        
+
+        // if (splitV) subMenu.push({
+        //     key: 'splitV',
+        //     name: 'Split Horizontal',
+        //     icon: { name: 'splitscreen_vertical_add', weight: 200 },
+        //     onClick: splitV,
+        // });
+        // if (splitH) subMenu.push({
+        //     key: 'splitH',
+        //     name: 'Split Vertical',
+        //     icon: { name: 'splitscreen_add', weight: 200 },
+        //     onClick: splitH,
+        // });
+        // if (close) subMenu.push({
+        //     key: 'close',
+        //     name: 'Close Section',
+        //     icon: { name: 'close', weight: 200 },
+        //     onClick: close,
+        // });
+
+        // if (subMenu.length > 0) buttons.push({
+        //     key: 'sub',
+        //     name: '',
+        //     type: 'Panel',
+        //     data: [subMenu],
+        //     icon: Icon.make('more_vert', 300),
+        //     design: 'icon'
+        // });
+
 
         return buttons;
     }

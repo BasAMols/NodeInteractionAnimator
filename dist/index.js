@@ -100,16 +100,27 @@ var DomElement = class _DomElement {
 // ts/lib/dom/icon.ts
 var Icon = class extends DomElement {
   constructor(properties) {
-    var _a;
     super("span", {
       text: properties.name,
-      className: "icon material-symbols-outlined",
-      style: {
-        "font-weight": String((_a = properties.weight) != null ? _a : 400)
-      }
+      className: "icon material-symbols-outlined"
     });
+    this.fontVariation = {
+      FILL: 0,
+      wght: 230,
+      GRAD: 30,
+      opsz: 20
+    };
+    if (properties.weight)
+      this.fontVariation.wght = properties.weight;
+    if (properties.offset) {
+      this.setStyle("transform", "translate(".concat(properties.offset.join("px,"), "px)"));
+    }
+    this.setVariation();
   }
-  static make(n, w) {
+  setVariation() {
+    this.setStyle("font-variation-settings", Object.entries(this.fontVariation).map(([k, v]) => "'".concat(k, "' ").concat(v)).join(","));
+  }
+  static make(n, w, o) {
     return {
       name: n || "",
       weight: w || 200
@@ -123,17 +134,16 @@ var Button = class extends DomElement {
     var _a;
     super("button", __spreadValues(__spreadValues({}, properties), {
       text: void 0,
-      className: ((_a = properties.className) != null ? _a : "") + " button"
+      className: " button ".concat((_a = properties.className) != null ? _a : "", " ").concat(properties.design || "default")
     }));
     this._enabled = true;
     this._active = false;
     if (properties.icon)
       this.append(new Icon(properties.icon));
-    if (properties.unstyle)
-      this.domElement.classList.add("unstyle");
-    this.span = this.child("span", {
-      text: properties.text
-    });
+    if (properties.text)
+      this.span = this.child("span", {
+        text: properties.text
+      });
     if (properties.enabled)
       this.enabled = properties.enabled;
   }
@@ -158,8 +168,8 @@ var Button = class extends DomElement {
 
 // ts/interface/menu.ts
 var MenuP = class extends DomElement {
-  constructor(button, d) {
-    super("div", { className: "menu_panel" });
+  constructor(button, d, prop = {}) {
+    super("div", { className: "menu_panel " + (prop.classList || "") });
     this.button = button;
     this._open = false;
     this.columns = [];
@@ -197,13 +207,13 @@ var MenuP = class extends DomElement {
     this.options[a.key] = {
       column,
       button: column.append(new Button({
-        text: a.name,
+        text: a.name || "...",
         onClick: () => {
           a.onClick();
           this.open = false;
         },
         icon: a.icon,
-        unstyle: true
+        design: a.design || "inline"
       })),
       hasIcon: Boolean(a.icon),
       label: a.name
@@ -227,7 +237,7 @@ var MenuS = class extends MenuP {
     super.open = value;
     this.button.domElement.classList[value ? "add" : "remove"]("open");
   }
-  constructor(button, c, d) {
+  constructor(button, c, d, prop = {}) {
     super(button, d.map((c2) => c2.map((v) => {
       if (typeof v === "string")
         return v;
@@ -237,7 +247,8 @@ var MenuS = class extends MenuP {
         onClick: () => this.value(v.key),
         icon: v.icon
       };
-    })));
+    })), prop);
+    this.domElement.classList.add("select");
     this.onChange = c;
   }
   value(key) {
@@ -252,7 +263,7 @@ var MenuS = class extends MenuP {
       if (k === key)
         foundText = v.label;
     });
-    this.button.setText(foundText + "...");
+    this.button.setText(foundText);
   }
 };
 var Menu = class extends DomElement {
@@ -265,32 +276,37 @@ var Menu = class extends DomElement {
       d.forEach((v) => this.addButton(v));
   }
   addButton(data) {
-    const menuWrap = this.child("div", { className: "menu_wrap" });
+    const menuWrap = this.child("div", { className: "menu_wrap menu_type_" + data.type.toLowerCase() });
     let button, panel;
     if (data.type === "Action") {
       button = menuWrap.append(new Button({
         onClick: data.onClick,
         icon: data.icon,
-        text: data.label
+        text: data.name,
+        design: data.design || "default"
       }));
     }
     if (data.type === "Select") {
       button = menuWrap.append(new Button({
         icon: data.icon,
-        text: data.label + "...",
+        text: data.name,
+        className: "opens",
         onClick: () => {
           panel.toggle();
-        }
+        },
+        design: data.design || "default"
       }));
       panel = menuWrap.append(new MenuS(button, data.onChange, data.data));
     }
     if (data.type === "Panel") {
       button = menuWrap.append(new Button({
         icon: data.icon,
-        text: data.label + "...",
+        text: data.name,
+        className: "opens",
         onClick: () => {
           panel.toggle();
-        }
+        },
+        design: data.design || "default"
       }));
       panel = menuWrap.append(new MenuP(button, data.data));
     }
@@ -351,12 +367,6 @@ var Panel = class extends DomElement {
     });
     this.id = id;
     this.name = name;
-    this.child("div", {
-      text: name,
-      style: {
-        "color": "white"
-      }
-    });
   }
 };
 
@@ -370,7 +380,7 @@ var Section = class _Section extends DomElement {
   static getPanel(n) {
     return {
       type: "panel",
-      panel: glob.panels.getPanel(n)
+      panel: $.panels.getPanel(n)
     };
   }
   static getSplit(c, d = "h", p = 50) {
@@ -417,7 +427,7 @@ var Section = class _Section extends DomElement {
   setPanel(panel = "empty") {
     this.fill({
       type: "panel",
-      panel: panel instanceof Panel ? panel : glob.panels.getPanel(panel)
+      panel: panel instanceof Panel ? panel : $.panels.getPanel(panel)
     });
     return this.panel;
   }
@@ -442,7 +452,7 @@ var Section = class _Section extends DomElement {
   }
   empty(del = false) {
     var _a, _b;
-    glob.panels.unassign(this);
+    $.panels.unassign(this);
     this.removePanel();
     this.direction = void 0;
     (_a = this.sections) == null ? void 0 : _a.forEach((s) => s.empty(true));
@@ -461,7 +471,7 @@ var Section = class _Section extends DomElement {
         this.domElement.classList.remove("s_split");
         this.domElement.classList.add("s_panel");
         this.panel = content.panel;
-        glob.panels.assign(this.panel, this);
+        $.panels.assign(this.panel, this);
         this.panelSwitch.silentValue((_a = this.panel) == null ? void 0 : _a.id);
         this.dragger.visible = false;
       } else {
@@ -487,6 +497,21 @@ var Section = class _Section extends DomElement {
     this.build();
     this.fill(content);
   }
+  getData() {
+    if (this.mode === "panel") {
+      return {
+        type: "panel",
+        panel: this.panel
+      };
+    } else {
+      return {
+        type: "split",
+        sections: this.sections.map((s) => s.getData()),
+        percentage: this.percentage,
+        direction: this.direction
+      };
+    }
+  }
   build() {
     this.contentWrap = this.child("div", { className: "section_content" });
     this.child("div", {
@@ -502,54 +527,30 @@ var Section = class _Section extends DomElement {
     this.dragger.domElement.addEventListener("mousedown", () => this.dragging = true);
     this.dragger.domElement.addEventListener("mouseup", () => this.dragging = false);
     this.domElement.addEventListener("mouseup", () => this.dragging = false);
-    if (this.parent) {
-      this.sectionMenu = this.append(new Menu([
-        ...glob.panels.getSelectObject(
-          "panel",
-          (v) => {
-            this.setPanel(v);
-          },
-          () => {
-            if (this.parent)
-              this.parent.setPanel(this.panel);
-          },
-          () => {
-            this.setSplit("v", 50, [
-              { type: "panel", panel: this.panel },
-              _Section.getEmpty()
-            ]);
-          },
-          () => {
-            this.setSplit("h", 50, [
-              { type: "panel", panel: this.panel },
-              _Section.getEmpty()
-            ]);
-          }
-        )
-      ]));
-    } else {
-      this.sectionMenu = this.append(new Menu([
-        ...glob.panels.getSelectObject(
-          "panel",
-          (v) => {
-            this.setPanel(v);
-          },
-          void 0,
-          () => {
-            this.setSplit("v", 50, [
-              { type: "panel", panel: this.panel },
-              _Section.getEmpty()
-            ]);
-          },
-          () => {
-            this.setSplit("h", 50, [
-              { type: "panel", panel: this.panel },
-              _Section.getEmpty()
-            ]);
-          }
-        )
-      ]));
-    }
+    this.sectionMenu = this.append(new Menu([
+      ...$.panels.getSelectObject(
+        "panel",
+        (v) => {
+          this.setPanel(v);
+        },
+        this.parent ? () => {
+          if (this.parent)
+            this.parent.fill(this.parent.sections.find((s) => s !== this).getData());
+        } : void 0,
+        () => {
+          this.setSplit("v", 50, [
+            { type: "panel", panel: this.panel },
+            _Section.getEmpty()
+          ]);
+        },
+        () => {
+          this.setSplit("h", 50, [
+            { type: "panel", panel: this.panel },
+            _Section.getEmpty()
+          ]);
+        }
+      )
+    ]));
     this.panelSwitch = this.sectionMenu.getButton("panel").panel;
   }
   resize(e) {
@@ -581,8 +582,9 @@ var WorkSpace = class extends DomElement {
     this.header.append(new Menu([
       {
         key: "file",
-        label: "File",
+        name: "File",
         type: "Panel",
+        design: "inline",
         data: [[
           { key: "new", name: "New", icon: Icon.make("library_add"), onClick: () => {
           } },
@@ -593,7 +595,7 @@ var WorkSpace = class extends DomElement {
           "",
           { key: "save", name: "Save", icon: Icon.make("save"), onClick: () => {
           } },
-          { key: "saveas", name: "Save As...", icon: Icon.make("file_save"), onClick: () => {
+          { key: "saveas", name: "Save As...", onClick: () => {
           } },
           { key: "import", name: "Import...", icon: Icon.make("file_open"), onClick: () => {
           } },
@@ -606,8 +608,9 @@ var WorkSpace = class extends DomElement {
       },
       {
         key: "edit",
-        label: "Edit",
+        name: "Edit",
         type: "Panel",
+        design: "inline",
         data: [[
           { key: "undo", name: "Undo", icon: Icon.make("undo"), onClick: () => {
           } },
@@ -619,7 +622,9 @@ var WorkSpace = class extends DomElement {
       },
       {
         key: "workspace",
-        label: "Workspace",
+        name: "Workspace",
+        design: "inline",
+        icon: { name: "dashboard", weight: 200 },
         type: "Select",
         onChange: (k) => this.setPreset(k),
         data: [Object.entries(p).map(([k, v]) => {
@@ -707,39 +712,40 @@ var PanelManager = class {
   }
   getSelectObject(key = "panel", switchPanel, close, splitH, splitV) {
     let buttons = [];
+    let subMenu = [];
     if (switchPanel)
       buttons.push({
         key,
-        label: "Panel",
-        icon: { name: "dashboard", weight: 200 },
+        name: "Panel",
         type: "Select",
         onChange: switchPanel,
-        data: [[{ key: "empty", name: "Empty" }, ...Object.entries(this.list).map(([k, v]) => {
+        icon: Icon.make("grid_view"),
+        data: [[{ key: "empty", name: "" }, ...Object.entries(this.list).map(([k, v]) => {
           return { key: k, name: v.panel.name };
         })]]
       });
-    if (splitH)
-      buttons.push({
-        key: "splitH",
-        label: "",
-        icon: { name: "splitscreen_add", weight: 200 },
-        type: "Action",
-        onClick: splitH
-      });
     if (splitV)
       buttons.push({
-        key: "splitV",
-        label: "",
-        icon: { name: "splitscreen_vertical_add", weight: 200 },
         type: "Action",
+        key: "splitV",
+        icon: { name: "splitscreen_vertical_add", weight: 200 },
+        design: "icon",
         onClick: splitV
+      });
+    if (splitH)
+      buttons.push({
+        type: "Action",
+        key: "splitH",
+        icon: { name: "splitscreen_add", weight: 200 },
+        design: "icon",
+        onClick: splitH
       });
     if (close)
       buttons.push({
-        key: "close",
-        label: "",
-        icon: { name: "close", weight: 200 },
         type: "Action",
+        key: "close",
+        icon: { name: "close", weight: 200 },
+        design: "icon",
         onClick: close
       });
     return buttons;
@@ -784,15 +790,15 @@ var TimelinePanel = class extends Panel {
 // ts/main.ts
 var Main = class {
   constructor() {
-    glob.main = this;
-    glob.panels = new PanelManager([
+    $.main = this;
+    $.panels = new PanelManager([
       new MainPanel(),
       new NodeEditorPanel(),
       new OutlinerPanel(),
       new PropertiesPanel(),
       new TimelinePanel()
     ]);
-    glob.interface = new WorkSpace({
+    $.interface = new WorkSpace({
       default: {
         name: "Default",
         data: [1, "v", 50, [1, "h", 70, [2, "main"], [1, "v", 50, [2, "outliner"], [2, "properties"]]], [2, "timeline"]]
@@ -809,10 +815,10 @@ var Main = class {
 // ts/index.ts
 var Glob = class {
 };
-window.glob = new Glob();
+window.$ = new Glob();
 window.log = console.log;
 document.addEventListener("DOMContentLoaded", async () => {
   const g = new Main();
-  document.body.appendChild(glob.interface.domElement);
+  document.body.appendChild($.interface.domElement);
 });
 //# sourceMappingURL=index.js.map

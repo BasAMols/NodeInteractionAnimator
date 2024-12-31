@@ -27,8 +27,9 @@ export interface MenuButtonPanel {
 }
 export type MenuButton = {
     key: string,
-    label: string,
+    name?: string,
     icon?: IconProperties;
+    design?: 'unset' | 'icon' | 'inline' | 'default'
 } & (MenuButtonAction | MenuButtonSelect | MenuButtonPanel);
 
 export interface MenuOption {
@@ -63,9 +64,12 @@ export class MenuP extends DomElement<'div'> {
         key: string,
         name: string,
         onClick: () => void,
-        icon?: IconProperties;
-    } | string)[][]) {
-        super('div', { className: 'menu_panel' });
+        icon?: IconProperties,
+        classList?: string,
+        design?: 'unset' | 'icon' | 'inline'
+    } | string)[][], prop: {classList?: string} = {}) {
+        super('div', { className: 'menu_panel ' + (prop.classList || '')});
+        
         d.forEach((c) => {
             const column = this.child('div', { className: 'menu_column' });
             const index = this.columns.push(column) - 1;
@@ -80,6 +84,7 @@ export class MenuP extends DomElement<'div'> {
         name: string,
         onClick: () => void,
         icon?: IconProperties;
+        design?: 'unset' | 'icon' | 'inline'
     } | string), i: number) {
         const column = this.columns[i];
         if (typeof a === 'string') {
@@ -94,13 +99,13 @@ export class MenuP extends DomElement<'div'> {
         this.options[a.key] = {
             column: column,
             button: column.append(new Button({
-                text: a.name,
+                text: a.name || '...',
                 onClick: ()=>{
                     a.onClick();
                     this.open = false;
                 },
                 icon: a.icon,
-                unstyle: true,
+                design: a.design || 'inline'
             })) as Button,
             hasIcon: Boolean(a.icon),
             label: a.name,
@@ -128,7 +133,7 @@ export class MenuS extends MenuP {
         key: string,
         name: string,
         icon?: IconProperties;
-    } | string)[][]) {
+    } | string)[][], prop: {classList?: string} = {}) {
         super(button, d.map((c) => c.map((v) => {
             if (typeof v === 'string') return v;
             return {
@@ -137,7 +142,8 @@ export class MenuS extends MenuP {
                 onClick: () => this.value(v.key),
                 icon: v.icon,
             };
-        })));
+        })), prop);
+        this.domElement.classList.add('select')
         this.onChange = c;
     }
     public value(key: string) {
@@ -151,7 +157,7 @@ export class MenuS extends MenuP {
             v.button.active = k === key;
             if (k === key) foundText = v.label
         });
-        this.button.setText(foundText + '...')
+        this.button.setText(foundText)
     }
 }
 
@@ -164,39 +170,45 @@ export class Menu extends DomElement<'div'> {
     // private iterator: number = 0;
     constructor(d?: MenuButton[]) {
         super('div', { className: 'menu' });
-
         if (d) d.forEach((v) => this.addButton(v));
     }
     public addButton(data: MenuButton) {
-        const menuWrap = this.child('div', { className: 'menu_wrap' });
+        const menuWrap = this.child('div', { className: 'menu_wrap menu_type_' + data.type.toLowerCase() });
 
         let button: Button, panel: MenuP | MenuS;
         if (data.type === 'Action') {
             button = menuWrap.append(new Button({
                 onClick: data.onClick,
                 icon: data.icon,
-                text: data.label,
+                text: data.name,
+                design: data.design || 'default'
             })) as Button;
         }
         if (data.type === 'Select') {
             button = menuWrap.append(new Button({
                 icon: data.icon,
-                text: data.label + '...',
+                text: data.name,
+                className: 'opens',
                 onClick:()=>{
                     panel.toggle();
-                }
+                },
+                design: data.design || 'default'
             })) as Button;
             panel = menuWrap.append(new MenuS(button, data.onChange, data.data)) as MenuS;
+            // button.append(new Icon({name: 'more_vert', weight: 200, offset: [0,0.5]}))
         }
         if (data.type === 'Panel') {
             button = menuWrap.append(new Button({
                 icon: data.icon,
-                text: data.label + '...',
+                text: data.name,
+                className: 'opens',
                 onClick:()=>{
                     panel.toggle();
-                }
+                },
+                design: data.design || 'default'
             })) as Button;
             panel = menuWrap.append(new MenuP(button, data.data)) as MenuP;
+            // button.append(new Icon({name: 'more_vert', weight: 200, offset: [0,0.5]}))
         }
 
         this.buttons[data.key] = {

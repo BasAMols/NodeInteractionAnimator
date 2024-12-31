@@ -14,15 +14,15 @@ export class Main {
     public ticker: Ticker;
 
     public constructor() {
-        glob.main = this;
-        glob.panels = new PanelManager([
+        $.main = this;
+        $.panels = new PanelManager([
             new MainPanel(),
             new NodeEditorPanel(),
             new OutlinerPanel(),
             new PropertiesPanel(),
             new TimelinePanel(),
         ])
-        glob.interface = new WorkSpace({
+        $.interface = new WorkSpace({
             default: {
                 name: 'Default',
                 data: [1, 'v', 50, [1, 'h', 70, [2, 'main'], [1, 'v', 50, [2, 'outliner'], [2, 'properties']]], [2, 'timeline']]

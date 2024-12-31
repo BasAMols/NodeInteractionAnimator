@@ -47,15 +47,16 @@ export class WorkSpace extends DomElement<'div'> {
         this.header.append(new Menu([
             {
                 key: 'file',
-                label: 'File',
+                name: 'File',
                 type: 'Panel',
+                design: 'inline',
                 data: [[
                     { key: 'new', name: 'New', icon: Icon.make('library_add'), onClick: () => { } },
                     { key: 'open', name: 'Open...', icon: Icon.make('folder_open'), onClick: () => { } },
                     { key: 'recover', name: 'Recover', icon: Icon.make('restore_page'), onClick: () => { } },
                     '',
                     { key: 'save', name: 'Save', icon: Icon.make('save'), onClick: () => { } },
-                    { key: 'saveas', name: 'Save As...', icon: Icon.make('file_save'), onClick: () => { } },
+                    { key: 'saveas', name: 'Save As...', onClick: () => { } },
                     { key: 'import', name: 'Import...', icon: Icon.make('file_open'), onClick: () => { } },
                     { key: 'export', name: 'Export', icon: Icon.make('file_export'), onClick: () => { } },
                     '',
@@ -63,8 +64,9 @@ export class WorkSpace extends DomElement<'div'> {
                 ]]
             }, {
                 key: 'edit',
-                label: 'Edit',
+                name: 'Edit',
                 type: 'Panel',
+                design: 'inline',
                 data: [[
                     { key: 'undo', name: 'Undo', icon: Icon.make('undo'), onClick: () => { } },
                     { key: 'redo', name: 'Redo...', icon: Icon.make('redo'), onClick: () => { } },
@@ -73,7 +75,9 @@ export class WorkSpace extends DomElement<'div'> {
             },
             {
                 key: 'workspace',
-                label: 'Workspace',
+                name: 'Workspace',
+                design: 'inline',
+                icon: { name: 'dashboard', weight: 200 },
                 type: 'Select',
                 onChange: (k) => this.setPreset(k),
                 data: [Object.entries(p).map(([k, v]) => {

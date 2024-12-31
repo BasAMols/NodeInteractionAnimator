@@ -28,7 +28,7 @@ export class Section extends DomElement<'div'> {
     static getPanel(n: string): sectionContentPanel {
         return {
             type: 'panel',
-            panel: glob.panels.getPanel(n)
+            panel: $.panels.getPanel(n)
         };
     }
     static getSplit(c: [SectionContent, SectionContent], d: 'v' | 'h' = 'h', p: number = 50): sectionContentSplit {
@@ -90,7 +90,7 @@ export class Section extends DomElement<'div'> {
     public setPanel(panel: string | undefined | Panel = 'empty'): Panel {
         this.fill({
             type: 'panel',
-            panel: panel instanceof Panel ? panel : glob.panels.getPanel(panel)
+            panel: panel instanceof Panel ? panel : $.panels.getPanel(panel)
         });
         return this.panel;
     }
@@ -116,7 +116,7 @@ export class Section extends DomElement<'div'> {
     }
 
     public empty(del: boolean = false) {
-        glob.panels.unassign(this);
+        $.panels.unassign(this);
         this.removePanel();
         this.direction = undefined;
         this.sections?.forEach((s) => s.empty(true));
@@ -137,7 +137,7 @@ export class Section extends DomElement<'div'> {
                 this.domElement.classList.add('s_panel');
 
                 this.panel = content.panel;
-                glob.panels.assign(this.panel, this);
+                $.panels.assign(this.panel, this);
                 this.panelSwitch.silentValue(this.panel?.id);
 
                 this.dragger.visible = false;
@@ -168,6 +168,24 @@ export class Section extends DomElement<'div'> {
 
     }
 
+    public getData():SectionContent {
+        if (this.mode === 'panel'){
+            return {
+                type: 'panel',
+                panel: this.panel
+            }
+        } else {
+            return  {
+                type: 'split',
+                sections: this.sections.map((s)=>s.getData()) as [SectionContent, SectionContent],
+                percentage: this.percentage,
+                direction: this.direction
+            }
+            
+            
+        }
+    }
+
     private build() {
         this.contentWrap = this.child('div', { className: 'section_content' });
         this.child('div', {
@@ -186,56 +204,32 @@ export class Section extends DomElement<'div'> {
         this.dragger.domElement.addEventListener('mouseup', () => this.dragging = false);
         this.domElement.addEventListener('mouseup', () => this.dragging = false);
 
-        if (this.parent){
-            this.sectionMenu = this.append(new Menu([
-                ...glob.panels.getSelectObject(
-                    'panel',
-                    (v: string) => {
-                        this.setPanel(v);
-                    },
-                    () => {
-                        if (this.parent) this.parent.setPanel(this.panel);
-                    },
-                    () => {
-                        this.setSplit('v', 50, [
-                            { type: 'panel', panel: this.panel },
-                            Section.getEmpty()
-                        ]);
-                    },
-                    () => {
-                        this.setSplit('h', 50, [
-                            { type: 'panel', panel: this.panel },
-                            Section.getEmpty()
-                        ]);
-                    }
-                ),
-    
-            ])) as Menu;
-        } else {
-            this.sectionMenu = this.append(new Menu([
-                ...glob.panels.getSelectObject(
-                    'panel',
-                    (v: string) => {
-                        this.setPanel(v);
-                    },
-                    undefined,
-                    () => {
-                        this.setSplit('v', 50, [
-                            { type: 'panel', panel: this.panel },
-                            Section.getEmpty()
-                        ]);
-                    },
-                    () => {
-                        this.setSplit('h', 50, [
-                            { type: 'panel', panel: this.panel },
-                            Section.getEmpty()
-                        ]);
-                    }
-                ),
-    
-            ])) as Menu;
-        }
-        
+        this.sectionMenu = this.append(new Menu([
+            ...$.panels.getSelectObject(
+                'panel',
+                (v: string) => {
+                    this.setPanel(v);
+                },
+                this.parent ? () => {
+                    if (this.parent) this.parent.fill(this.parent.sections.find((s)=>s!==this).getData());
+                } : undefined,
+                () => {
+                    this.setSplit('v', 50, [
+                        { type: 'panel', panel: this.panel },
+                        Section.getEmpty()
+                    ]);
+                },
+                () => {
+                    this.setSplit('h', 50, [
+                        { type: 'panel', panel: this.panel },
+                        Section.getEmpty()
+                    ]);
+                }
+            ),
+
+        ])) as Menu;
+
+
         this.panelSwitch = this.sectionMenu.getButton('panel').panel as MenuS;
     }
     private resize(e: MouseEvent) {
