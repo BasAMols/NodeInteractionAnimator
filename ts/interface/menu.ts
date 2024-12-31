@@ -3,13 +3,31 @@ import { DomElement } from '../lib/dom/domElement';
 import { IconProperties } from '../lib/dom/icon';
 
 
+export interface MenuButtonAction {
+    type: 'Action';
+    onClick: ()=>void;
+}
+export interface MenuButtonSelect {
+    type: 'Select';
+    onChange: ()=>void;
+}
+export interface MenuButtonPanel {
+    type: 'Panel';
+}
+export type MenuButton = {
+    key: string,
+    label: string,
+    icon?: IconProperties
+} & (MenuButtonAction | MenuButtonSelect | MenuButtonPanel);
+
+
 export interface MenuPanel {
     name: string;
     columns: MenuColumn[],
     element: DomElement<'div'>;
     button: Button;
     open: boolean;
-    icon?: IconProperties
+    icon?: IconProperties;
 }
 export interface MenuColumn {
     element: DomElement<'div'>;
@@ -26,22 +44,25 @@ export interface MenuOption {
     name: string,
     element: Button;
     onClick: () => void;
-    icon?: IconProperties
+    icon?: IconProperties;
 }
 
 export class Menu extends DomElement<'div'> {
     panels: Record<string, MenuPanel> = {};
+    private buttons: Record<string, {
+        button: Button
+    }> = {};
     private iterator: number = 0;
     constructor(d?: [
-        [string,string],
+        [string, string],
         [string?, string?, IconProperties?][]
     ][]) {
         super('div', { className: 'menu' });
 
-        if (d) d.forEach(([panel, options])=>{
+        if (d) d.forEach(([panel, options]) => {
             this.registerPanel(panel[0], panel[1], ['']);
-            options.forEach((o)=>{
-                if(o.length === 0){
+            options.forEach((o) => {
+                if (o.length === 0) {
                     this.registerSpacer({
                         panelKey: panel[0],
                         columnIndex: 0,
@@ -56,8 +77,34 @@ export class Menu extends DomElement<'div'> {
                         icon: o[2]
                     });
                 }
+            });
+        });
+    }
+    addButton(data: MenuButton):Button {
+        let button: Button;
+        if (data.type === 'Action'){
+            button = new Button({
+                onClick: data.onClick,
+                icon: data.icon,
+                text: data.label,
             })
-        })
+        }
+        if (data.type === 'Select'){
+            button = new Button({
+                icon: data.icon,
+                text: data.label,
+            })
+        }
+        if (data.type === 'Panel'){
+            button = new Button({
+                icon: data.icon,
+                text: data.label,
+            })
+        }
+
+
+
+        return button;
     }
     registerPanel(key: string, name: string, columns?: string[], icon?: IconProperties) {
         const menuWrap = this.child('div', { className: 'menu_wrap' });
@@ -129,10 +176,10 @@ export class Menu extends DomElement<'div'> {
             name,
             onClick: click,
         };
-        if (icon){
-            column.element.domElement.classList.add('icons')
+        if (icon) {
+            column.element.domElement.classList.add('icons');
         }
-        return column.options[key]
+        return column.options[key];
     }
     removeOption({ panelKey, columnIndex = 0, key }: { panelKey: string; columnIndex: number; key: string; }) {
         const o = this.getOption({ panelKey, columnIndex, key });
@@ -144,7 +191,7 @@ export class Menu extends DomElement<'div'> {
 
     togglePanel(k: string, b: boolean = !this.panels[k].open) {
         this.closePanels();
-        if (b){
+        if (b) {
             this.panels[k].button.domElement.classList.add('open');
             this.panels[k].element.visible = true;
             this.panels[k].button.active = true;

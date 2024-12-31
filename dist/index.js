@@ -164,6 +164,7 @@ var Menu = class extends DomElement {
   constructor(d) {
     super("div", { className: "menu" });
     this.panels = {};
+    this.buttons = {};
     this.iterator = 0;
     if (d)
       d.forEach(([panel, options]) => {
@@ -187,6 +188,29 @@ var Menu = class extends DomElement {
           }
         });
       });
+  }
+  addButton(data) {
+    let button;
+    if (data.type === "Action") {
+      button = new Button({
+        onClick: data.onClick,
+        icon: data.icon,
+        text: data.label
+      });
+    }
+    if (data.type === "Select") {
+      button = new Button({
+        icon: data.icon,
+        text: data.label
+      });
+    }
+    if (data.type === "Panel") {
+      button = new Button({
+        icon: data.icon,
+        text: data.label
+      });
+    }
+    return button;
   }
   registerPanel(key, name, columns, icon) {
     const menuWrap = this.child("div", { className: "menu_wrap" });
