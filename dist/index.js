@@ -533,8 +533,7 @@ var WorkSpace = class extends DomElement {
         __spreadProps(__spreadValues({}, v), {
           button: this.header.append(new Button({
             text: v.name,
-            onClick: () => this.setPreset(k),
-            icon: { name: "dashboard", weight: 200 }
+            onClick: () => this.setPreset(k)
           }))
         })
       ];

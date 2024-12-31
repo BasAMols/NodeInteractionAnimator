@@ -9,11 +9,12 @@ button.button {
 * {
     box-sizing: border-box;
     position: relative;
-    font-family: "Figtree", serif;
+    font-family: "Noto Sans", sans-serif;
     user-select: none;
-    font-weight: 400;
+    font-weight: 350;
     font-size: 15px;
     color: #f9f8fc;
+    font-variation-settings: "wdth" 85;
 }
 
 body {
@@ -36,9 +37,9 @@ body {
 
 
         &>.icon {
-            margin-right: 4px;
-            font-size: 19px;
-            font-weight: 300 !important;
+            margin-right: 6px;
+            font-size: 20px;
+            font-variation-settings: 'FILL' 0, 'wght' 230, 'GRAD' 30, 'opsz' 20;
         }
 
         &:hover,
@@ -204,10 +205,10 @@ body {
             display: flex;
             border-radius: 0 0 var(--radius) var(--radius);
             box-shadow: 0px 0px 13px #00000054;
-            
-            
-            
-            
+
+
+
+
 
             .menu_column {
                 min-width: 70px;
@@ -218,7 +219,7 @@ body {
                     min-width: 100px;
 
                     &>button.button {
-                        padding-left: 29px;
+                        padding-left: 31px;
                     }
                 }
 
@@ -246,9 +247,17 @@ body {
                     display: inline-flex;
                     align-items: center;
                     line-height: 1.7em;
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
 
                     &>span {
-                        font-weight: 400;
+                        font-weight: 350;
                     }
 
                     &.active>span {
@@ -259,7 +268,7 @@ body {
                         position: absolute;
                         left: 0;
                         font-size: 21px;
-                        font-weight: 300 !important;
+                        font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 60, 'opsz' 21;
                     }
 
                     /* &.active {
@@ -293,6 +302,7 @@ body {
 .section>.input.select button.menu_button.button {
     background: #5a58a4;
 }
-header > .menu > .menu_wrap .menu_panel {
+
+header>.menu>.menu_wrap .menu_panel {
     top: 40px;
 }

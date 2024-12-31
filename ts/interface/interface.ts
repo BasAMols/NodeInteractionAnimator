@@ -74,7 +74,6 @@ export class WorkSpace extends DomElement<'div'> {
                     button: this.header.append(new Button({
                         text: v.name,
                         onClick: () => this.setPreset(k),
-                        icon: { name: 'dashboard', weight: 200 }
                     })) as Button
                 } as WorkspacePresetStorage
             ]
