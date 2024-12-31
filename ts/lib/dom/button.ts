@@ -41,5 +41,6 @@ export class Button extends DomElement<'button'> {
 
     public setText(t: string): void {
         this.span.setText(t);
+
     }
 }

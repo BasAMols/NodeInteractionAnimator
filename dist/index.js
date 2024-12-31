@@ -206,7 +206,7 @@ var Menu = class extends DomElement {
       }),
       button: menuWrap.append(new Button({
         className: "menu_button",
-        text: name,
+        text: name + " ...",
         icon,
         onClick: () => {
           this.togglePanel(key);
@@ -579,7 +579,7 @@ var Select = class extends DomElement {
       });
   }
   setName(n) {
-    this.menu.panels["panel"].button.setText(n);
+    this.menu.panels["panel"].button.setText(n + " ...");
   }
   value(v) {
     if (!v)
@@ -667,7 +667,7 @@ var PanelManager = class {
   getSelectObject() {
     return new Select({
       icon: { name: "dashboard", weight: 200 },
-      options: Object.fromEntries([["empty", "..."], ...Object.entries(this.list).map(([k, v]) => {
+      options: Object.fromEntries([["empty", "Empty"], ...Object.entries(this.list).map(([k, v]) => {
         return [k, v.panel.name];
       })])
     });

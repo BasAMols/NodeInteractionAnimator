@@ -28,7 +28,7 @@ export class Select extends DomElement<'div'> {
     }
 
     setName(n: string) {
-        this.menu.panels['panel'].button.setText(n);
+        this.menu.panels['panel'].button.setText(n+' ...');
     }
 
     value(v: string) {

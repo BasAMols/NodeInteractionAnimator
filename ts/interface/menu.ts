@@ -77,7 +77,7 @@ export class Menu extends DomElement<'div'> {
             }),
             button: menuWrap.append(new Button({
                 className: 'menu_button',
-                text: name,
+                text: name + ' ...',
                 icon,
                 onClick: () => {
                     this.togglePanel(key);

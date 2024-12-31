@@ -199,12 +199,15 @@ body {
         .menu_panel {
             position: absolute;
             background: #202023;
-            top: 40px;
+            /* top: 40px; */
             padding: 9px 9px 19px;
             display: flex;
             border-radius: 0 0 var(--radius) var(--radius);
             box-shadow: 0px 0px 13px #00000054;
-            margin-left: -6px;
+            
+            
+            
+            
 
             .menu_column {
                 min-width: 70px;
@@ -289,4 +292,7 @@ body {
 
 .section>.input.select button.menu_button.button {
     background: #5a58a4;
+}
+header > .menu > .menu_wrap .menu_panel {
+    top: 40px;
 }

@@ -58,7 +58,7 @@ export class PanelManager {
         return new Select({
             icon: {name: 'dashboard', weight:200},
             options:
-                Object.fromEntries([['empty', '...'], ...Object.entries(this.list).map(([k, v]) => {
+                Object.fromEntries([['empty', 'Empty'], ...Object.entries(this.list).map(([k, v]) => {
                     return [k, v.panel.name];
                 })])
         });
