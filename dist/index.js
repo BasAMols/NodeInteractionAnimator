@@ -1,6 +1,4 @@
 var __defProp = Object.defineProperty;
-var __defProps = Object.defineProperties;
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __propIsEnum = Object.prototype.propertyIsEnumerable;
@@ -16,7 +14,6 @@ var __spreadValues = (a, b) => {
     }
   return a;
 };
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 
 // ts/lib/dom/domElement.ts
 var DomElement = class _DomElement {
@@ -160,158 +157,144 @@ var Button = class extends DomElement {
 };
 
 // ts/interface/menu.ts
+var MenuP = class extends DomElement {
+  constructor(button, d) {
+    super("div", { className: "menu_panel" });
+    this.button = button;
+    this._open = false;
+    this.columns = [];
+    this.options = {};
+    d.forEach((c) => {
+      const column = this.child("div", { className: "menu_column" });
+      const index = this.columns.push(column) - 1;
+      c.forEach((a) => {
+        this.addOption(a, index);
+      });
+    });
+    this.open = false;
+  }
+  get open() {
+    return this._open;
+  }
+  set open(value) {
+    this._open = value;
+    this.domElement.classList[value ? "add" : "remove"]("open");
+  }
+  toggle() {
+    this.open = !this.open;
+  }
+  addOption(a, i) {
+    const column = this.columns[i];
+    if (typeof a === "string") {
+      column.child("span", {
+        className: "spacer",
+        text: a
+      });
+      return;
+    }
+    this.removeOption(a.key);
+    this.options[a.key] = {
+      column,
+      button: column.append(new Button({
+        text: a.name,
+        onClick: () => {
+          a.onClick();
+          this.open = false;
+        },
+        icon: a.icon,
+        unstyle: true
+      })),
+      hasIcon: Boolean(a.icon)
+    };
+    if (a.icon)
+      column.domElement.classList.add("icons");
+  }
+  removeOption(key) {
+    const option = this.options[key];
+    if (!option)
+      return;
+    option.column.remove(option.button);
+    delete this.options[key];
+  }
+};
+var MenuS = class extends MenuP {
+  get open() {
+    return super.open;
+  }
+  set open(value) {
+    super.open = value;
+    this.button.domElement.classList[value ? "add" : "remove"]("open");
+  }
+  constructor(button, c, d) {
+    super(button, d.map((c2) => c2.map((v) => {
+      if (typeof v === "string")
+        return v;
+      return {
+        key: v.key,
+        name: v.name,
+        onClick: () => this.value(v.key),
+        icon: v.icon
+      };
+    })));
+    this.onChange = c;
+  }
+  value(key) {
+    this.silentValue(key);
+    this.onChange(key);
+  }
+  silentValue(key) {
+    this.open = false;
+    Object.entries(this.options).forEach(([k, v]) => {
+      v.button.active = k === key;
+    });
+  }
+};
 var Menu = class extends DomElement {
+  // private iterator: number = 0;
   constructor(d) {
     super("div", { className: "menu" });
-    this.panels = {};
+    // panels: Record<string, MenuPanel> = {};
     this.buttons = {};
-    this.iterator = 0;
     if (d)
-      d.forEach(([panel, options]) => {
-        this.registerPanel(panel[0], panel[1], [""]);
-        options.forEach((o) => {
-          if (o.length === 0) {
-            this.registerSpacer({
-              panelKey: panel[0],
-              columnIndex: 0
-            });
-          } else {
-            this.registerOption({
-              panelKey: panel[0],
-              columnIndex: 0,
-              key: o[0],
-              name: o[1],
-              onClick: () => {
-              },
-              icon: o[2]
-            });
-          }
-        });
-      });
+      d.forEach((v) => this.addButton(v));
   }
   addButton(data) {
-    let button;
+    const menuWrap = this.child("div", { className: "menu_wrap" });
+    let button, panel;
     if (data.type === "Action") {
-      button = new Button({
+      button = menuWrap.append(new Button({
         onClick: data.onClick,
         icon: data.icon,
         text: data.label
-      });
+      }));
     }
     if (data.type === "Select") {
-      button = new Button({
+      button = menuWrap.append(new Button({
         icon: data.icon,
-        text: data.label
-      });
+        text: data.label + "...",
+        onClick: () => {
+          panel.toggle();
+        }
+      }));
+      panel = menuWrap.append(new MenuS(button, data.onChange, data.data));
     }
     if (data.type === "Panel") {
-      button = new Button({
+      button = menuWrap.append(new Button({
         icon: data.icon,
-        text: data.label
-      });
-    }
-    return button;
-  }
-  registerPanel(key, name, columns, icon) {
-    const menuWrap = this.child("div", { className: "menu_wrap" });
-    const panel = menuWrap.child("div", { className: "menu_panel", visible: false });
-    this.panels[key] = {
-      name,
-      open: false,
-      element: panel,
-      columns: columns.map((label) => {
-        const column = panel.child("div", { className: "menu_column" });
-        column.child("span", { text: label });
-        return {
-          element: column,
-          label,
-          options: {}
-        };
-      }),
-      button: menuWrap.append(new Button({
-        className: "menu_button",
-        text: name + " ...",
-        icon,
+        text: data.label + "...",
         onClick: () => {
-          this.togglePanel(key);
+          panel.toggle();
         }
-      }))
-    };
-  }
-  getOption({ panelKey, columnIndex = 0, key }) {
-    if (!this.panels[panelKey])
-      return void 0;
-    const panel = this.panels[panelKey];
-    if (panel.columns.length < columnIndex)
-      return void 0;
-    const column = panel.columns[columnIndex];
-    if (!key)
-      return [panel, column];
-    if (!column.options[key])
-      return void 0;
-    return [panel, column, column.options[key]];
-  }
-  registerSpacer({ panelKey, columnIndex = 0, key = String(this.iterator++), name: text }) {
-    const o = this.getOption({ panelKey, columnIndex });
-    if (!o)
-      return;
-    const [panel, column] = o;
-    const element = column.element.child("span", { className: "spacer", text });
-    if (column.options[key])
-      this.removeOption({ panelKey, columnIndex, key });
-    column.options[key] = {
-      type: "spacer",
-      element,
-      text
-    };
-  }
-  registerOption({ panelKey, columnIndex = 0, key = String(this.iterator++), name, onClick, icon }) {
-    const o = this.getOption({ panelKey, columnIndex });
-    if (!o)
-      return;
-    const [panel, column] = o;
-    const click = () => {
-      onClick();
-      this.closePanels();
-    };
-    const element = column.element.append(new Button({ text: name, onClick: click, unstyle: true, icon }));
-    if (column.options[key])
-      this.removeOption({ panelKey, columnIndex, key });
-    column.options[key] = {
-      type: "option",
-      element,
-      name,
-      onClick: click
-    };
-    if (icon) {
-      column.element.domElement.classList.add("icons");
+      }));
+      panel = menuWrap.append(new MenuP(button, data.data));
     }
-    return column.options[key];
+    this.buttons[data.key] = {
+      button,
+      panel
+    };
   }
-  removeOption({ panelKey, columnIndex = 0, key }) {
-    const o = this.getOption({ panelKey, columnIndex, key });
-    if (!o)
-      return;
-    const [panel, column, button] = o;
-    column.element.remove(button.element);
-    delete column.options[key];
-  }
-  togglePanel(k, b = !this.panels[k].open) {
-    this.closePanels();
-    if (b) {
-      this.panels[k].button.domElement.classList.add("open");
-      this.panels[k].element.visible = true;
-      this.panels[k].button.active = true;
-      this.panels[k].open = true;
-    }
-  }
-  closePanels() {
-    Object.values(this.panels).forEach((p) => {
-      p.element.visible = false;
-      p.button.domElement.classList.remove("open");
-      p.button.active = false;
-      p.open = false;
-    });
+  getButton(key) {
+    return this.buttons[key];
   }
 };
 
@@ -436,7 +419,7 @@ var Section = class _Section extends DomElement {
       this.contentWrap.remove(this.panel);
       this.panel = void 0;
     }
-    this.panelSwitch.value("empty");
+    this.panelSwitch.silentValue("empty");
   }
   empty(del = false) {
     var _a, _b;
@@ -460,7 +443,7 @@ var Section = class _Section extends DomElement {
         this.domElement.classList.add("s_panel");
         this.panel = content.panel;
         glob.panels.assign(this.panel, this);
-        this.panelSwitch.value((_a = this.panel) == null ? void 0 : _a.id);
+        this.panelSwitch.silentValue((_a = this.panel) == null ? void 0 : _a.id);
         this.dragger.visible = false;
       } else {
         this.domElement.classList.remove("s_panel");
@@ -500,10 +483,12 @@ var Section = class _Section extends DomElement {
     this.dragger.domElement.addEventListener("mousedown", () => this.dragging = true);
     this.dragger.domElement.addEventListener("mouseup", () => this.dragging = false);
     this.domElement.addEventListener("mouseup", () => this.dragging = false);
-    this.panelSwitch = this.append(glob.panels.getSelectObject());
-    this.panelSwitch.onChange = (v) => {
-      this.setMode("panel", v);
-    };
+    this.sectionMenu = this.append(new Menu([
+      glob.panels.getSelectObject("panel", (v) => {
+        this.setMode("panel", v);
+      })
+    ]));
+    this.panelSwitch = this.sectionMenu.getButton("panel").panel;
   }
   resize(e) {
     if (this.dragging) {
@@ -532,33 +517,58 @@ var WorkSpace = class extends DomElement {
       id: "toolbar"
     });
     this.header.append(new Menu([
-      [["file", "File"], [
-        ["new", "New", Icon.make("library_add")],
-        ["open", "Open...", Icon.make("folder_open")],
-        ["recover", "Recover", Icon.make("restore_page")],
-        [],
-        ["save", "Save", Icon.make("save")],
-        ["saveas", "Save As...", Icon.make("file_save")],
-        ["import", "Import...", Icon.make("file_open")],
-        ["export", "Export", Icon.make("file_export")],
-        [],
-        ["reset", "Reset", Icon.make("reset_image")]
-      ]],
-      [["edit", "Edit"], [
-        ["undo", "Undo", Icon.make("undo")],
-        ["redo", "Redo", Icon.make("redo")],
-        ["options", "Options...", Icon.make("settings")]
-      ]]
+      {
+        key: "file",
+        label: "File",
+        type: "Panel",
+        data: [[
+          { key: "new", name: "New", icon: Icon.make("library_add"), onClick: () => {
+          } },
+          { key: "open", name: "Open...", icon: Icon.make("folder_open"), onClick: () => {
+          } },
+          { key: "recover", name: "Recover", icon: Icon.make("restore_page"), onClick: () => {
+          } },
+          "",
+          { key: "save", name: "Save", icon: Icon.make("save"), onClick: () => {
+          } },
+          { key: "saveas", name: "Save As...", icon: Icon.make("file_save"), onClick: () => {
+          } },
+          { key: "import", name: "Import...", icon: Icon.make("file_open"), onClick: () => {
+          } },
+          { key: "export", name: "Export", icon: Icon.make("file_export"), onClick: () => {
+          } },
+          "",
+          { key: "reset", name: "Reset", icon: Icon.make("reset_image"), onClick: () => {
+          } }
+        ]]
+      },
+      {
+        key: "edit",
+        label: "Edit",
+        type: "Panel",
+        data: [[
+          { key: "undo", name: "Undo", icon: Icon.make("undo"), onClick: () => {
+          } },
+          { key: "redo", name: "Redo...", icon: Icon.make("redo"), onClick: () => {
+          } },
+          { key: "options", name: "Options...", icon: Icon.make("settings"), onClick: () => {
+          } }
+        ]]
+      },
+      {
+        key: "workspace",
+        label: "Workspace",
+        type: "Select",
+        onChange: (k) => this.setPreset(k),
+        data: [Object.entries(p).map(([k, v]) => {
+          return { key: k, name: v.name };
+        })]
+      }
     ]));
     this.presets = Object.fromEntries(Object.entries(p).map(([k, v]) => {
       return [
         k,
-        __spreadProps(__spreadValues({}, v), {
-          button: this.header.append(new Button({
-            text: v.name,
-            onClick: () => this.setPreset(k)
-          }))
-        })
+        __spreadValues({}, v)
       ];
     }));
   }
@@ -566,9 +576,6 @@ var WorkSpace = class extends DomElement {
     if (!this.presets[n])
       return;
     this.mainSection.fill(this.presetMap(this.presets[n].data));
-    Object.entries(this.presets).forEach(([k, v]) => {
-      v.button.active = k === n;
-    });
   }
   presetMap(d) {
     if (!d)
@@ -584,56 +591,6 @@ var WorkSpace = class extends DomElement {
         d[1]
       )
     ][d[0]];
-  }
-};
-
-// ts/interface/select.ts
-var Select = class extends DomElement {
-  constructor(props = {}) {
-    super("div", { className: "input select" });
-    this.options = {};
-    this.menu = this.append(new Menu());
-    this.menu.registerPanel("panel", "Panel", [""], props.icon);
-    this.onChange = props.onChange;
-    if (props.options)
-      Object.entries(props.options).forEach(([k, v]) => {
-        this.addOption(k, v);
-      });
-  }
-  setName(n) {
-    this.menu.panels["panel"].button.setText(n + " ...");
-  }
-  value(v) {
-    if (!v)
-      return;
-    let found;
-    Object.entries(this.options).forEach(([k, value]) => {
-      value.option.element.active = k === v;
-      value.active = k === v;
-      if (k === v)
-        found = k;
-    });
-    if (found)
-      this.setName(this.options[found].label);
-  }
-  change(v) {
-    var _a;
-    (_a = this.onChange) == null ? void 0 : _a.call(this, v);
-    this.value(v);
-  }
-  addOption(k, v) {
-    this.options[k] = {
-      active: false,
-      label: v,
-      option: this.menu.registerOption({
-        panelKey: "panel",
-        key: k,
-        name: v,
-        onClick: () => {
-          this.change(k);
-        }
-      })
-    };
   }
 };
 
@@ -686,13 +643,17 @@ var PanelManager = class {
     d.section = section;
     d.section.contentWrap.append(d.panel);
   }
-  getSelectObject() {
-    return new Select({
+  getSelectObject(key = "panel", onChange) {
+    return {
+      key: "panel",
+      label: "Panel",
       icon: { name: "dashboard", weight: 200 },
-      options: Object.fromEntries([["empty", "Empty"], ...Object.entries(this.list).map(([k, v]) => {
-        return [k, v.panel.name];
-      })])
-    });
+      type: "Select",
+      onChange,
+      data: [[{ key: "empty", name: "Empty" }, ...Object.entries(this.list).map(([k, v]) => {
+        return { key: k, name: v.panel.name };
+      })]]
+    };
   }
 };
 

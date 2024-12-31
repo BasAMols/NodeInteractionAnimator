@@ -1,6 +1,6 @@
 import { Button } from '../lib/dom/button';
 import { DomElement } from '../lib/dom/domElement';
-import { Icon, IconProperties } from '../lib/dom/icon';
+import { Icon } from '../lib/dom/icon';
 import { Menu } from './menu';
 import { Section, SectionContent } from './section';
 
@@ -37,56 +37,63 @@ export class WorkSpace extends DomElement<'div'> {
     }
     private buildToolbar(presets?: Record<string, WorkspacePreset>) {
 
-        
+
         const p = { empty: { name: 'Empty', data: [0] } };
         if (presets) Object.assign(p, presets);
-        
+
         this.header = this.child('header', {
             id: 'toolbar',
         });
         this.header.append(new Menu([
-            [['file', 'File'],[
-                ['new', 'New', Icon.make('library_add')],
-                ['open', 'Open...', Icon.make('folder_open')],
-                ['recover', 'Recover', Icon.make('restore_page')],
-                [],
-                ['save', 'Save', Icon.make('save')],
-                ['saveas', 'Save As...', Icon.make('file_save')],
-                ['import', 'Import...', Icon.make('file_open')],
-                ['export', 'Export', Icon.make('file_export')],
-                [],
-                ['reset', 'Reset', Icon.make('reset_image')],
-            ]],
-            [['edit', 'Edit'],[
-                ['undo', 'Undo', Icon.make('undo')],
-                ['redo', 'Redo', Icon.make('redo')],
-                ['options', 'Options...', Icon.make('settings')],
-            ]],
-        ] as [
-            [string,string],
-            [string?, string?, IconProperties?][]
-        ][]))
+            {
+                key: 'file',
+                label: 'File',
+                type: 'Panel',
+                data: [[
+                    { key: 'new', name: 'New', icon: Icon.make('library_add'), onClick: () => { } },
+                    { key: 'open', name: 'Open...', icon: Icon.make('folder_open'), onClick: () => { } },
+                    { key: 'recover', name: 'Recover', icon: Icon.make('restore_page'), onClick: () => { } },
+                    '',
+                    { key: 'save', name: 'Save', icon: Icon.make('save'), onClick: () => { } },
+                    { key: 'saveas', name: 'Save As...', icon: Icon.make('file_save'), onClick: () => { } },
+                    { key: 'import', name: 'Import...', icon: Icon.make('file_open'), onClick: () => { } },
+                    { key: 'export', name: 'Export', icon: Icon.make('file_export'), onClick: () => { } },
+                    '',
+                    { key: 'reset', name: 'Reset', icon: Icon.make('reset_image'), onClick: () => { } },
+                ]]
+            }, {
+                key: 'edit',
+                label: 'Edit',
+                type: 'Panel',
+                data: [[
+                    { key: 'undo', name: 'Undo', icon: Icon.make('undo'), onClick: () => { } },
+                    { key: 'redo', name: 'Redo...', icon: Icon.make('redo'), onClick: () => { } },
+                    { key: 'options', name: 'Options...', icon: Icon.make('settings'), onClick: () => { } },
+                ]]
+            },
+            {
+                key: 'workspace',
+                label: 'Workspace',
+                type: 'Select',
+                onChange: (k) => this.setPreset(k),
+                data: [Object.entries(p).map(([k, v]) => {
+                    return { key: k, name: v.name };
+                })]
+            }
+        ]));
 
         this.presets = Object.fromEntries(Object.entries(p).map(([k, v]) => {
             return [k,
                 {
                     ...v,
-                    button: this.header.append(new Button({
-                        text: v.name,
-                        onClick: () => this.setPreset(k),
-                    })) as Button
                 } as WorkspacePresetStorage
-            ]
+            ];
         }));
     }
 
     public setPreset(n: string) {
-        if (!this.presets[n]) return
+        if (!this.presets[n]) return;
         this.mainSection.fill(this.presetMap(this.presets[n].data));
-
-        Object.entries(this.presets).forEach(([k,v])=>{
-            v.button.active = k===n
-        })
     }
     private presetMap(d: WorkspacePresetData): SectionContent {
         if (!d) return Section.getEmpty();

@@ -1,7 +1,7 @@
 import { DomElement } from '../lib/dom/domElement';
-import { Select } from './select';
 import { Util } from '../lib/utilities/utils';
 import { Panel } from './panel';
+import { Menu, MenuS } from './menu';
 
 export interface sectionContentEmpty {
     type: 'empty',
@@ -43,10 +43,11 @@ export class Section extends DomElement<'div'> {
     public contentWrap: DomElement<"div">;
     protected dragger: DomElement<"span">;
     protected mode: 'split' | 'panel';
+    private panelSwitch: MenuS;
     protected panel: Panel | undefined;
     protected sections: [Section, Section] | undefined;
     private _direction: 'v' | 'h' | undefined;
-    private panelSwitch: Select;
+    private sectionMenu: Menu;
     private _dragging: boolean;
     public get dragging(): boolean {
         return this._dragging;
@@ -119,7 +120,7 @@ export class Section extends DomElement<'div'> {
             this.contentWrap.remove(this.panel);
             this.panel = undefined;
         }
-        this.panelSwitch.value('empty');
+        this.panelSwitch.silentValue('empty');
     }
 
     public empty(del: boolean = false) {
@@ -145,7 +146,7 @@ export class Section extends DomElement<'div'> {
 
                 this.panel = content.panel;
                 glob.panels.assign(this.panel, this);
-                this.panelSwitch.value(this.panel?.id);
+                this.panelSwitch.silentValue(this.panel?.id);
 
                 this.dragger.visible = false;
             } else {
@@ -193,10 +194,12 @@ export class Section extends DomElement<'div'> {
         this.dragger.domElement.addEventListener('mouseup', () => this.dragging = false);
         this.domElement.addEventListener('mouseup', () => this.dragging = false);
 
-        this.panelSwitch = this.append(glob.panels.getSelectObject()) as Select;
-        this.panelSwitch.onChange = (v) => {
-            this.setMode('panel', v);
-        };
+        this.sectionMenu = this.append(new Menu([
+            glob.panels.getSelectObject('panel', (v:string)=>{
+                this.setMode('panel', v)
+            })
+        ])) as Menu;
+        this.panelSwitch = this.sectionMenu.getButton('panel').panel as MenuS;
     }
     private resize(e: MouseEvent) {
         if (this.dragging) {

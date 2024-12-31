@@ -1,4 +1,4 @@
-import { Select } from './select';
+import { MenuButton } from './menu';
 import { Panel } from './panel';
 import { Section } from './section';
 
@@ -45,22 +45,25 @@ export class PanelManager {
 
     }
     public assign(n: string | Panel, section: Section) {
-        if (!n ) return;
+        if (!n) return;
         const d = this.get(typeof n === 'string' ? n : n.id);
-        
-        if (!d ) return;
-        if(d.section) this.unassign(d.section);
+
+        if (!d) return;
+        if (d.section) this.unassign(d.section);
 
         d.section = section;
         d.section.contentWrap.append(d.panel);
     }
-    public getSelectObject() {
-        return new Select({
-            icon: {name: 'dashboard', weight:200},
-            options:
-                Object.fromEntries([['empty', 'Empty'], ...Object.entries(this.list).map(([k, v]) => {
-                    return [k, v.panel.name];
-                })])
-        });
+    public getSelectObject(key: string = 'panel', onChange: (v:string)=>void): MenuButton {
+        return {
+            key: 'panel',
+            label: 'Panel',
+            icon: { name: 'dashboard', weight: 200 },
+            type: 'Select',
+            onChange,
+            data: [[{key: 'empty', name: 'Empty'}, ...Object.entries(this.list).map(([k, v]) => {
+                return {key: k, name: v.panel.name};
+            })]]
+        };
     }
 }

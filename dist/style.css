@@ -162,16 +162,28 @@ body {
             &.s_split {
                 overflow: hidden;
 
-                >.select {
+                >.menu {
                     display: none;
                 }
             }
 
-            >.select {
+            >.menu {
                 z-index: 3;
                 position: absolute;
                 top: 4px;
                 right: 4px;
+
+                .button.open {
+                    display: none;
+                }
+
+                .menu_panel {
+                    z-index: 3;
+                    position: absolute;
+                    top: 4px;
+                    right: 4px;
+       
+                }
             }
 
             >.section_dragger {
@@ -277,12 +289,13 @@ body {
             background: var(--color-blue2);
             /* top: 40px; */
             padding: 10px 12px 12px;
-            display: flex;
+            display: none;
             border-radius: var(--radius);
             box-shadow: var(--shadow);
-            
-            
-            
+
+            &.open{
+                display: flex;
+            }
             
             .menu_column {
                 min-width: 75px;

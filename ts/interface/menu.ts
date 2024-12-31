@@ -5,40 +5,32 @@ import { IconProperties } from '../lib/dom/icon';
 
 export interface MenuButtonAction {
     type: 'Action';
-    onClick: ()=>void;
+    onClick: () => void;
 }
 export interface MenuButtonSelect {
     type: 'Select';
-    onChange: ()=>void;
+    onChange: (v: string) => void;
+    data: ({
+        key: string,
+        name: string,
+        icon?: IconProperties;
+    } | string)[][];
 }
 export interface MenuButtonPanel {
     type: 'Panel';
+    data: ({
+        key: string,
+        name: string,
+        onClick: () => void,
+        icon?: IconProperties;
+    } | string)[][];
 }
 export type MenuButton = {
     key: string,
     label: string,
-    icon?: IconProperties
+    icon?: IconProperties;
 } & (MenuButtonAction | MenuButtonSelect | MenuButtonPanel);
 
-
-export interface MenuPanel {
-    name: string;
-    columns: MenuColumn[],
-    element: DomElement<'div'>;
-    button: Button;
-    open: boolean;
-    icon?: IconProperties;
-}
-export interface MenuColumn {
-    element: DomElement<'div'>;
-    label?: string,
-    options: Record<string, MenuOption | MenuSpacer>;
-}
-export interface MenuSpacer {
-    type: 'spacer',
-    text: string,
-    element: DomElement<'span'>;
-}
 export interface MenuOption {
     type: 'option',
     name: string,
@@ -47,163 +39,167 @@ export interface MenuOption {
     icon?: IconProperties;
 }
 
-export class Menu extends DomElement<'div'> {
-    panels: Record<string, MenuPanel> = {};
-    private buttons: Record<string, {
-        button: Button
+export class MenuP extends DomElement<'div'> {
+    private _open: boolean = false;
+    public get open(): boolean {
+        return this._open;
+    }
+    public set open(value: boolean) {
+        this._open = value;
+        this.domElement.classList[value ? 'add' : 'remove']('open');
+    }
+    public toggle() {
+        this.open = !this.open;
+    }
+    protected columns: DomElement<'div'>[] = [];
+    protected options: Record<string, {
+        column: DomElement<'div'>,
+        button: Button,
+        hasIcon: boolean,
     }> = {};
-    private iterator: number = 0;
-    constructor(d?: [
-        [string, string],
-        [string?, string?, IconProperties?][]
-    ][]) {
-        super('div', { className: 'menu' });
-
-        if (d) d.forEach(([panel, options]) => {
-            this.registerPanel(panel[0], panel[1], ['']);
-            options.forEach((o) => {
-                if (o.length === 0) {
-                    this.registerSpacer({
-                        panelKey: panel[0],
-                        columnIndex: 0,
-                    });
-                } else {
-                    this.registerOption({
-                        panelKey: panel[0],
-                        columnIndex: 0,
-                        key: o[0],
-                        name: o[1],
-                        onClick: () => { },
-                        icon: o[2]
-                    });
-                }
+    constructor(protected button: Button, d: ({
+        key: string,
+        name: string,
+        onClick: () => void,
+        icon?: IconProperties;
+    } | string)[][]) {
+        super('div', { className: 'menu_panel' });
+        d.forEach((c) => {
+            const column = this.child('div', { className: 'menu_column' });
+            const index = this.columns.push(column) - 1;
+            c.forEach((a) => {
+                this.addOption(a, index);
             });
         });
+        this.open = false;
     }
-    addButton(data: MenuButton):Button {
-        let button: Button;
-        if (data.type === 'Action'){
-            button = new Button({
+    addOption(a: ({
+        key: string,
+        name: string,
+        onClick: () => void,
+        icon?: IconProperties;
+    } | string), i: number) {
+        const column = this.columns[i];
+        if (typeof a === 'string') {
+            column.child('span', {
+                className: 'spacer',
+                text: a,
+            });
+            return;
+        }
+
+        this.removeOption(a.key);
+        this.options[a.key] = {
+            column: column,
+            button: column.append(new Button({
+                text: a.name,
+                onClick: ()=>{
+                    a.onClick();
+                    this.open = false;
+                },
+                icon: a.icon,
+                unstyle: true,
+            })) as Button,
+            hasIcon: Boolean(a.icon),
+        };
+        if (a.icon) column.domElement.classList.add('icons');
+    }
+    removeOption(key: string) {
+        const option = this.options[key];
+        if (!option) return;
+        option.column.remove(option.button);
+        delete this.options[key];
+    }
+}
+
+export class MenuS extends MenuP {
+    onChange: (v: string) => void;
+    public get open(): boolean {
+        return super.open;
+    }
+    public set open(value: boolean) {
+        super.open = value;
+        this.button.domElement.classList[value?'add':'remove']('open')
+    }
+    constructor(button: Button, c: (v: string) => void, d: ({
+        key: string,
+        name: string,
+        icon?: IconProperties;
+    } | string)[][]) {
+        super(button, d.map((c) => c.map((v) => {
+            if (typeof v === 'string') return v;
+            return {
+                key: v.key,
+                name: v.name,
+                onClick: () => this.value(v.key),
+                icon: v.icon,
+            };
+        })));
+        this.onChange = c;
+    }
+    public value(key: string) {
+        this.silentValue(key);
+        this.onChange(key);
+    }
+    public silentValue(key: string) {
+        this.open = false;
+        Object.entries(this.options).forEach(([k, v]) => {
+            v.button.active = k === key;
+        });
+    }
+}
+
+export class Menu extends DomElement<'div'> {
+    // panels: Record<string, MenuPanel> = {};
+    private buttons: Record<string, {
+        button: Button;
+        panel?: MenuP;
+    }> = {};
+    // private iterator: number = 0;
+    constructor(d?: MenuButton[]) {
+        super('div', { className: 'menu' });
+
+        if (d) d.forEach((v) => this.addButton(v));
+    }
+    public addButton(data: MenuButton) {
+        const menuWrap = this.child('div', { className: 'menu_wrap' });
+
+        let button: Button, panel: MenuP | MenuS;
+        if (data.type === 'Action') {
+            button = menuWrap.append(new Button({
                 onClick: data.onClick,
                 icon: data.icon,
                 text: data.label,
-            })
+            })) as Button;
         }
-        if (data.type === 'Select'){
-            button = new Button({
+        if (data.type === 'Select') {
+            button = menuWrap.append(new Button({
                 icon: data.icon,
-                text: data.label,
-            })
-        }
-        if (data.type === 'Panel'){
-            button = new Button({
-                icon: data.icon,
-                text: data.label,
-            })
-        }
-
-
-
-        return button;
-    }
-    registerPanel(key: string, name: string, columns?: string[], icon?: IconProperties) {
-        const menuWrap = this.child('div', { className: 'menu_wrap' });
-        const panel = menuWrap.child('div', { className: 'menu_panel', visible: false, });
-        this.panels[key] = {
-            name,
-            open: false,
-            element: panel,
-            columns: columns.map((label) => {
-                const column = panel.child('div', { className: 'menu_column' });
-                column.child('span', { text: label });
-                return {
-                    element: column,
-                    label,
-                    options: {}
-                };
-            }),
-            button: menuWrap.append(new Button({
-                className: 'menu_button',
-                text: name + ' ...',
-                icon,
-                onClick: () => {
-                    this.togglePanel(key);
+                text: data.label + '...',
+                onClick:()=>{
+                    panel.toggle();
                 }
-            })) as Button
-        };
-
-    }
-    getOption({ panelKey, columnIndex = 0, key }: { panelKey: string; columnIndex: number; key?: string; }): [MenuPanel, MenuColumn, (MenuOption | MenuSpacer)?] | undefined {
-        if (!this.panels[panelKey]) return undefined;
-        const panel = this.panels[panelKey];
-
-        if (panel.columns.length < columnIndex) return undefined;
-
-        const column = panel.columns[columnIndex];
-
-        if (!key) return [panel, column];
-        if (!column.options[key]) return undefined;
-
-        return [panel, column, column.options[key]];
-    }
-    registerSpacer({ panelKey, columnIndex = 0, key = String(this.iterator++), name: text }: { panelKey: string; columnIndex: number; key?: string; name?: string; }) {
-        const o = this.getOption({ panelKey, columnIndex });
-        if (!o) return;
-        const [panel, column] = o;
-
-        const element = column.element.child('span', { className: 'spacer', text: text });
-        if (column.options[key]) this.removeOption({ panelKey, columnIndex, key });
-        column.options[key] = {
-            type: 'spacer',
-            element,
-            text,
-        };
-    }
-    registerOption({ panelKey, columnIndex = 0, key = String(this.iterator++), name, onClick, icon }: { icon?: IconProperties, panelKey: string; columnIndex?: number; key: string; name: string; onClick: () => void; }) {
-        const o = this.getOption({ panelKey, columnIndex });
-        if (!o) return;
-        const [panel, column] = o;
-        const click = () => {
-            onClick();
-            this.closePanels();
-        };
-
-        const element = column.element.append(new Button({ text: name, onClick: click, unstyle: true, icon })) as Button;
-        if (column.options[key]) this.removeOption({ panelKey, columnIndex, key });
-        column.options[key] = {
-            type: 'option',
-            element,
-            name,
-            onClick: click,
-        };
-        if (icon) {
-            column.element.domElement.classList.add('icons');
+            })) as Button;
+            panel = menuWrap.append(new MenuS(button, data.onChange, data.data)) as MenuS;
         }
-        return column.options[key];
-    }
-    removeOption({ panelKey, columnIndex = 0, key }: { panelKey: string; columnIndex: number; key: string; }) {
-        const o = this.getOption({ panelKey, columnIndex, key });
-        if (!o) return;
-        const [panel, column, button] = o;
-        column.element.remove(button.element);
-        delete column.options[key];
-    }
-
-    togglePanel(k: string, b: boolean = !this.panels[k].open) {
-        this.closePanels();
-        if (b) {
-            this.panels[k].button.domElement.classList.add('open');
-            this.panels[k].element.visible = true;
-            this.panels[k].button.active = true;
-            this.panels[k].open = true;
+        if (data.type === 'Panel') {
+            button = menuWrap.append(new Button({
+                icon: data.icon,
+                text: data.label + '...',
+                onClick:()=>{
+                    panel.toggle();
+                }
+            })) as Button;
+            panel = menuWrap.append(new MenuP(button, data.data)) as MenuP;
         }
+
+        this.buttons[data.key] = {
+            button,
+            panel
+        };
+
     }
-    closePanels() {
-        Object.values(this.panels).forEach((p) => {
-            p.element.visible = false;
-            p.button.domElement.classList.remove('open');
-            p.button.active = false;
-            p.open = false;
-        });
+    getButton(key: string) {
+        return this.buttons[key];
     }
 }
