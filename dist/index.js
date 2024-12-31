@@ -179,6 +179,7 @@ var MenuP = class extends DomElement {
   set open(value) {
     this._open = value;
     this.domElement.classList[value ? "add" : "remove"]("open");
+    this.button.active = value;
   }
   toggle() {
     this.open = !this.open;
@@ -204,7 +205,8 @@ var MenuP = class extends DomElement {
         icon: a.icon,
         unstyle: true
       })),
-      hasIcon: Boolean(a.icon)
+      hasIcon: Boolean(a.icon),
+      label: a.name
     };
     if (a.icon)
       column.domElement.classList.add("icons");
@@ -244,9 +246,13 @@ var MenuS = class extends MenuP {
   }
   silentValue(key) {
     this.open = false;
+    let foundText = "";
     Object.entries(this.options).forEach(([k, v]) => {
       v.button.active = k === key;
+      if (k === key)
+        foundText = v.label;
     });
+    this.button.setText(foundText + "...");
   }
 };
 var Menu = class extends DomElement {

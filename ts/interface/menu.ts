@@ -47,6 +47,7 @@ export class MenuP extends DomElement<'div'> {
     public set open(value: boolean) {
         this._open = value;
         this.domElement.classList[value ? 'add' : 'remove']('open');
+        this.button.active = value
     }
     public toggle() {
         this.open = !this.open;
@@ -56,6 +57,7 @@ export class MenuP extends DomElement<'div'> {
         column: DomElement<'div'>,
         button: Button,
         hasIcon: boolean,
+        label: string,
     }> = {};
     constructor(protected button: Button, d: ({
         key: string,
@@ -101,6 +103,7 @@ export class MenuP extends DomElement<'div'> {
                 unstyle: true,
             })) as Button,
             hasIcon: Boolean(a.icon),
+            label: a.name,
         };
         if (a.icon) column.domElement.classList.add('icons');
     }
@@ -143,9 +146,12 @@ export class MenuS extends MenuP {
     }
     public silentValue(key: string) {
         this.open = false;
+        let foundText = '';
         Object.entries(this.options).forEach(([k, v]) => {
             v.button.active = k === key;
+            if (k === key) foundText = v.label
         });
+        this.button.setText(foundText + '...')
     }
 }
 
