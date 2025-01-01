@@ -34,6 +34,15 @@ export class WorkSpace extends DomElement<'div'> {
 
         this.mainSection = this.append(new Section()) as Section;
         this.setPreset(presets ? Object.keys(presets)[0] : 'empty');
+
+        window.addEventListener('resize', ()=>{
+            this.resize();
+        })
+        this.resize();
+
+    }
+    public resize() {
+        this.mainSection.resize();
     }
     private buildToolbar(presets?: Record<string, WorkspacePreset>) {
 

@@ -1,7 +1,7 @@
 import { WorkSpace } from './interface/interface';
 import { PanelManager } from './interface/panelManager';
 import { MainPanel } from './panels/main';
-import { NodeEditorPanel } from './panels/node';
+import { NodeEditorPanel } from './panels/node/nodePanel';
 import { OutlinerPanel } from './panels/outliner';
 import { PropertiesPanel } from './panels/properties';
 import { TimelinePanel } from './panels/timeline';
@@ -22,16 +22,13 @@ export class Main {
             new PropertiesPanel(),
             new TimelinePanel(),
         ])
-        $.interface = new WorkSpace({
+        $.workspace = new WorkSpace({
             default: {
                 name: 'Default',
-                data: [1, 'v', 50, [1, 'h', 70, [2, 'main'], [1, 'v', 50, [2, 'outliner'], [2, 'properties']]], [2, 'timeline']]
+                data: [1, 'v', 50, [1, 'h', 70, [2, 'main'], [1, 'v', 50, [2, 'outliner'], [2, 'properties']]], [2, 'node']]
             }
         })
-        this.build();
-    }
-
-    private build() {
+        $.workspace.resize();
     }
 
     public tick() {

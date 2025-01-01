@@ -8,7 +8,7 @@ declare global {
 }
 class Glob {
     public main: Main;
-    public interface: WorkSpace ;
+    public workspace: WorkSpace ;
     public panels: PanelManager;
 };
 window.$ = new Glob();
@@ -16,5 +16,5 @@ window.log = console.log;
 
 document.addEventListener("DOMContentLoaded", async () => {
     const g = new Main();
-    document.body.appendChild($.interface.domElement);
+    document.body.appendChild($.workspace.domElement);
 });

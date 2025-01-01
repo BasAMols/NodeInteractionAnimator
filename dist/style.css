@@ -23,12 +23,15 @@ button.button {
     color: var(--color-text);
     font-variation-settings: "wdth" 97;
 }
-
+html {
+    background: var(--color-dark);
+}
 body {
     height: 100vh;
     margin: 0 !IMPORTANT;
     overflow: hidden;
     width: 100vw;
+    background: var(--color-dark);
 
     button.button:not(.unset) {
         cursor: pointer;
@@ -39,7 +42,7 @@ body {
         line-height: 1.2em;
         margin-right: 5px;
 
-        &.default{
+        &.default {
             background: var(--color-blue2);
             border-radius: var(--radius);
             padding: 3px 8px;
@@ -48,6 +51,7 @@ body {
         &.icon {
             padding: 3px 1px;
         }
+
         &.inline {
             padding: 3px 6px;
         }
@@ -102,6 +106,7 @@ body {
                 display: flex !important;
                 justify-content: space-between;
                 position: relative;
+                overflow: hidden;
 
                 &:empty {
                     display: flex;
@@ -149,6 +154,7 @@ body {
                         position: absolute;
                         top: 30px;
                     }
+
                     z-index: 4;
                 }
 
@@ -223,8 +229,17 @@ body {
             height: 100%;
             width: 100%;
             background: var(--color-blue1);
-            padding: 7px 12px;
+            padding: 0;
             border-radius: var(--radius);
+
+            .panelContent {
+                width: 100%;
+                height: calc(100% - 34px);
+                padding: 0;
+                margin-top: 34px;
+                box-shadow: inset 0px 0px 8px #1b1a1ee3;
+            }
+
         }
 
         .v>.section_content {
@@ -255,6 +270,7 @@ body {
             display: none;
             border-radius: var(--radius);
             box-shadow: var(--shadow);
+
 
             &.open {
                 display: flex;
@@ -323,7 +339,7 @@ body {
 .section>.menu button.button.inline {
     background: transparent;
     padding: 4px 6px 4px 6px;
-    
+
     &>span {
         margin-right: 2px;
         text-wrap-mode: nowrap;
@@ -337,4 +353,25 @@ body {
 
 header>.menu>.menu_wrap .menu_panel {
     top: 40px;
+}
+
+.panelCamera {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    &.draggable {
+        cursor: grab;
+        &.grabbing {
+            cursor: grabbing;
+        }
+    }
+}
+.grid {
+    display: block;
+    position: absolute;
+    background-image: radial-gradient(#171719 2px, transparent 0);
+    background-size: 35px 35px;
+}
+.panelCameraContent {
+    box-shadow: 0px 0px 10px black;
 }

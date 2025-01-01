@@ -367,6 +367,14 @@ var Panel = class extends DomElement {
     });
     this.id = id;
     this.name = name;
+    this.size = [0, 0];
+    this.content = this.child("div", {
+      className: "panelContent"
+    });
+  }
+  resize() {
+    const { width, height } = this.content.domElement.getBoundingClientRect();
+    this.size = [width, height];
   }
 };
 
@@ -412,7 +420,7 @@ var Section = class _Section extends DomElement {
   }
   set percentage(value) {
     this._percentage = Util.clamp(value, 5, 95);
-    if (this.sections && this.direction) {
+    if (this.sections) {
       this.sections[0].setStyle(this.direction === "h" ? "width" : "height", "calc(".concat(this._percentage, "% - 3px)"));
       this.sections[1].setStyle(this.direction === "h" ? "width" : "height", "calc(".concat(100 - this._percentage, "% - 3px)"));
       this.sections[0].setStyle(this.direction === "h" ? "height" : "width", "100%");
@@ -420,6 +428,14 @@ var Section = class _Section extends DomElement {
       this.dragger.setStyle("left", this.direction === "h" ? "calc(".concat(this._percentage, "% - 3px)") : "4px");
       this.dragger.setStyle("top", this.direction === "v" ? "calc(".concat(this._percentage, "% - 3px)") : "4px");
     }
+    this.resize();
+  }
+  resize() {
+    var _a;
+    if (this.mode === "panel" && this.panel)
+      this.panel.resize();
+    if (this.mode === "split")
+      (_a = this.sections) == null ? void 0 : _a.forEach((s) => s.resize());
   }
   get activePanel() {
     return this.panel;
@@ -485,6 +501,7 @@ var Section = class _Section extends DomElement {
     } else {
       this.setPanel();
     }
+    this.resize();
   }
   constructor(parent, content) {
     super("div", {
@@ -523,7 +540,13 @@ var Section = class _Section extends DomElement {
     this.dragger.child("div", {
       className: "section_dragger_collapse"
     });
-    this.domElement.addEventListener("mousemove", this.resize.bind(this));
+    this.domElement.addEventListener("mousemove", (e) => {
+      if (this.dragging) {
+        let v = this.direction === "v" ? (e.y - this.domElement.getBoundingClientRect().y) / this.domElement.offsetHeight * 100 : (e.x - this.domElement.getBoundingClientRect().x) / this.domElement.offsetWidth * 100;
+        if (v !== 0)
+          this.percentage = Util.clamp(v, 0, 100);
+      }
+    });
     this.dragger.domElement.addEventListener("mousedown", () => this.dragging = true);
     this.dragger.domElement.addEventListener("mouseup", () => this.dragging = false);
     this.domElement.addEventListener("mouseup", () => this.dragging = false);
@@ -534,8 +557,16 @@ var Section = class _Section extends DomElement {
           this.setPanel(v);
         },
         this.parent ? () => {
-          if (this.parent)
-            this.parent.fill(this.parent.sections.find((s) => s !== this).getData());
+          var _a;
+          if (this.parent) {
+            const other = this.parent.sections.find((s) => s !== this);
+            const data = other.getData();
+            if (data.type === "panel") {
+              this.parent.setPanel(other.panel);
+            } else {
+              this.parent.setSplit(other.direction, other.percentage, (_a = other.getData()) == null ? void 0 : _a.sections);
+            }
+          }
         } : void 0,
         () => {
           this.setSplit("v", 50, [
@@ -553,13 +584,6 @@ var Section = class _Section extends DomElement {
     ]));
     this.panelSwitch = this.sectionMenu.getButton("panel").panel;
   }
-  resize(e) {
-    if (this.dragging) {
-      let v = this.direction === "v" ? (e.y - this.domElement.getBoundingClientRect().y) / this.domElement.offsetHeight * 100 : (e.x - this.domElement.getBoundingClientRect().x) / this.domElement.offsetWidth * 100;
-      if (v !== 0)
-        this.percentage = Util.clamp(v, 0, 100);
-    }
-  }
 };
 
 // ts/interface/interface.ts
@@ -571,6 +595,13 @@ var WorkSpace = class extends DomElement {
     this.buildToolbar(presets);
     this.mainSection = this.append(new Section());
     this.setPreset(presets ? Object.keys(presets)[0] : "empty");
+    window.addEventListener("resize", () => {
+      this.resize();
+    });
+    this.resize();
+  }
+  resize() {
+    this.mainSection.resize();
   }
   buildToolbar(presets) {
     const p = { empty: { name: "Empty", data: [0] } };
@@ -759,10 +790,86 @@ var MainPanel = class extends Panel {
   }
 };
 
-// ts/panels/node.ts
+// ts/panels/utils/camera.ts
+var Camera = class extends DomElement {
+  constructor(parent, contentSize) {
+    super("div", {
+      className: "panelCamera"
+    });
+    this.parent = parent;
+    this.contentSize = contentSize;
+    this.draggable = [false, false];
+    this._dragging = false;
+    this.position = [0, 0];
+    this.area = [0, 0];
+    this.mover = this.child("div", {
+      className: "panelCameraMover grid"
+    });
+    this.content = this.mover.child("div", {
+      className: "panelCameraContent",
+      style: {
+        width: "".concat(this.contentSize[0], "px"),
+        height: "".concat(this.contentSize[1], "px")
+      }
+    });
+    this.domElement.addEventListener("mousedown", () => {
+      this.dragging = true;
+    });
+    this.domElement.addEventListener("mouseup", () => {
+      this.dragging = false;
+    });
+    this.domElement.addEventListener("mousemove", this.mouseMove.bind(this));
+  }
+  get dragging() {
+    return this._dragging;
+  }
+  set dragging(value) {
+    this._dragging = value;
+    this.domElement.classList[value ? "add" : "remove"]("grabbing");
+  }
+  mouseMove(e) {
+    if (this.dragging && this.draggable.find((axis) => axis)) {
+      this.move([e.movementX, e.movementY]);
+    }
+  }
+  move(v) {
+    this.setPosition([
+      this.position[0] + v[0],
+      this.position[1] + v[1]
+    ]);
+  }
+  resize() {
+    [0, 1].forEach((i) => {
+      this.draggable[i] = this.parent.size[i] < this.contentSize[i];
+      this.area[i] = this.draggable[i] ? this.contentSize[i] : this.parent.size[i];
+      this.mover.setStyle(["width", "height"][i], "".concat(Math.max(this.area[i], this.parent.size[i]), "px"));
+    });
+    this.domElement.classList[this.draggable.find((axis) => axis) ? "add" : "remove"]("draggable");
+    this.setPosition(this.position);
+  }
+  setPosition(v) {
+    [0, 1].forEach((i) => {
+      if (this.draggable[i]) {
+        console.log([i], this.contentSize[i] - this.area[i]);
+        this.position[i] = Util.clamp(v[i], this.parent.size[i] - this.contentSize[i], 0);
+      } else {
+        this.position[i] = (this.area[i] - this.contentSize[i]) / 2;
+      }
+    });
+    this.mover.setStyle("transform", "translate(".concat(this.position.join("px,"), "px)"));
+  }
+};
+
+// ts/panels/node/nodePanel.ts
 var NodeEditorPanel = class extends Panel {
   constructor() {
     super("node", "Node");
+    this.camera = this.content.append(new Camera(this, [500, 500]));
+  }
+  resize() {
+    var _a;
+    super.resize();
+    (_a = this.camera) == null ? void 0 : _a.resize();
   }
 };
 
@@ -798,15 +905,13 @@ var Main = class {
       new PropertiesPanel(),
       new TimelinePanel()
     ]);
-    $.interface = new WorkSpace({
+    $.workspace = new WorkSpace({
       default: {
         name: "Default",
-        data: [1, "v", 50, [1, "h", 70, [2, "main"], [1, "v", 50, [2, "outliner"], [2, "properties"]]], [2, "timeline"]]
+        data: [1, "v", 50, [1, "h", 70, [2, "main"], [1, "v", 50, [2, "outliner"], [2, "properties"]]], [2, "node"]]
       }
     });
-    this.build();
-  }
-  build() {
+    $.workspace.resize();
   }
   tick() {
   }
@@ -819,6 +924,6 @@ window.$ = new Glob();
 window.log = console.log;
 document.addEventListener("DOMContentLoaded", async () => {
   const g = new Main();
-  document.body.appendChild($.interface.domElement);
+  document.body.appendChild($.workspace.domElement);
 });
 //# sourceMappingURL=index.js.map

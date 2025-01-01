@@ -72,7 +72,7 @@ export class Section extends DomElement<'div'> {
     }
     protected set percentage(value: number | undefined) {
         this._percentage = Util.clamp(value, 5, 95);
-        if (this.sections && this.direction) {
+        if (this.sections) {
             this.sections[0].setStyle(this.direction === 'h' ? 'width' : 'height', `calc(${this._percentage}% - 3px)`);
             this.sections[1].setStyle(this.direction === 'h' ? 'width' : 'height', `calc(${100 - this._percentage}% - 3px)`);
             this.sections[0].setStyle(this.direction === 'h' ? 'height' : 'width', `100%`);
@@ -81,6 +81,12 @@ export class Section extends DomElement<'div'> {
             this.dragger.setStyle('left', this.direction === 'h' ? `calc(${this._percentage}% - 3px)` : '4px');
             this.dragger.setStyle('top', this.direction === 'v' ? `calc(${this._percentage}% - 3px)` : '4px');
         }
+        this.resize();
+    }
+
+    public resize() {
+        if (this.mode === 'panel' && this.panel) this.panel.resize();
+        if (this.mode === 'split') this.sections?.forEach((s) => s.resize());
     }
 
     public get activePanel() {
@@ -154,6 +160,7 @@ export class Section extends DomElement<'div'> {
         } else {
             this.setPanel();
         }
+        this.resize();
     }
     constructor(parent?: Section, content?: SectionContent) {
         super('div', {
@@ -168,21 +175,21 @@ export class Section extends DomElement<'div'> {
 
     }
 
-    public getData():SectionContent {
-        if (this.mode === 'panel'){
+    public getData(): sectionContentPanel | sectionContentSplit {
+        if (this.mode === 'panel') {
             return {
                 type: 'panel',
                 panel: this.panel
-            }
+            };
         } else {
-            return  {
+            return {
                 type: 'split',
-                sections: this.sections.map((s)=>s.getData()) as [SectionContent, SectionContent],
+                sections: this.sections.map((s) => s.getData()) as [sectionContentPanel | sectionContentSplit, sectionContentPanel | sectionContentSplit],
                 percentage: this.percentage,
                 direction: this.direction
-            }
-            
-            
+            };
+
+
         }
     }
 
@@ -199,7 +206,15 @@ export class Section extends DomElement<'div'> {
         });
 
 
-        this.domElement.addEventListener('mousemove', this.resize.bind(this));
+        this.domElement.addEventListener('mousemove', (e: MouseEvent) => {
+            if (this.dragging) {
+                let v = this.direction === 'v' ?
+                    (e.y - this.domElement.getBoundingClientRect().y) / this.domElement.offsetHeight * 100 :
+                    (e.x - this.domElement.getBoundingClientRect().x) / this.domElement.offsetWidth * 100;
+
+                if (v !== 0) this.percentage = Util.clamp(v, 0, 100);
+            }
+        });
         this.dragger.domElement.addEventListener('mousedown', () => this.dragging = true);
         this.dragger.domElement.addEventListener('mouseup', () => this.dragging = false);
         this.domElement.addEventListener('mouseup', () => this.dragging = false);
@@ -211,7 +226,15 @@ export class Section extends DomElement<'div'> {
                     this.setPanel(v);
                 },
                 this.parent ? () => {
-                    if (this.parent) this.parent.fill(this.parent.sections.find((s)=>s!==this).getData());
+                    if (this.parent) {
+                        const other = this.parent.sections.find((s) => s !== this);
+                        const data = other.getData();
+                        if (data.type === 'panel') {
+                            this.parent.setPanel(other.panel);
+                        } else {
+                            this.parent.setSplit(other.direction, other.percentage, (other.getData() as sectionContentSplit)?.sections);
+                        }
+                    }
                 } : undefined,
                 () => {
                     this.setSplit('v', 50, [
@@ -232,14 +255,4 @@ export class Section extends DomElement<'div'> {
 
         this.panelSwitch = this.sectionMenu.getButton('panel').panel as MenuS;
     }
-    private resize(e: MouseEvent) {
-        if (this.dragging) {
-            let v = this.direction === 'v' ?
-                (e.y - this.domElement.getBoundingClientRect().y) / this.domElement.offsetHeight * 100 :
-                (e.x - this.domElement.getBoundingClientRect().x) / this.domElement.offsetWidth * 100;
-
-            if (v !== 0) this.percentage = Util.clamp(v, 0, 100);
-        }
-    }
-
 }
