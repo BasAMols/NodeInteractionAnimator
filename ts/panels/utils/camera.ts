@@ -64,7 +64,6 @@ export class Camera extends DomElement<'div'> {
         [0, 1].forEach((i) => {
             if (this.draggable[i]) {
                 console.log([i], this.contentSize[i] - this.area[i]);
-                
                 this.position[i] = Util.clamp(v[i], this.parent.size[i] - this.contentSize[i], 0);
             } else {
                 this.position[i] = (this.area[i] - this.contentSize[i]) / 2;
