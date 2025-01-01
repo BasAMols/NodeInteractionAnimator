@@ -11,7 +11,7 @@ export class Panel extends DomElement<'div'> {
         })
         this.header = this.child('div', {
             className: 'panelHeader'
-        })
+        });
         this.content = this.child('div', {
             className: 'panelContent'
         });

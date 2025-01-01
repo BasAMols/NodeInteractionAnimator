@@ -30,6 +30,8 @@ export class WorkSpace extends DomElement<'div'> {
             className: 'content'
         });
 
+        this.append($.windows)
+
         this.buildToolbar(presets);
 
         this.mainSection = this.append(new Section()) as Section;
@@ -42,10 +44,11 @@ export class WorkSpace extends DomElement<'div'> {
 
     }
     public resize() {
+        $.windowSize = [window.innerWidth, window.innerHeight]
+        $.windows.resize();
         this.mainSection.resize();
     }
     private buildToolbar(presets?: Record<string, WorkspacePreset>) {
-
 
         const p = { empty: { name: 'Empty', data: [0] } };
         if (presets) Object.assign(p, presets);
@@ -79,7 +82,9 @@ export class WorkSpace extends DomElement<'div'> {
                 data: [[
                     { key: 'undo', name: 'Undo', icon: Icon.make('undo'), onClick: () => { } },
                     { key: 'redo', name: 'Redo...', icon: Icon.make('redo'), onClick: () => { } },
-                    { key: 'options', name: 'Options...', icon: Icon.make('settings'), onClick: () => { } },
+                    { key: 'options', name: 'Options...', icon: Icon.make('settings'), onClick: () => { 
+                        $.windows.open('settings')
+                    } },
                 ]]
             },
             {

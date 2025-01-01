@@ -6,6 +6,9 @@ import { PropertiesPanel } from './panels/properties';
 import { TimelinePanel } from './panels/timeline';
 import { Ticker } from './lib/utilities/ticker';
 import { GraphicPanel } from './panels/graphic/graphicPanel';
+import { WindowManager } from './interface/windows/windowManager';
+import { Settings } from './interface/windows/settings';
+import { WindowPanel } from './interface/windows/window';
 
 
 
@@ -22,10 +25,16 @@ export class Main {
             new PropertiesPanel(),
             new TimelinePanel(),
         ])
+        $.windows = new WindowManager([
+            new WindowPanel('s', 'S'),
+            new WindowPanel('a', 'A'),
+            new WindowPanel('b', 'B'),
+            new Settings(),
+        ])
         $.workspace = new WorkSpace({
             default: {
                 name: 'Default',
-                data: [1, 'v', 50, [1, 'h', 70, [2, 'graphic'], [1, 'v', 50, [2, 'outliner'], [2, 'properties']]], [2, 'node']]
+                data: [1, 'v', 80, [1, 'h', 70, [2, 'graphic'], [1, 'v', 50, [2, 'outliner'], [2, 'properties']]], [2, 'timeline']]
             }
         })
         $.workspace.resize();

@@ -3,7 +3,8 @@ import { DomElement } from './domElement';
 export type IconProperties = {
     name: string,
     weight?: number,
-    offset?: [number,number]
+    offset?: [number,number],
+    classList?: string
 }
 export class Icon extends DomElement<'span'> {
     private fontVariation:{
@@ -20,7 +21,7 @@ export class Icon extends DomElement<'span'> {
     public constructor(properties: IconProperties) {
         super('span', {
             text: properties.name,
-            className: 'icon material-symbols-outlined',
+            className: `icon material-symbols-outlined ${properties.classList || ''}`,
  
         });
         if (properties.weight) this.fontVariation.wght = properties.weight

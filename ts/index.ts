@@ -1,5 +1,6 @@
 import { WorkSpace } from './interface/interface';
 import { PanelManager } from './interface/panelManager';
+import { WindowManager } from './interface/windows/windowManager';
 import { Main } from "./main";
 
 declare global {
@@ -10,6 +11,8 @@ class Glob {
     public main: Main;
     public workspace: WorkSpace ;
     public panels: PanelManager;
+    public windows: WindowManager;
+    public windowSize: [number,number];
 };
 window.$ = new Glob();
 window.log = console.log;

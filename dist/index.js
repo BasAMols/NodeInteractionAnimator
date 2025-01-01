@@ -102,7 +102,7 @@ var Icon = class extends DomElement {
   constructor(properties) {
     super("span", {
       text: properties.name,
-      className: "icon material-symbols-outlined"
+      className: "icon material-symbols-outlined ".concat(properties.classList || "")
     });
     this.fontVariation = {
       FILL: 0,
@@ -595,6 +595,7 @@ var WorkSpace = class extends DomElement {
     super("div", {
       className: "content"
     });
+    this.append($.windows);
     this.buildToolbar(presets);
     this.mainSection = this.append(new Section());
     this.setPreset(presets ? Object.keys(presets)[0] : "empty");
@@ -604,6 +605,8 @@ var WorkSpace = class extends DomElement {
     this.resize();
   }
   resize() {
+    $.windowSize = [window.innerWidth, window.innerHeight];
+    $.windows.resize();
     this.mainSection.resize();
   }
   buildToolbar(presets) {
@@ -651,6 +654,7 @@ var WorkSpace = class extends DomElement {
           { key: "redo", name: "Redo...", icon: Icon.make("redo"), onClick: () => {
           } },
           { key: "options", name: "Options...", icon: Icon.make("settings"), onClick: () => {
+            $.windows.open("settings");
           } }
         ]]
       },
@@ -909,6 +913,196 @@ var GraphicPanel = class extends Panel {
   }
 };
 
+// ts/interface/windows/windowManager.ts
+var WindowManager = class extends DomElement {
+  constructor(windows) {
+    super("div", { className: "windows" });
+    this.list = {};
+    windows == null ? void 0 : windows.forEach((p, i) => {
+      this.list[p.id] = {
+        id: p.id,
+        window: p
+      };
+      this.append(p);
+      this.open(p.id);
+    });
+  }
+  resize() {
+    Object.values(this.list).forEach((w) => {
+      w.window.resize();
+    });
+  }
+  open(k) {
+    this.list[k].window.open = true;
+    this.list[k].window.order = -1;
+    this.reorder();
+  }
+  close(k) {
+    this.list[k].window.open = false;
+  }
+  closeAll() {
+    Object.keys(this.list).forEach(this.close);
+  }
+  reorder() {
+    Object.values(this.list).sort((a, b) => a.window.order - b.window.order).forEach((w, i) => {
+      w.window.order = i * 2;
+    });
+  }
+};
+
+// ts/interface/windows/window.ts
+var WindowPanel = class extends DomElement {
+  constructor(id, name) {
+    super("div", {
+      className: "window",
+      id
+    });
+    this.id = id;
+    this.name = name;
+    this._fullscreen = false;
+    this._dragging = false;
+    this.preFullscreenSize = [0, 0];
+    this.size = [0, 0];
+    this.position = [10, 10];
+    this._open = false;
+    this._order = 0;
+    this.header = this.child("div", {
+      className: "windowHeader"
+    });
+    this.header.append(new Icon({ name: "drag_indicator", classList: "drag" }));
+    this.header.child("span", {
+      text: name,
+      className: "title"
+    });
+    this.header.append(new Menu([
+      {
+        key: "max",
+        name: "",
+        type: "Action",
+        design: "inline",
+        icon: Icon.make("filter_none"),
+        onClick: () => {
+          this.fullscreen = !this.fullscreen;
+        }
+      },
+      {
+        key: "close",
+        name: "",
+        type: "Action",
+        design: "inline",
+        icon: Icon.make("close"),
+        onClick: () => {
+          this.open = false;
+        }
+      }
+    ]));
+    this.content = this.child("div", {
+      className: "windowContent"
+    });
+    this.domElement.addEventListener("click", () => {
+      this.focus();
+    });
+    this.header.domElement.addEventListener("mousedown", () => {
+      this.dragging = true;
+    });
+    this.domElement.addEventListener("mouseup", () => {
+      this.dragging = false;
+    });
+    this.domElement.addEventListener("mousemove", (e) => {
+      if (this.dragging) {
+        this.move([e.movementX, e.movementY]);
+      }
+    });
+  }
+  get fullscreen() {
+    return this._fullscreen;
+  }
+  set fullscreen(value) {
+    if (this._fullscreen === value)
+      return;
+    this._fullscreen = value;
+    this.domElement.classList[this._fullscreen ? "add" : "remove"]("fullscreen");
+    if (this._fullscreen) {
+      this.preFullscreenSize = [...this.size];
+      this.setSize();
+      this.setPosition([0, 0]);
+    } else {
+      this.setSize(this.preFullscreenSize);
+      this.setPosition([10, 10]);
+    }
+  }
+  get dragging() {
+    return this._dragging;
+  }
+  set dragging(value) {
+    this._dragging = value;
+    this.domElement.classList[value ? "add" : "remove"]("grabbing");
+  }
+  get open() {
+    return this._open;
+  }
+  set open(value) {
+    this._open = value;
+    this.visible = value;
+  }
+  get order() {
+    return this._order;
+  }
+  set order(value) {
+    this._order = value;
+    this.setStyle("order", String(value));
+  }
+  focus() {
+    this.order = -1;
+    $.windows.reorder();
+  }
+  resize() {
+    if (this.fullscreen) {
+      this.setSize($.windowSize);
+      this.setPosition([0, 0]);
+    }
+    this.setSize();
+    this.setPosition();
+  }
+  setSize(s = this.size) {
+    this.size = s;
+    [0, 1].forEach((i) => {
+      if (this.fullscreen) {
+        this.size[i] = $.windowSize[i];
+      } else {
+        this.size[i] = Util.clamp(this.size[i], 200, $.windowSize[i] - 20);
+      }
+      this.setStyle(["width", "height"][i], "".concat(this.size[i], "px"));
+    });
+  }
+  move(v) {
+    if (!this.fullscreen) {
+    }
+    this.setPosition(
+      [
+        this.position[0] + v[0],
+        this.position[1] + v[1]
+      ]
+    );
+  }
+  setPosition(v = this.position) {
+    this.position = v;
+    this.setStyle("transform", "translate(".concat(this.position.map((p) => {
+      return p;
+    }).join("px,"), "px)"));
+  }
+};
+
+// ts/interface/windows/settings.ts
+var Settings = class extends WindowPanel {
+  constructor() {
+    super("settings", "Settings");
+  }
+  resize() {
+    super.resize();
+  }
+};
+
 // ts/main.ts
 var Main = class {
   constructor() {
@@ -920,10 +1114,16 @@ var Main = class {
       new PropertiesPanel(),
       new TimelinePanel()
     ]);
+    $.windows = new WindowManager([
+      new WindowPanel("s", "S"),
+      new WindowPanel("a", "A"),
+      new WindowPanel("b", "B"),
+      new Settings()
+    ]);
     $.workspace = new WorkSpace({
       default: {
         name: "Default",
-        data: [1, "v", 50, [1, "h", 70, [2, "graphic"], [1, "v", 50, [2, "outliner"], [2, "properties"]]], [2, "node"]]
+        data: [1, "v", 80, [1, "h", 70, [2, "graphic"], [1, "v", 50, [2, "outliner"], [2, "properties"]]], [2, "timeline"]]
       }
     });
     $.workspace.resize();
