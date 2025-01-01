@@ -368,6 +368,9 @@ var Panel = class extends DomElement {
     this.id = id;
     this.name = name;
     this.size = [0, 0];
+    this.header = this.child("div", {
+      className: "panelHeader"
+    });
     this.content = this.child("div", {
       className: "panelContent"
     });
@@ -783,34 +786,34 @@ var PanelManager = class {
   }
 };
 
-// ts/panels/main.ts
-var MainPanel = class extends Panel {
-  constructor() {
-    super("main", "Main");
-  }
-};
-
 // ts/panels/utils/camera.ts
 var Camera = class extends DomElement {
-  constructor(parent, contentSize) {
+  constructor(parent, contentSize, clamp = true) {
     super("div", {
-      className: "panelCamera"
+      className: "panelCamera draggable"
     });
     this.parent = parent;
     this.contentSize = contentSize;
-    this.draggable = [false, false];
+    this.clamp = clamp;
     this._dragging = false;
     this.position = [0, 0];
-    this.area = [0, 0];
+    this.scale = 1;
     this.mover = this.child("div", {
       className: "panelCameraMover grid"
     });
-    this.content = this.mover.child("div", {
+    this.content = this.child("div", {
       className: "panelCameraContent",
       style: {
         width: "".concat(this.contentSize[0], "px"),
         height: "".concat(this.contentSize[1], "px")
       }
+    });
+    this.domElement.addEventListener("wheel", (e) => {
+      this.scale = Util.clamp(this.scale + this.scale * (e.deltaY / 100) * -0.1, 0.1, 5);
+      this.resize();
+    });
+    this.domElement.addEventListener("mouseleave", () => {
+      this.dragging = false;
     });
     this.domElement.addEventListener("mousedown", () => {
       this.dragging = true;
@@ -828,35 +831,34 @@ var Camera = class extends DomElement {
     this.domElement.classList[value ? "add" : "remove"]("grabbing");
   }
   mouseMove(e) {
-    if (this.dragging && this.draggable.find((axis) => axis)) {
+    if (this.dragging) {
       this.move([e.movementX, e.movementY]);
     }
   }
   move(v) {
-    this.setPosition([
-      this.position[0] + v[0],
-      this.position[1] + v[1]
-    ]);
+    this.setPosition(
+      [
+        this.position[0] + v[0],
+        this.position[1] + v[1]
+      ]
+    );
   }
   resize() {
     [0, 1].forEach((i) => {
-      this.draggable[i] = this.parent.size[i] < this.contentSize[i];
-      this.area[i] = this.draggable[i] ? this.contentSize[i] : this.parent.size[i];
-      this.mover.setStyle(["width", "height"][i], "".concat(Math.max(this.area[i], this.parent.size[i]), "px"));
+      this.mover.setStyle(["width", "height"][i], "".concat((this.parent.size[i] + 80 * this.scale) * (1 / this.scale), "px"));
     });
-    this.domElement.classList[this.draggable.find((axis) => axis) ? "add" : "remove"]("draggable");
     this.setPosition(this.position);
   }
   setPosition(v) {
     [0, 1].forEach((i) => {
-      if (this.draggable[i]) {
-        console.log([i], this.contentSize[i] - this.area[i]);
-        this.position[i] = Util.clamp(v[i], this.parent.size[i] - this.contentSize[i], 0);
-      } else {
-        this.position[i] = (this.area[i] - this.contentSize[i]) / 2;
-      }
+      this.position[i] = v[i];
     });
-    this.mover.setStyle("transform", "translate(".concat(this.position.join("px,"), "px)"));
+    this.mover.setStyle("transform", "translate(".concat(this.position.map((p) => {
+      return p % (40 * this.scale) - 40 * this.scale;
+    }).join("px,"), "px) scale(").concat(this.scale, ")"));
+    this.content.setStyle("transform", "translate(".concat(this.position.map((p) => {
+      return p;
+    }).join("px,"), "px) scale(").concat(this.scale, ")"));
   }
 };
 
@@ -894,12 +896,25 @@ var TimelinePanel = class extends Panel {
   }
 };
 
+// ts/panels/graphic/graphicPanel.ts
+var GraphicPanel = class extends Panel {
+  constructor() {
+    super("graphic", "Graphic");
+    this.camera = this.content.append(new Camera(this, [505, 545], false));
+  }
+  resize() {
+    var _a;
+    super.resize();
+    (_a = this.camera) == null ? void 0 : _a.resize();
+  }
+};
+
 // ts/main.ts
 var Main = class {
   constructor() {
     $.main = this;
     $.panels = new PanelManager([
-      new MainPanel(),
+      new GraphicPanel(),
       new NodeEditorPanel(),
       new OutlinerPanel(),
       new PropertiesPanel(),
@@ -908,10 +923,13 @@ var Main = class {
     $.workspace = new WorkSpace({
       default: {
         name: "Default",
-        data: [1, "v", 50, [1, "h", 70, [2, "main"], [1, "v", 50, [2, "outliner"], [2, "properties"]]], [2, "node"]]
+        data: [1, "v", 50, [1, "h", 70, [2, "graphic"], [1, "v", 50, [2, "outliner"], [2, "properties"]]], [2, "node"]]
       }
     });
     $.workspace.resize();
+    setTimeout(() => {
+      $.workspace.resize();
+    }, 20);
   }
   tick() {
   }
