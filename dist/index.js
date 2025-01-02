@@ -1102,6 +1102,9 @@ var GraphicPanel = class extends CameraPanel {
     this._light = value;
     this.class(value, "light");
   }
+  update(d) {
+    console.log(d);
+  }
 };
 
 // ts/interface/windows/windowManager.ts
@@ -1471,6 +1474,145 @@ var ExportPanel = class extends WindowPanel {
   }
 };
 
+// ts/sceneobjects/sceneobjectManager.ts
+var SceneObjectManager = class {
+  constructor(panels) {
+    this.panels = panels;
+    this.sceneObjects = {};
+  }
+  /** 
+   * Adds a `SceneObject` to the scene 
+   * @return Returns the `SceneObject`
+  */
+  add(n) {
+    this.sceneObjects[n.key] = n;
+    n.build();
+    return n;
+  }
+  /** 
+   * Removes a `SceneObject` to the scene 
+   * @remarks This method will call the {@link SceneObject.delete() `delete()`} method on the sceneobject to ensure neat deletion. 
+  */
+  remove(n) {
+    if (!this.sceneObjects[n.key])
+      return;
+    n.delete();
+    delete this.sceneObjects[n.key];
+  }
+  /** 
+   * Handle a resizing window.
+   * @remarks This method will call the {@link SceneObject.resize() `resize()`} method on all {@link SceneObject `sceneObjects`} in the scene. 
+  */
+  resize() {
+    Object.values(this.sceneObjects).forEach((n) => {
+      n.resize();
+    });
+  }
+  /** 
+   * Empty all {@link SceneObject `sceneObjects`} from the scene.
+   * @remarks This method will call the {@link SceneObjectManager.remove() `remove()`} method on all {@link SceneObject sceneObjects} in the scene. 
+  */
+  clear() {
+    Object.values(this.sceneObjects).forEach((n) => {
+      this.remove(n);
+    });
+  }
+  /** 
+   * Bulk add multple {@link SceneObject `sceneObjects`} to the scene.
+   * @remarks Often used for importing an entire scene
+   * @param clear Should the {@link SceneObjectManager.clear() `clear()`} method be run to empty the scene? 
+  */
+  bulk(clear) {
+    if (clear)
+      this.clear();
+    Object.values(this.sceneObjects).forEach((n) => {
+      this.remove(n);
+    });
+  }
+  getComponentsByType(type) {
+    return Object.values(this.sceneObjects).map((so) => so.getComponentsByType(type)).flat(1);
+  }
+  update(type) {
+    if (type === "visual")
+      this.panels.graphic.update(this.getComponentsByType(type));
+  }
+};
+
+// ts/sceneobjects/components/sceneobjectComponent.ts
+var SceneObjectComponent = class {
+  constructor(type, { key }) {
+    this.type = type;
+    this.key = key;
+  }
+  build() {
+  }
+  resize() {
+  }
+  delete() {
+  }
+};
+
+// ts/sceneobjects/components/sceneobjectComponentVisual.ts
+var SceneObjectComponentVisual = class extends SceneObjectComponent {
+  constructor(attr) {
+    super("visual", attr);
+    this.element = new DomElement("span", {
+      className: "SceneObjectVisual"
+    });
+    this.setPosition(attr.position);
+  }
+  build() {
+    super.build();
+  }
+  delete() {
+    if (this.element.domElement.parentElement) {
+      this.element.domElement.parentElement.removeChild(this.element.domElement);
+    }
+  }
+  setPosition(v) {
+    this.element.setStyle("left", "".concat(v[0], "px"));
+    this.element.setStyle("top", "".concat(v[1], "px"));
+  }
+};
+
+// ts/sceneobjects/sceneobject.ts
+var SceneObject = class {
+  constructor({ key, components = [] }) {
+    this.active = true;
+    this.selected = false;
+    this.components = [];
+    this.key = key;
+    this.assign(components);
+  }
+  getComponentsByType(type) {
+    return this.components.filter((c) => c.type === type);
+  }
+  assign(components) {
+    components.forEach((c) => {
+      this.components.push(c);
+      c.sceneObject = this;
+      c.build();
+      $.scene.update(c.type);
+    });
+  }
+  resize() {
+    this.components.forEach((c) => {
+      c.resize();
+    });
+  }
+  clear() {
+    this.components.forEach((c) => {
+      c.delete();
+    });
+    this.components = [];
+  }
+  delete() {
+    this.clear();
+  }
+  build() {
+  }
+};
+
 // ts/main.ts
 var Main = class {
   constructor() {
@@ -1495,11 +1637,30 @@ var Main = class {
         data: [1, "v", 80, [1, "h", 70, [2, "graphic"], [1, "v", 50, [2, "outliner"], [2, "properties"]]], [2, "timeline"]]
       }
     });
+    $.scene = new SceneObjectManager({
+      graphic: $.panels.getPanel("graphic"),
+      properties: $.panels.getPanel("properties"),
+      node: $.panels.getPanel("node"),
+      timeline: $.panels.getPanel("timeline"),
+      outliner: $.panels.getPanel("outliner")
+    });
     $.workspace.resize();
     setTimeout(() => {
       $.workspace.resize();
       $.panels.forEach(([k, p]) => p.build());
+      const t1 = $.scene.add(new SceneObject({
+        key: "test1",
+        components: [
+          new SceneObjectComponentVisual({
+            key: $.unique,
+            position: v2(10, 10)
+          })
+        ]
+      }));
     }, 20);
+    setTimeout(() => {
+      $.scene.update("visual");
+    }, 200);
   }
   tick() {
   }

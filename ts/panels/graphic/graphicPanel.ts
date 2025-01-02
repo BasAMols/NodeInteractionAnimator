@@ -1,5 +1,6 @@
 import { Icon, IconProperties } from '../../lib/dom/icon';
 import { v2 } from '../../lib/utilities/vector2';
+import { SceneObjectComponent } from '../../sceneobjects/components/sceneobjectComponent';
 import { CameraPanel } from '../cameraPanel';
 
 export class GraphicPanel extends CameraPanel {
@@ -14,7 +15,7 @@ export class GraphicPanel extends CameraPanel {
     }
     constructor() {
         super('graphic', 'Graphic', {
-            camera: {contentSize: v2(505, 545), minZoom: 0.1, maxZoom: 5, scrollSpeed: 2},
+            camera: { contentSize: v2(505, 545), minZoom: 0.1, maxZoom: 5, scrollSpeed: 2 },
             buttons: [{
                 className: 'panelMenu',
                 key: 'graphic_light',
@@ -29,6 +30,11 @@ export class GraphicPanel extends CameraPanel {
         this.childCamera('div', {
             className: '_graphic'
         });
+        
+    }
+    update(d: SceneObjectComponent<"visual">[]) {
+        console.log(d);
+        
     }
 
 }

@@ -4,6 +4,7 @@ import { PanelManager } from './interface/panelManager';
 import { WindowManager } from './interface/windows/windowManager';
 import { Vector2 } from './lib/utilities/vector2';
 import { Main } from "./main";
+import { SceneObjectManager } from './sceneobjects/sceneobjectManager';
 
 declare global {
   var $: Glob
@@ -15,6 +16,7 @@ class Glob {
     public windows: WindowManager;
     public windowSize: Vector2;
     public mouse: DragManager;
+    public scene: SceneObjectManager;
     public get unique():string{
       this.uniqueIndex++;
       return (this.uniqueIndex+1000).toString(16);
