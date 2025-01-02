@@ -1,7 +1,7 @@
 import { DomElement } from '../../lib/dom/domElement';
 import { WindowPanel } from './window';
 
-export class Notes extends WindowPanel {
+export class NotesPanel extends WindowPanel {
     private area: DomElement<"textarea">;
     private text: string;
     constructor() {

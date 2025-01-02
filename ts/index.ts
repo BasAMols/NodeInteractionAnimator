@@ -6,7 +6,6 @@ import { Vector2 } from './lib/utilities/vector2';
 import { Main } from "./main";
 
 declare global {
-  function log(...data: any[]):void;
   var $: Glob
 }
 class Glob {
@@ -23,7 +22,6 @@ class Glob {
     private uniqueIndex:number = 0;
 };
 window.$ = new Glob();
-window.log = console.log;
 
 document.addEventListener("DOMContentLoaded", async () => {
     const g = new Main();

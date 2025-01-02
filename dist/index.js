@@ -700,11 +700,15 @@ var WorkSpace = class extends DomElement {
           { key: "saveas", name: "Save As...", onClick: () => {
           } },
           { key: "import", name: "Import...", icon: Icon.make("file_open"), onClick: () => {
+            $.windows.open("import");
           } },
           { key: "export", name: "Export", icon: Icon.make("file_export"), onClick: () => {
+            $.windows.open("export");
           } },
           "",
           { key: "reset", name: "Reset", icon: Icon.make("reset_image"), onClick: () => {
+            if (window.confirm("This will refresh the page. Are you sure?"))
+              window.location = window.location;
           } }
         ]]
       },
@@ -731,13 +735,14 @@ var WorkSpace = class extends DomElement {
       },
       {
         key: "workspace",
-        name: "Workspace",
+        name: "Layout",
         design: "inline",
         icon: { name: "dashboard", weight: 200 },
-        type: "Select",
-        onChange: (k) => this.setPreset(k),
+        type: "Panel",
         data: [Object.entries(p).map(([k, v]) => {
-          return { key: k, name: v.name };
+          return { key: k, name: v.name, onClick: () => {
+            this.setPreset(k);
+          } };
         })]
       },
       {
@@ -1258,7 +1263,7 @@ var WindowPanel = class extends DomElement {
 };
 
 // ts/interface/windows/settings.ts
-var Settings = class extends WindowPanel {
+var SettingsPanel = class extends WindowPanel {
   constructor() {
     super("settings", "Settings");
   }
@@ -1367,13 +1372,33 @@ var DragManager = class extends DomElement {
 };
 
 // ts/interface/windows/notes.ts
-var Notes = class extends WindowPanel {
+var NotesPanel = class extends WindowPanel {
   constructor() {
     super("notes", "Notes");
     this.area = this.content.child("textarea");
     this.area.domElement.addEventListener("change", (v) => {
       this.text = this.area.domElement.textContent;
     });
+  }
+  resize() {
+    super.resize();
+  }
+};
+
+// ts/interface/windows/import.ts
+var ImportPanel = class extends WindowPanel {
+  constructor() {
+    super("import", "Import");
+  }
+  resize() {
+    super.resize();
+  }
+};
+
+// ts/interface/windows/export.ts
+var ExportPanel = class extends WindowPanel {
+  constructor() {
+    super("export", "Export");
   }
   resize() {
     super.resize();
@@ -1393,8 +1418,10 @@ var Main = class {
       new TimelinePanel()
     ]);
     $.windows = new WindowManager([
-      new Settings(),
-      new Notes()
+      new SettingsPanel(),
+      new NotesPanel(),
+      new ImportPanel(),
+      new ExportPanel()
     ]);
     $.workspace = new WorkSpace({
       default: {
@@ -1422,7 +1449,6 @@ var Glob = class {
   }
 };
 window.$ = new Glob();
-window.log = console.log;
 document.addEventListener("DOMContentLoaded", async () => {
   const g = new Main();
   document.body.appendChild($.workspace.domElement);

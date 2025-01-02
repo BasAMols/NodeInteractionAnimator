@@ -7,9 +7,11 @@ import { TimelinePanel } from './panels/timeline';
 import { Ticker } from './lib/utilities/ticker';
 import { GraphicPanel } from './panels/graphic/graphicPanel';
 import { WindowManager } from './interface/windows/windowManager';
-import { Settings } from './interface/windows/settings';
+import { SettingsPanel } from './interface/windows/settings';
 import { DragManager } from './interface/dragging/dragManager';
-import { Notes } from './interface/windows/notes';
+import { NotesPanel } from './interface/windows/notes';
+import { ImportPanel } from './interface/windows/import';
+import { ExportPanel } from './interface/windows/export';
 
 
 
@@ -28,8 +30,10 @@ export class Main {
             new TimelinePanel(),
         ])
         $.windows = new WindowManager([
-            new Settings(),
-            new Notes(),
+            new SettingsPanel(),
+            new NotesPanel(),
+            new ImportPanel(),
+            new ExportPanel(),
         ])
         $.workspace = new WorkSpace({
             default: {

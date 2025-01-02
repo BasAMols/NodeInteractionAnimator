@@ -1,8 +1,8 @@
 import { WindowPanel } from './window';
 
-export class SettingsPanel extends WindowPanel {
+export class ExportPanel extends WindowPanel {
     constructor() {
-        super('settings', 'Settings');
+        super('export', 'Export');
     }
     public resize(): void {
         super.resize();

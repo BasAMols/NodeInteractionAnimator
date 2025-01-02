@@ -72,10 +72,12 @@ export class WorkSpace extends DomElement<'div'> {
                     '',
                     { key: 'save', name: 'Save', icon: Icon.make('save'), onClick: () => { } },
                     { key: 'saveas', name: 'Save As...', onClick: () => { } },
-                    { key: 'import', name: 'Import...', icon: Icon.make('file_open'), onClick: () => { } },
-                    { key: 'export', name: 'Export', icon: Icon.make('file_export'), onClick: () => { } },
+                    { key: 'import', name: 'Import...', icon: Icon.make('file_open'), onClick: () => {$.windows.open('import'); } },
+                    { key: 'export', name: 'Export', icon: Icon.make('file_export'), onClick: () => {$.windows.open('export'); } },
                     '',
-                    { key: 'reset', name: 'Reset', icon: Icon.make('reset_image'), onClick: () => { } },
+                    { key: 'reset', name: 'Reset', icon: Icon.make('reset_image'), onClick: () => {
+                        if (window.confirm('This will refresh the page. Are you sure?')) window.location = window.location
+                    } },
                 ]]
             }, {
                 key: 'edit',
@@ -95,13 +97,12 @@ export class WorkSpace extends DomElement<'div'> {
             },
             {
                 key: 'workspace',
-                name: 'Workspace',
+                name: 'Layout',
                 design: 'inline',
                 icon: { name: 'dashboard', weight: 200 },
-                type: 'Select',
-                onChange: (k) => this.setPreset(k),
+                type: 'Panel',
                 data: [Object.entries(p).map(([k, v]) => {
-                    return { key: k, name: v.name };
+                    return { key: k, name: v.name, onClick: ()=>{this.setPreset(k)} };
                 })]
             },
             {
@@ -117,7 +118,7 @@ export class WorkSpace extends DomElement<'div'> {
                         }
                     },
                 ]]
-            }
+            },
         ]));
 
         this.presets = Object.fromEntries(Object.entries(p).map(([k, v]) => {
