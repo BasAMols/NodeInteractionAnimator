@@ -1,6 +1,8 @@
+import { DragManager } from './interface/dragManager';
 import { WorkSpace } from './interface/interface';
 import { PanelManager } from './interface/panelManager';
 import { WindowManager } from './interface/windows/windowManager';
+import { Vector2 } from './lib/utilities/vector2';
 import { Main } from "./main";
 
 declare global {
@@ -12,7 +14,8 @@ class Glob {
     public workspace: WorkSpace ;
     public panels: PanelManager;
     public windows: WindowManager;
-    public windowSize: [number,number];
+    public windowSize: Vector2;
+    public drag: DragManager;
 };
 window.$ = new Glob();
 window.log = console.log;

@@ -26,7 +26,7 @@ var DomElement = class _DomElement {
     }), properties);
     this.domElement = document.createElement(type);
     this.domElement.setAttribute("draggable", "false");
-    this.domElement.addEventListener("click", this.click.bind(this));
+    this.domElement.addEventListener("mousedown", this.click.bind(this));
     if (this.props.style)
       Object.entries((_a = this.props) == null ? void 0 : _a.style).forEach(([k, v]) => {
         this.setStyle(
@@ -125,6 +125,43 @@ var Icon = class extends DomElement {
       name: n || "",
       weight: w || 200
     };
+  }
+};
+
+// ts/lib/utilities/vector2.ts
+function v2(x, y) {
+  if (x === void 0)
+    return new Vector2(0, 0);
+  if (typeof x === "number")
+    return new Vector2(x, y != null ? y : x);
+  if (Array.isArray(x))
+    return new Vector2(x[0], x[1]);
+  if (x.x !== void 0 && x.y !== void 0)
+    return new Vector2(x.x, x.y);
+  return new Vector2(0, 0);
+}
+var Vector2 = class _Vector2 extends Array {
+  get x() {
+    return this[0];
+  }
+  get y() {
+    return this[1];
+  }
+  constructor(x, y) {
+    super(x, y);
+  }
+  //Methods
+  add(v) {
+    return new _Vector2(this[0] + v[0], this[1] + v[1]);
+  }
+  subtract(v) {
+    return new _Vector2(this[0] - v[0], this[1] - v[1]);
+  }
+  scale(n) {
+    return new _Vector2(this[0] * n, this[1] * n);
+  }
+  c() {
+    return new _Vector2(this[0], this[1]);
   }
 };
 
@@ -596,6 +633,7 @@ var WorkSpace = class extends DomElement {
       className: "content"
     });
     this.append($.windows);
+    this.append($.drag);
     this.buildToolbar(presets);
     this.mainSection = this.append(new Section());
     this.setPreset(presets ? Object.keys(presets)[0] : "empty");
@@ -605,7 +643,7 @@ var WorkSpace = class extends DomElement {
     this.resize();
   }
   resize() {
-    $.windowSize = [window.innerWidth, window.innerHeight];
+    $.windowSize = v2(window.innerWidth, window.innerHeight);
     $.windows.resize();
     this.mainSection.resize();
   }
@@ -653,9 +691,14 @@ var WorkSpace = class extends DomElement {
           } },
           { key: "redo", name: "Redo...", icon: Icon.make("redo"), onClick: () => {
           } },
-          { key: "options", name: "Options...", icon: Icon.make("settings"), onClick: () => {
-            $.windows.open("settings");
-          } }
+          {
+            key: "options",
+            name: "Options...",
+            icon: Icon.make("settings"),
+            onClick: () => {
+              $.windows.open("settings");
+            }
+          }
         ]]
       },
       {
@@ -944,8 +987,8 @@ var WindowManager = class extends DomElement {
     Object.keys(this.list).forEach(this.close);
   }
   reorder() {
-    Object.values(this.list).sort((a, b) => a.window.order - b.window.order).forEach((w, i) => {
-      w.window.order = i * 2;
+    Object.values(this.list).sort((a, b) => a.window.order - b.window.order).forEach((w, i, a) => {
+      w.window.order = i * 2 + (i === a.length - 1 ? 1 : 0);
     });
   }
 };
@@ -960,19 +1003,26 @@ var WindowPanel = class extends DomElement {
     this.id = id;
     this.name = name;
     this._fullscreen = false;
-    this._dragging = false;
-    this.preFullscreenSize = [0, 0];
-    this.size = [0, 0];
-    this.position = [10, 10];
+    this.preFullscreen = [v2(), v2()];
+    this.size = v2();
+    this.position = v2(10, 10);
     this._open = false;
     this._order = 0;
     this.header = this.child("div", {
       className: "windowHeader"
     });
     this.header.append(new Icon({ name: "drag_indicator", classList: "drag" }));
-    this.header.child("span", {
-      text: name,
-      className: "title"
+    $.drag.register("window_".concat(id), {
+      element: this.header.child("span", {
+        text: name,
+        className: "title"
+      }),
+      move: (e) => {
+        this.setPosition(e.relative.add(e.offset));
+      },
+      start: () => {
+        this.focus();
+      }
     });
     this.header.append(new Menu([
       {
@@ -1002,17 +1052,6 @@ var WindowPanel = class extends DomElement {
     this.domElement.addEventListener("click", () => {
       this.focus();
     });
-    this.header.domElement.addEventListener("mousedown", () => {
-      this.dragging = true;
-    });
-    this.domElement.addEventListener("mouseup", () => {
-      this.dragging = false;
-    });
-    this.domElement.addEventListener("mousemove", (e) => {
-      if (this.dragging) {
-        this.move([e.movementX, e.movementY]);
-      }
-    });
   }
   get fullscreen() {
     return this._fullscreen;
@@ -1021,22 +1060,16 @@ var WindowPanel = class extends DomElement {
     if (this._fullscreen === value)
       return;
     this._fullscreen = value;
-    this.domElement.classList[this._fullscreen ? "add" : "remove"]("fullscreen");
-    if (this._fullscreen) {
-      this.preFullscreenSize = [...this.size];
+    this.domElement.classList[this.fullscreen ? "add" : "remove"]("fullscreen");
+    if (this.fullscreen) {
+      this.preFullscreen = [this.size.c(), this.position.c()];
       this.setSize();
-      this.setPosition([0, 0]);
+      this.setPosition(v2());
     } else {
-      this.setSize(this.preFullscreenSize);
-      this.setPosition([10, 10]);
+      this.setSize(this.preFullscreen[0]);
+      this.setPosition(this.preFullscreen[1]);
     }
-  }
-  get dragging() {
-    return this._dragging;
-  }
-  set dragging(value) {
-    this._dragging = value;
-    this.domElement.classList[value ? "add" : "remove"]("grabbing");
+    $.drag.able("window_".concat(this.id), !this.fullscreen);
   }
   get open() {
     return this._open;
@@ -1050,16 +1083,18 @@ var WindowPanel = class extends DomElement {
   }
   set order(value) {
     this._order = value;
-    this.setStyle("order", String(value));
+    this.setStyle("z-index", String(value));
   }
   focus() {
-    this.order = -1;
-    $.windows.reorder();
+    if (this.order % 2 === 0) {
+      this.order = 100;
+      $.windows.reorder();
+    }
   }
   resize() {
     if (this.fullscreen) {
       this.setSize($.windowSize);
-      this.setPosition([0, 0]);
+      this.setPosition(v2());
     }
     this.setSize();
     this.setPosition();
@@ -1075,20 +1110,10 @@ var WindowPanel = class extends DomElement {
       this.setStyle(["width", "height"][i], "".concat(this.size[i], "px"));
     });
   }
-  move(v) {
-    if (!this.fullscreen) {
-    }
-    this.setPosition(
-      [
-        this.position[0] + v[0],
-        this.position[1] + v[1]
-      ]
-    );
-  }
   setPosition(v = this.position) {
     this.position = v;
-    this.setStyle("transform", "translate(".concat(this.position.map((p) => {
-      return p;
+    this.setStyle("transform", "translate(".concat(this.position.map((p, i) => {
+      return Util.clamp(p, 0, $.windowSize[i] - this.size[i]);
     }).join("px,"), "px)"));
   }
 };
@@ -1103,10 +1128,92 @@ var Settings = class extends WindowPanel {
   }
 };
 
+// ts/interface/dragManager.ts
+var DragManager = class extends DomElement {
+  constructor() {
+    super("div", { className: "dragOverlay" });
+    this._dragging = false;
+    this.listeners = {};
+    this.domElement.addEventListener("mousemove", (e) => {
+      if (this.dragging)
+        this.move(e);
+    });
+    this.domElement.addEventListener("mouseup", this.end.bind(this));
+    this.domElement.addEventListener("mouseout", this.end.bind(this));
+  }
+  get dragging() {
+    return this._dragging;
+  }
+  set dragging(value) {
+    this._dragging = value;
+    this.domElement.classList[value ? "add" : "remove"]("dragging");
+  }
+  register(key, reg) {
+    this.listeners[key] = __spreadValues(__spreadValues({}, reg), { enabled: true });
+    reg.element.domElement.addEventListener("mousedown", (e) => {
+      if (this.listeners[key].enabled) {
+        this.start(key, e);
+      }
+    });
+    reg.element.domElement.classList.add("draggable");
+  }
+  able(key, b) {
+    if (!this.listeners[key])
+      return;
+    this.listeners[key].enabled = b;
+    this.listeners[key].element.domElement.classList[b ? "add" : "remove"]("draggable");
+  }
+  calcOffsets(key, e) {
+    if (!this.listeners[key])
+      return;
+    let elementStart = v2(this.listeners[key].element.domElement.getBoundingClientRect());
+    let mouseStart = v2(e.x, e.y);
+    this.listeners[key].elementStart = elementStart;
+    this.listeners[key].startOffset = elementStart.subtract(mouseStart);
+  }
+  start(key, e) {
+    var _a, _b;
+    if (!this.dragging) {
+      this.current = this.listeners[key];
+      this.dragging = true;
+      this.calcOffsets(key, e);
+      (_b = (_a = this.current).start) == null ? void 0 : _b.call(_a);
+    }
+  }
+  move(e) {
+    if (this.dragging && this.current.move) {
+      const absolute = v2(e.clientX, e.clientY);
+      let relative;
+      if (this.current.reference) {
+        relative = v2(e.movementX, e.movementY);
+      } else {
+        relative = absolute;
+      }
+      this.current.move({
+        relative,
+        absolute,
+        offset: this.current.startOffset,
+        delta: v2(e.movementX, e.movementY),
+        total: absolute.add(this.current.startOffset).subtract(this.current.elementStart),
+        e
+      });
+    }
+  }
+  end() {
+    var _a, _b;
+    if (this.dragging) {
+      (_b = (_a = this.current).end) == null ? void 0 : _b.call(_a);
+      this.current = void 0;
+      this.dragging = false;
+    }
+  }
+};
+
 // ts/main.ts
 var Main = class {
   constructor() {
     $.main = this;
+    $.drag = new DragManager();
     $.panels = new PanelManager([
       new GraphicPanel(),
       new NodeEditorPanel(),

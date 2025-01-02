@@ -29,7 +29,7 @@ export class DomElement<T extends keyof HTMLElementTagNameMap> {
         }, ...properties};
         this.domElement = document.createElement(type);
         this.domElement.setAttribute('draggable', 'false');
-        this.domElement.addEventListener('click', this.click.bind(this))
+        this.domElement.addEventListener('mousedown', this.click.bind(this))
         if (this.props.style) Object.entries(this.props?.style).forEach(([k,v])=>{
             this.setStyle(
                 k, 

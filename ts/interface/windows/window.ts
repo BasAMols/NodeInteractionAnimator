@@ -1,6 +1,7 @@
 import { DomElement } from '../../lib/dom/domElement';
 import { Icon } from '../../lib/dom/icon';
 import { Util } from '../../lib/utilities/utils';
+import { v2, Vector2 } from '../../lib/utilities/vector2';
 import { Menu } from '../menu';
 
 export class WindowPanel extends DomElement<'div'> {
@@ -11,31 +12,24 @@ export class WindowPanel extends DomElement<'div'> {
     public set fullscreen(value: boolean) {
         if (this._fullscreen === value) return;
         this._fullscreen = value;
-        this.domElement.classList[this._fullscreen ? 'add' : 'remove']('fullscreen');
-        if (this._fullscreen) {
-            this.preFullscreenSize = [...this.size];
+        this.domElement.classList[this.fullscreen ? 'add' : 'remove']('fullscreen');
+        if (this.fullscreen) {
+            this.preFullscreen = [this.size.c(), this.position.c()];
             this.setSize();
-            this.setPosition([0, 0]);
+            this.setPosition(v2());
         } else {
-            this.setSize(this.preFullscreenSize);
-            this.setPosition([10, 10]);
+            this.setSize(this.preFullscreen[0]);
+            this.setPosition(this.preFullscreen[1]);
         }
+        $.drag.able(`window_${this.id}`, !this.fullscreen)
 
-    }
-    private _dragging: boolean = false;
-    public get dragging(): boolean {
-        return this._dragging;
-    }
-    public set dragging(value: boolean) {
-        this._dragging = value;
-        this.domElement.classList[value ? 'add' : 'remove']('grabbing');
     }
 
     protected content: DomElement<"div">;
     protected header: DomElement<"div">;
-    public preFullscreenSize: [number, number] = [0, 0];
-    public size: [number, number] = [0, 0];
-    public position: [number, number] = [10, 10];
+    public preFullscreen: [Vector2, Vector2] = [v2(),v2()];
+    public size: Vector2 = v2();
+    public position: Vector2 = v2(10, 10);
     private _open: boolean = false;
     public get open(): boolean {
         return this._open;
@@ -50,7 +44,7 @@ export class WindowPanel extends DomElement<'div'> {
     }
     public set order(value: number) {
         this._order = value;
-        this.setStyle('order', String(value));
+        this.setStyle('z-index', String(value));
     }
 
     constructor(public readonly id: string, public readonly name: string) {
@@ -62,9 +56,17 @@ export class WindowPanel extends DomElement<'div'> {
             className: 'windowHeader'
         });
         this.header.append(new Icon({ name: 'drag_indicator', classList: 'drag' }));
-        this.header.child('span', {
-            text: name,
-            className: 'title'
+        $.drag.register(`window_${id}`, {
+            element: this.header.child('span', {
+                text: name,
+                className: 'title'
+            }),
+            move: (e) => {
+                this.setPosition(e.relative.add(e.offset));
+            },
+            start: () => {
+                this.focus();
+            }
         });
         this.header.append(new Menu([
             {
@@ -94,33 +96,25 @@ export class WindowPanel extends DomElement<'div'> {
         this.domElement.addEventListener('click', () => {
             this.focus();
         });
-        this.header.domElement.addEventListener('mousedown', () => {
-            this.dragging = true;
-        });
-        this.domElement.addEventListener('mouseup', () => {
-            this.dragging = false;
-        });
-        this.domElement.addEventListener('mousemove', (e: MouseEvent) => {
-            if (this.dragging) {
-                this.move([e.movementX, e.movementY]);
-            }
-        });
 
     }
     public focus() {
-        this.order = -1;
-        $.windows.reorder();
+        // The top most window always has an even order, so if this is uneven I dont have to reorder the list. 
+        if (this.order % 2 === 0) {
+            this.order = 100;
+            $.windows.reorder();
+        }
     }
 
     public resize() {
         if (this.fullscreen) {
             this.setSize($.windowSize);
-            this.setPosition([0, 0]);
+            this.setPosition(v2());
         }
         this.setSize();
         this.setPosition();
     }
-    public setSize(s: [number, number] = this.size) {
+    public setSize(s: Vector2 = this.size) {
         this.size = s;
         [0, 1].forEach((i) => {
             if (this.fullscreen) {
@@ -131,21 +125,10 @@ export class WindowPanel extends DomElement<'div'> {
             this.setStyle(['width', 'height'][i], `${this.size[i]}px`);
         });
     }
-    private move(v: [number, number]) {
-        if (!this.fullscreen){
-
-        }
-        this.setPosition(
-            [
-                this.position[0] + (v[0]),
-                this.position[1] + (v[1]),
-            ]);
-    }
-    public setPosition(v: [number, number] = this.position) {
+    public setPosition(v: Vector2 = this.position) {
         this.position = v;
-
-        this.setStyle('transform', `translate(${this.position.map((p) => {
-            return p;
+        this.setStyle('transform', `translate(${this.position.map((p, i) => {
+            return Util.clamp(p, 0, $.windowSize[i] - this.size[i]);
         }).join('px,')}px)`);
     }
 }

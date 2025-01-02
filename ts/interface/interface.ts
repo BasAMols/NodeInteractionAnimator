@@ -1,6 +1,7 @@
 import { Button } from '../lib/dom/button';
 import { DomElement } from '../lib/dom/domElement';
 import { Icon } from '../lib/dom/icon';
+import { v2 } from '../lib/utilities/vector2';
 import { Menu } from './menu';
 import { Section, SectionContent } from './section';
 
@@ -30,21 +31,22 @@ export class WorkSpace extends DomElement<'div'> {
             className: 'content'
         });
 
-        this.append($.windows)
+        this.append($.windows);
+        this.append($.drag);
 
         this.buildToolbar(presets);
 
         this.mainSection = this.append(new Section()) as Section;
         this.setPreset(presets ? Object.keys(presets)[0] : 'empty');
 
-        window.addEventListener('resize', ()=>{
+        window.addEventListener('resize', () => {
             this.resize();
-        })
+        });
         this.resize();
 
     }
     public resize() {
-        $.windowSize = [window.innerWidth, window.innerHeight]
+        $.windowSize = v2(window.innerWidth,window.innerHeight);
         $.windows.resize();
         this.mainSection.resize();
     }
@@ -82,9 +84,11 @@ export class WorkSpace extends DomElement<'div'> {
                 data: [[
                     { key: 'undo', name: 'Undo', icon: Icon.make('undo'), onClick: () => { } },
                     { key: 'redo', name: 'Redo...', icon: Icon.make('redo'), onClick: () => { } },
-                    { key: 'options', name: 'Options...', icon: Icon.make('settings'), onClick: () => { 
-                        $.windows.open('settings')
-                    } },
+                    {
+                        key: 'options', name: 'Options...', icon: Icon.make('settings'), onClick: () => {
+                            $.windows.open('settings');
+                        }
+                    },
                 ]]
             },
             {
