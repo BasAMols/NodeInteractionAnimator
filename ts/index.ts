@@ -1,4 +1,4 @@
-import { DragManager } from './interface/dragManager';
+import { DragManager } from './interface/dragging/dragManager';
 import { WorkSpace } from './interface/interface';
 import { PanelManager } from './interface/panelManager';
 import { WindowManager } from './interface/windows/windowManager';
@@ -16,6 +16,11 @@ class Glob {
     public windows: WindowManager;
     public windowSize: Vector2;
     public drag: DragManager;
+    public get unique():string{
+      this.uniqueIndex++;
+      return (this.uniqueIndex+1000).toString(16);
+    }
+    private uniqueIndex:number = 0;
 };
 window.$ = new Glob();
 window.log = console.log;

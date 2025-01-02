@@ -9,7 +9,7 @@ import { GraphicPanel } from './panels/graphic/graphicPanel';
 import { WindowManager } from './interface/windows/windowManager';
 import { Settings } from './interface/windows/settings';
 import { WindowPanel } from './interface/windows/window';
-import { DragManager } from './interface/dragManager';
+import { DragManager } from './interface/dragging/dragManager';
 
 
 

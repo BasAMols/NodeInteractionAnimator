@@ -20,6 +20,8 @@ export type SectionContent = sectionContentEmpty | sectionContentPanel | section
 
 
 export class Section extends DomElement<'div'> {
+    resizerKey: string;
+    resizer: DomElement<"span">;
     static getEmpty(): sectionContentEmpty {
         return {
             type: 'empty',
@@ -41,29 +43,20 @@ export class Section extends DomElement<'div'> {
     }
     protected parent: Section | undefined;
     public contentWrap: DomElement<"div">;
-    protected dragger: DomElement<"span">;
     protected mode: 'split' | 'panel';
     private panelSwitch: MenuS;
     protected panel: Panel | undefined;
     protected sections: [Section, Section] | undefined;
     private _direction: 'v' | 'h' | undefined;
     private sectionMenu: Menu;
-    private _dragging: boolean;
-    public get dragging(): boolean {
-        return this._dragging;
-    }
-    public set dragging(value: boolean) {
-        this._dragging = value;
-        this.dragger.setStyle('pointerEvents', value ? 'none' : 'auto');
-        this.dragger.domElement.classList[value ? 'add' : 'remove']('dragging');
-    }
     protected get direction(): 'v' | 'h' | undefined {
         return this._direction;
     }
     protected set direction(value: 'v' | 'h' | undefined) {
         this._direction = value;
-        this.domElement.classList[this.direction === 'h' ? 'add' : 'remove']('h');
-        this.domElement.classList[this.direction === 'v' ? 'add' : 'remove']('v');
+        this.class(false, 'v' , 'h');
+        this.class(true, this.direction)
+        $.drag.able(this.resizerKey, true, value === 'h'?'col-resize':'row-resize')
     }
 
     private _percentage: number | undefined;
@@ -78,8 +71,8 @@ export class Section extends DomElement<'div'> {
             this.sections[0].setStyle(this.direction === 'h' ? 'height' : 'width', `100%`);
             this.sections[1].setStyle(this.direction === 'h' ? 'height' : 'width', `100%`);
 
-            this.dragger.setStyle('left', this.direction === 'h' ? `calc(${this._percentage}% - 3px)` : '4px');
-            this.dragger.setStyle('top', this.direction === 'v' ? `calc(${this._percentage}% - 3px)` : '4px');
+            this.resizer.setStyle('left', this.direction === 'h' ? `calc(${this._percentage}% - 3px)` : '4px');
+            this.resizer.setStyle('top', this.direction === 'v' ? `calc(${this._percentage}% - 3px)` : '4px');
         }
         this.resize();
     }
@@ -146,7 +139,7 @@ export class Section extends DomElement<'div'> {
                 $.panels.assign(this.panel, this);
                 this.panelSwitch.silentValue(this.panel?.id);
 
-                this.dragger.visible = false;
+                this.resizer.visible = false;
             } else {
                 this.domElement.classList.remove('s_panel');
                 this.domElement.classList.add('s_split');
@@ -155,7 +148,7 @@ export class Section extends DomElement<'div'> {
                 this.direction = content.direction || (this.parent.direction === 'v' ? 'h' : 'v');
                 this.percentage = content.percentage || 50;
 
-                this.dragger.visible = true;
+                this.resizer.visible = true;
             }
         } else {
             this.setPanel();
@@ -198,26 +191,21 @@ export class Section extends DomElement<'div'> {
         this.child('div', {
             className: 'section_outline'
         });
-        this.dragger = this.child('span', {
-            className: 'section_dragger'
-        });
-        this.dragger.child('div', {
-            className: 'section_dragger_collapse'
-        });
-
-
-        this.domElement.addEventListener('mousemove', (e: MouseEvent) => {
-            if (this.dragging) {
-                let v = this.direction === 'v' ?
-                    (e.y - this.domElement.getBoundingClientRect().y) / this.domElement.offsetHeight * 100 :
-                    (e.x - this.domElement.getBoundingClientRect().x) / this.domElement.offsetWidth * 100;
-
-                if (v !== 0) this.percentage = Util.clamp(v, 0, 100);
+        this.resizerKey = $.drag.register($.unique, {
+            element: this.resizer = this.child('span', {
+                className: `section_dragger`
+            }),
+            reference: this,
+            cursor: this.direction === 'h'?'col-resize':'row-resize',
+            move: (e) => {
+                if (this.direction === 'v'){
+                    this.percentage = e.factor.y*100;
+                }
+                if (this.direction === 'h'){
+                    this.percentage = e.factor.x*100;
+                }
             }
         });
-        this.dragger.domElement.addEventListener('mousedown', () => this.dragging = true);
-        this.dragger.domElement.addEventListener('mouseup', () => this.dragging = false);
-        this.domElement.addEventListener('mouseup', () => this.dragging = false);
 
         this.sectionMenu = this.append(new Menu([
             ...$.panels.getSelectObject(

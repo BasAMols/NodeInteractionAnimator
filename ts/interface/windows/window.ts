@@ -6,6 +6,8 @@ import { Menu } from '../menu';
 
 export class WindowPanel extends DomElement<'div'> {
     private _fullscreen: boolean = false;
+    resizer: DomElement;
+    resizerKey: string;
     public get fullscreen(): boolean {
         return this._fullscreen;
     }
@@ -21,13 +23,13 @@ export class WindowPanel extends DomElement<'div'> {
             this.setSize(this.preFullscreen[0]);
             this.setPosition(this.preFullscreen[1]);
         }
-        $.drag.able(`window_${this.id}`, !this.fullscreen)
+        $.drag.able(`window_${this.id}`, !this.fullscreen);
 
     }
 
     protected content: DomElement<"div">;
     protected header: DomElement<"div">;
-    public preFullscreen: [Vector2, Vector2] = [v2(),v2()];
+    public preFullscreen: [Vector2, Vector2] = [v2(), v2()];
     public size: Vector2 = v2();
     public position: Vector2 = v2(10, 10);
     private _open: boolean = false;
@@ -68,6 +70,23 @@ export class WindowPanel extends DomElement<'div'> {
                 this.focus();
             }
         });
+
+        this.resizerKey = $.drag.register($.unique, {
+            element: this.resizer = this.child('span', {
+                className: `window_resizer`
+            }),
+            reference: this,
+            cursor: 'nw-resize',
+            move: (e) => {
+                this.setSize(e.relative)
+            },
+            start: ()=>{
+                this.focus();
+            }
+        });
+        this.resizer.append(new Icon({name: 'aspect_ratio', weight: 200}))
+
+        
         this.header.append(new Menu([
             {
                 key: 'max',

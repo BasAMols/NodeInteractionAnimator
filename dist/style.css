@@ -170,61 +170,7 @@ body {
                 }
             }
 
-            >.section_dragger {
-                position: absolute;
-                z-index: 3;
 
-                &:after {
-                    content: '';
-                    background: repeating-linear-gradient(45deg, var(--color-blue3) 0px, var(--color-blue3) 4px, transparent 4px, transparent 8px);
-                    width: 100%;
-                    height: 100%;
-                    transition: opacity 0.1s, width 0.1s, height 0.1s, margin 0.1s, filter 0.1s;
-                    display: block;
-                    opacity: 0;
-                    filter: saturate(0);
-                    border-radius: 10px;
-                }
-
-                &:hover:after {
-                    opacity: 1;
-                    filter: saturate(1);
-                }
-
-                .v>& {
-                    width: calc(100% - 8px);
-                    height: 20px;
-                    margin-top: -7px;
-                    cursor: n-resize;
-
-                    &:after {
-                        height: 6px;
-                        margin: 7px 0;
-                    }
-
-                    &:hover:after {
-                        height: 10px;
-                        margin: 5px 0;
-                    }
-                }
-
-                .h>& {
-                    height: calc(100% - 6px);
-                    width: 20px;
-                    margin-left: -7px;
-                    cursor: e-resize;
-
-                    &:after {
-                        width: 6px;
-                        margin: 0 7px;
-                    }
-
-                    &:hover:after {
-                        width: 10px;
-                        margin: 0 5px;
-                    }
-                }
-            }
         }
 
         &>.section {
@@ -464,8 +410,209 @@ div.window {
     margin-right: 5px;
 }
 
+
+.section_dragger {
+    position: absolute;
+    z-index: 3;
+
+    &:after {
+        content: '';
+        background: repeating-linear-gradient(45deg, var(--color-blue3) 0px, var(--color-blue3) 4px, transparent 4px, transparent 8px);
+        width: 100%;
+        height: 100%;
+        transition: opacity 0.1s, width 0.1s, height 0.1s, margin 0.1s, filter 0.1s;
+        display: block;
+        opacity: 0;
+        filter: saturate(0);
+        border-radius: 10px;
+    }
+
+    &:hover:after {
+        opacity: 1;
+        filter: saturate(1);
+    }
+
+    .v>& {
+        width: calc(100% - 8px);
+        height: 20px;
+        margin-top: -7px;
+
+        &:after {
+            height: 6px;
+            margin: 7px 0;
+        }
+
+        &:hover:after {
+            height: 10px;
+            margin: 5px 0;
+        }
+    }
+
+    .h>& {
+        height: calc(100% - 6px);
+        width: 20px;
+        margin-left: -7px;
+
+        &:after {
+            width: 6px;
+            margin: 0 7px;
+        }
+
+        &:hover:after {
+            width: 10px;
+            margin: 0 5px;
+        }
+    }
+}
+
+.window_resizer.draggable {
+    width: 28px;
+    height: 23px;
+    display: block;
+    position: absolute;
+    bottom: 4px;
+    right: 2px;
+    &>.icon {
+        color: var(--color-verydark);
+        font-size: 30px;
+    }
+}
+
+
 .draggable {
     cursor: grab;
+
+    &.cursor_context-menu {
+        cursor: context-menu
+    }
+
+    &.cursor_help {
+        cursor: help
+    }
+
+    &.cursor_pointer {
+        cursor: pointer
+    }
+
+    &.cursor_progress {
+        cursor: progress
+    }
+
+    &.cursor_wait {
+        cursor: wait
+    }
+
+    &.cursor_cell {
+        cursor: cell
+    }
+
+    &.cursor_crosshair {
+        cursor: crosshair
+    }
+
+    &.cursor_text {
+        cursor: text
+    }
+
+    &.cursor_vertical-text {
+        cursor: vertical-text
+    }
+
+    &.cursor_alias {
+        cursor: alias
+    }
+
+    &.cursor_copy {
+        cursor: copy
+    }
+
+    &.cursor_move {
+        cursor: move
+    }
+
+    &.cursor_no-drop {
+        cursor: no-drop
+    }
+
+    &.cursor_not-allowed {
+        cursor: not-allowed
+    }
+
+    &.cursor_grab {
+        cursor: grab
+    }
+
+    &.cursor_grabbing {
+        cursor: grabbing
+    }
+
+    &.cursor_e-resize {
+        cursor: e-resize
+    }
+
+    &.cursor_n-resize {
+        cursor: n-resize
+    }
+
+    &.cursor_ne-resize {
+        cursor: ne-resize
+    }
+
+    &.cursor_nw-resize {
+        cursor: nw-resize
+    }
+
+    &.cursor_s-resize {
+        cursor: s-resize
+    }
+
+    &.cursor_se-resize {
+        cursor: se-resize
+    }
+
+    &.cursor_sw-resize {
+        cursor: sw-resize
+    }
+
+    &.cursor_w-resize {
+        cursor: w-resize
+    }
+
+    &.cursor_ew-resize {
+        cursor: ew-resize
+    }
+
+    &.cursor_ns-resize {
+        cursor: ns-resize
+    }
+
+    &.cursor_nesw-resize {
+        cursor: nesw-resize
+    }
+
+    &.cursor_nwse-resize {
+        cursor: nwse-resize
+    }
+
+    &.cursor_col-resize {
+        cursor: col-resize
+    }
+
+    &.cursor_row-resize {
+        cursor: row-resize
+    }
+
+    &.cursor_all-scroll {
+        cursor: all-scroll
+    }
+
+    &.cursor_zoom-in {
+        cursor: zoom-in
+    }
+
+    &.cursor_zoom-out {
+        cursor: zoom-out
+    }
 }
 
 .dragOverlay.dragging {

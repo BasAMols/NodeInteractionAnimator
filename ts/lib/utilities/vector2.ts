@@ -1,3 +1,5 @@
+import { Util } from './utils';
+
 export function v2(x?: { x: number, y: number; }): Vector2;
 export function v2(x?: [number, number]): Vector2;
 export function v2(x?: number, y?: number): Vector2;
@@ -29,6 +31,18 @@ export class Vector2 extends Array<number> {
     }
     public scale(n: number): Vector2 {
         return new Vector2(this[0] * n, this[1] * n);
+    }
+    public clampComponents(min:number = 0, max:number = 1) {
+        return new Vector2(
+            Util.clamp(this[0], min, max), 
+            Util.clamp(this[1], min, max), 
+        )
+    }
+    public divideComponents(v: Vector2): Vector2 {
+        if (v.every((n)=>n!==0)){
+            return new Vector2(this[0] / v[0], this[1] / v[1]);
+        }
+        return new Vector2(0,0)
     }
     public c() {
         return new Vector2(this[0], this[1])

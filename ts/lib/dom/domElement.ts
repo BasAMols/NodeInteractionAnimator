@@ -7,8 +7,11 @@ export interface DomElementProperties {
     onClick?: ()=>void;
     visible?: boolean,
 }
-export class DomElement<T extends keyof HTMLElementTagNameMap> {
+export class DomElement<T extends keyof HTMLElementTagNameMap = keyof HTMLElementTagNameMap> {
     public domElement: HTMLElementTagNameMap[T];
+    public class(b: boolean = undefined, ...d: string[]):void {
+        this.domElement.classList[b?'add':'remove'](...d)
+    };
     private _onClick?: () => void;
     public get onClick(): () => void {
         return this._onClick;
@@ -76,6 +79,7 @@ export class DomElement<T extends keyof HTMLElementTagNameMap> {
     private click() {
         this.onClick?.()
     }
+
     public remove(d: DomElement<any>) {
         try {
             this.domElement.removeChild(d.domElement)
