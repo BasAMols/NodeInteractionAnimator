@@ -8,8 +8,8 @@ import { Ticker } from './lib/utilities/ticker';
 import { GraphicPanel } from './panels/graphic/graphicPanel';
 import { WindowManager } from './interface/windows/windowManager';
 import { Settings } from './interface/windows/settings';
-import { WindowPanel } from './interface/windows/window';
 import { DragManager } from './interface/dragging/dragManager';
+import { Notes } from './interface/windows/notes';
 
 
 
@@ -28,10 +28,8 @@ export class Main {
             new TimelinePanel(),
         ])
         $.windows = new WindowManager([
-            new WindowPanel('s', 'S'),
-            new WindowPanel('a', 'A'),
-            new WindowPanel('b', 'B'),
             new Settings(),
+            new Notes(),
         ])
         $.workspace = new WorkSpace({
             default: {

@@ -16,7 +16,7 @@ export class WindowManager extends DomElement<'div'> {
                 window: p,
             };
             this.append(p);
-            this.open(p.id);
+            this.close(p.id);
         });
     }
     public resize() {

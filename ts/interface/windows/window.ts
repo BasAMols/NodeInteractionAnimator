@@ -91,11 +91,23 @@ export class WindowPanel extends DomElement<'div'> {
             {
                 key: 'max',
                 name: '',
+                className: 'max-button',
+                type: 'Action',
+                design: 'inline',
+                icon: Icon.make('check_box_outline_blank'),
+                onClick: () => {
+                    this.fullscreen = true;
+                }
+            },
+            {
+                key: 'min',
+                name: '',
+                className: 'min-button',
                 type: 'Action',
                 design: 'inline',
                 icon: Icon.make('filter_none'),
                 onClick: () => {
-                    this.fullscreen = !this.fullscreen;
+                    this.fullscreen = false;
                 }
             },
             {

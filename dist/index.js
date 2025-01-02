@@ -303,7 +303,8 @@ var MenuP = class extends DomElement {
           this.open = false;
         },
         icon: a.icon,
-        design: a.design || "inline"
+        design: a.design || "inline",
+        className: a.className
       })),
       hasIcon: Boolean(a.icon),
       label: a.name
@@ -366,7 +367,7 @@ var Menu = class extends DomElement {
       d.forEach((v) => this.addButton(v));
   }
   addButton(data) {
-    const menuWrap = this.child("div", { className: "menu_wrap menu_type_" + data.type.toLowerCase() });
+    const menuWrap = this.child("div", { className: "menu_wrap menu_type_".concat(data.type.toLowerCase(), " ").concat(data.className || "") });
     let button, panel;
     if (data.type === "Action") {
       button = menuWrap.append(new Button({
@@ -718,6 +719,23 @@ var WorkSpace = class extends DomElement {
         data: [Object.entries(p).map(([k, v]) => {
           return { key: k, name: v.name };
         })]
+      },
+      {
+        key: "tools",
+        name: "Tools",
+        design: "inline",
+        icon: { name: "construction", weight: 200 },
+        type: "Panel",
+        data: [[
+          {
+            key: "notes",
+            name: "Notes",
+            icon: Icon.make("notes"),
+            onClick: () => {
+              $.windows.open("notes");
+            }
+          }
+        ]]
       }
     ]));
     this.presets = Object.fromEntries(Object.entries(p).map(([k, v]) => {
@@ -974,7 +992,7 @@ var WindowManager = class extends DomElement {
         window: p
       };
       this.append(p);
-      this.open(p.id);
+      this.close(p.id);
     });
   }
   resize() {
@@ -1049,11 +1067,23 @@ var WindowPanel = class extends DomElement {
       {
         key: "max",
         name: "",
+        className: "max-button",
+        type: "Action",
+        design: "inline",
+        icon: Icon.make("check_box_outline_blank"),
+        onClick: () => {
+          this.fullscreen = true;
+        }
+      },
+      {
+        key: "min",
+        name: "",
+        className: "min-button",
         type: "Action",
         design: "inline",
         icon: Icon.make("filter_none"),
         onClick: () => {
-          this.fullscreen = !this.fullscreen;
+          this.fullscreen = false;
         }
       },
       {
@@ -1248,6 +1278,20 @@ var DragManager = class extends DomElement {
   }
 };
 
+// ts/interface/windows/notes.ts
+var Notes = class extends WindowPanel {
+  constructor() {
+    super("notes", "Notes");
+    this.area = this.content.child("textarea");
+    this.area.domElement.addEventListener("change", (v) => {
+      this.text = this.area.domElement.textContent;
+    });
+  }
+  resize() {
+    super.resize();
+  }
+};
+
 // ts/main.ts
 var Main = class {
   constructor() {
@@ -1261,10 +1305,8 @@ var Main = class {
       new TimelinePanel()
     ]);
     $.windows = new WindowManager([
-      new WindowPanel("s", "S"),
-      new WindowPanel("a", "A"),
-      new WindowPanel("b", "B"),
-      new Settings()
+      new Settings(),
+      new Notes()
     ]);
     $.workspace = new WorkSpace({
       default: {

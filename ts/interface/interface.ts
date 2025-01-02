@@ -46,7 +46,7 @@ export class WorkSpace extends DomElement<'div'> {
 
     }
     public resize() {
-        $.windowSize = v2(window.innerWidth,window.innerHeight);
+        $.windowSize = v2(window.innerWidth, window.innerHeight);
         $.windows.resize();
         this.mainSection.resize();
     }
@@ -101,6 +101,20 @@ export class WorkSpace extends DomElement<'div'> {
                 data: [Object.entries(p).map(([k, v]) => {
                     return { key: k, name: v.name };
                 })]
+            },
+            {
+                key: 'tools',
+                name: 'Tools',
+                design: 'inline',
+                icon: { name: 'construction', weight: 200 },
+                type: 'Panel',
+                data: [[
+                    {
+                        key: 'notes', name: 'Notes', icon: Icon.make('notes'), onClick: () => {
+                            $.windows.open('notes');
+                        }
+                    },
+                ]]
             }
         ]));
 

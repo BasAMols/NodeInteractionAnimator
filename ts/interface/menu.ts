@@ -29,7 +29,8 @@ export type MenuButton = {
     key: string,
     name?: string,
     icon?: IconProperties;
-    design?: 'unset' | 'icon' | 'inline' | 'default'
+    className?: string,
+    design?: 'unset' | 'icon' | 'inline' | 'default';
 } & (MenuButtonAction | MenuButtonSelect | MenuButtonPanel);
 
 export interface MenuOption {
@@ -48,7 +49,7 @@ export class MenuP extends DomElement<'div'> {
     public set open(value: boolean) {
         this._open = value;
         this.domElement.classList[value ? 'add' : 'remove']('open');
-        this.button.active = value
+        this.button.active = value;
     }
     public toggle() {
         this.open = !this.open;
@@ -66,10 +67,10 @@ export class MenuP extends DomElement<'div'> {
         onClick: () => void,
         icon?: IconProperties,
         classList?: string,
-        design?: 'unset' | 'icon' | 'inline'
-    } | string)[][], prop: {classList?: string} = {}) {
-        super('div', { className: 'menu_panel ' + (prop.classList || '')});
-        
+        design?: 'unset' | 'icon' | 'inline';
+    } | string)[][], prop: { classList?: string; } = {}) {
+        super('div', { className: 'menu_panel ' + (prop.classList || '') });
+
         d.forEach((c) => {
             const column = this.child('div', { className: 'menu_column' });
             const index = this.columns.push(column) - 1;
@@ -83,8 +84,9 @@ export class MenuP extends DomElement<'div'> {
         key: string,
         name: string,
         onClick: () => void,
+        className?: string,
         icon?: IconProperties;
-        design?: 'unset' | 'icon' | 'inline'
+        design?: 'unset' | 'icon' | 'inline';
     } | string), i: number) {
         const column = this.columns[i];
         if (typeof a === 'string') {
@@ -100,12 +102,13 @@ export class MenuP extends DomElement<'div'> {
             column: column,
             button: column.append(new Button({
                 text: a.name || '...',
-                onClick: ()=>{
+                onClick: () => {
                     a.onClick();
                     this.open = false;
                 },
                 icon: a.icon,
-                design: a.design || 'inline'
+                design: a.design || 'inline',
+                className: a.className,
             })) as Button,
             hasIcon: Boolean(a.icon),
             label: a.name,
@@ -127,13 +130,13 @@ export class MenuS extends MenuP {
     }
     public set open(value: boolean) {
         super.open = value;
-        this.button.domElement.classList[value?'add':'remove']('open')
+        this.button.domElement.classList[value ? 'add' : 'remove']('open');
     }
     constructor(button: Button, c: (v: string) => void, d: ({
         key: string,
         name: string,
         icon?: IconProperties;
-    } | string)[][], prop: {classList?: string} = {}) {
+    } | string)[][], prop: { classList?: string; } = {}) {
         super(button, d.map((c) => c.map((v) => {
             if (typeof v === 'string') return v;
             return {
@@ -143,7 +146,7 @@ export class MenuS extends MenuP {
                 icon: v.icon,
             };
         })), prop);
-        this.domElement.classList.add('select')
+        this.domElement.classList.add('select');
         this.onChange = c;
     }
     public value(key: string) {
@@ -155,9 +158,9 @@ export class MenuS extends MenuP {
         let foundText = '';
         Object.entries(this.options).forEach(([k, v]) => {
             v.button.active = k === key;
-            if (k === key) foundText = v.label
+            if (k === key) foundText = v.label;
         });
-        this.button.setText(foundText)
+        this.button.setText(foundText);
     }
 }
 
@@ -173,7 +176,7 @@ export class Menu extends DomElement<'div'> {
         if (d) d.forEach((v) => this.addButton(v));
     }
     public addButton(data: MenuButton) {
-        const menuWrap = this.child('div', { className: 'menu_wrap menu_type_' + data.type.toLowerCase() });
+        const menuWrap = this.child('div', { className: `menu_wrap menu_type_${data.type.toLowerCase()} ${data.className || ''}` });
 
         let button: Button, panel: MenuP | MenuS;
         if (data.type === 'Action') {
@@ -189,7 +192,7 @@ export class Menu extends DomElement<'div'> {
                 icon: data.icon,
                 text: data.name,
                 className: 'opens',
-                onClick:()=>{
+                onClick: () => {
                     panel.toggle();
                 },
                 design: data.design || 'default'
@@ -202,7 +205,7 @@ export class Menu extends DomElement<'div'> {
                 icon: data.icon,
                 text: data.name,
                 className: 'opens',
-                onClick:()=>{
+                onClick: () => {
                     panel.toggle();
                 },
                 design: data.design || 'default'

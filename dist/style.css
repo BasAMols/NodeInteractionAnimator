@@ -5,12 +5,14 @@
     --color-link: #9f9df5;
     --color-dark: #222226;
     --color-verydark: #1e1e22;
+    --color-grey: #54545c;
     --color-blue1: #2d2f33;
     --color-blue2: #444362;
     --color-blue3: #5c5aa9;
 }
 
-button.button {
+button.button,
+textarea {
     all: unset;
 }
 
@@ -23,6 +25,31 @@ button.button {
     font-size: 15px;
     color: var(--color-text);
     font-variation-settings: "wdth" 97;
+
+
+
+
+
+
+
+    /* width */
+    &::-webkit-scrollbar {
+        width: 7px;
+    }
+
+    /* Track */
+    &::-webkit-scrollbar-track {
+        background: transparent;
+        margin: 10px;
+    }
+
+    /* Handle */
+    &::-webkit-scrollbar-thumb {
+        background: var(--color-grey);
+        border-radius: var(--radius);
+        padding: 10px;
+    }
+
 }
 
 html {
@@ -332,7 +359,7 @@ header>.menu>.menu_wrap .menu_panel {
     position: absolute;
     border-radius: 5px;
     background-color: var(--color-blue1);
-    box-shadow: 0px 0px 21px var(--color-verydark);
+    /* box-shadow: 0px 0px 21px var(--color-verydark); */
     transform-origin: left top;
 }
 
@@ -343,7 +370,7 @@ header>.menu>.menu_wrap .menu_panel {
     right: 0;
     bottom: 0;
     top: 0;
-    box-shadow: inset 0px 0px 14px #00000057 !important;
+    box-shadow: inset 0px 8px 14px #00000021 !important;
     pointer-events: none;
 }
 
@@ -360,11 +387,258 @@ div.window {
     height: 500px;
     background: var(--color-blue1);
     position: absolute;
-    box-shadow: 0px 0px 7px 5px #20202326;
+    box-shadow: 0px 0px 9px 0px #20202354;
     border-radius: 5px;
     overflow: hidden;
     border: 1px solid #424242;
     pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     &:not(.fullscreen).grabbing {
         cursor: grabbing;
@@ -394,11 +668,23 @@ div.window {
     top: 5px;
 }
 
-.window.fullscreen {
-    border-radius: 0;
+.window {
+    &:not(.fullscreen)>.windowHeader>.menu>.min-button {
+        display: none;
+    }
 
-    &>.windowHeader>.drag {
-        display: none
+    &.fullscreen {
+        border-radius: 0;
+
+        &>.windowHeader {
+            &>.drag {
+                display: none
+            }
+
+            &>.menu>.max-button {
+                display: none;
+            }
+        }
     }
 }
 
@@ -470,12 +756,31 @@ div.window {
     height: 23px;
     display: block;
     position: absolute;
-    bottom: 4px;
-    right: 2px;
+    bottom: 6px;
+    right: 5px;
+
+
+
+
+
+
     &>.icon {
-        color: var(--color-verydark);
+        color: var(--color-grey);
         font-size: 30px;
     }
+}
+
+#notes {
+    textarea {
+        width: 100%;
+        height: 100%;
+        overflow-y: auto;
+        box-sizing: border-box;
+    }
+}
+
+#notes>.windowContent {
+    padding: 7px 9px !important;
 }
 
 
@@ -559,7 +864,8 @@ div.window {
     }
 
     &.cursor_nw-resize {
-        cursor: nw-resize
+        cursor: nw-resize;
+        z-index: 4;
     }
 
     &.cursor_s-resize {
@@ -621,4 +927,9 @@ div.window {
     position: absolute;
     z-index: 20;
     cursor: grabbing;
+}
+
+.windowContent {
+    flex-grow: 1;
+    background: #28282b;
 }
