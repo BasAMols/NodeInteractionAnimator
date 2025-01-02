@@ -25,13 +25,13 @@ export interface MenuButtonPanel {
         icon?: IconProperties;
     } | string)[][];
 }
-export type MenuButton = {
+export type MenuButton = ({
     key: string,
     name?: string,
     icon?: IconProperties;
     className?: string,
     design?: 'unset' | 'icon' | 'inline' | 'default';
-} & (MenuButtonAction | MenuButtonSelect | MenuButtonPanel);
+} & (MenuButtonAction | MenuButtonSelect | MenuButtonPanel)) | string;
 
 export interface MenuOption {
     type: 'option',
@@ -101,7 +101,7 @@ export class MenuP extends DomElement<'div'> {
         this.options[a.key] = {
             column: column,
             button: column.append(new Button({
-                text: a.name || '...',
+                text: a.name,
                 onClick: () => {
                     a.onClick();
                     this.open = false;
@@ -176,60 +176,65 @@ export class Menu extends DomElement<'div'> {
         if (d) d.forEach((v) => this.addButton(v));
     }
     public addButton(data: MenuButton) {
-        const menuWrap = this.child('div', { className: `menu_wrap menu_type_${data.type.toLowerCase()} ${data.className || ''}` });
+        if (typeof data === 'string') {
+            this.child('div', { className: `menu_space`, text: data})
+        } else {
 
-        let button: Button, panel: MenuP | MenuS;
-        if (data.type === 'Action') {
-            button = menuWrap.append(new Button({
-                onClick: data.onClick,
-                icon: data.icon,
-                text: data.name,
-                design: data.design || 'default'
-            })) as Button;
-        }
-        if (data.type === 'Select') {
-            button = menuWrap.append(new Button({
-                icon: data.icon,
-                text: data.name,
-                className: 'opens',
-                onClick: () => {
-                    const b = panel.open
-                    this.closeAll();
-                    panel.toggle(!b);
-                },
-                design: data.design || 'default'
-            })) as Button;
-            panel = menuWrap.append(new MenuS(button, data.onChange, data.data)) as MenuS;
-            // button.append(new Icon({name: 'more_vert', weight: 200, offset: [0,0.5]}))
-        }
-        if (data.type === 'Panel') {
-            button = menuWrap.append(new Button({
-                icon: data.icon,
-                text: data.name,
-                className: 'opens',
-                onClick: () => {
-                    const b = panel.open
-                    this.closeAll();
-                    panel.toggle(!b);
-                },
-                design: data.design || 'default'
-            })) as Button;
-            panel = menuWrap.append(new MenuP(button, data.data)) as MenuP;
-            // button.append(new Icon({name: 'more_vert', weight: 200, offset: [0,0.5]}))
+            const menuWrap = this.child('div', { className: `menu_wrap menu_type_${data.type.toLowerCase()} ${data.className || ''}` });
+            let button: Button, panel: MenuP | MenuS;
+            if (data.type === 'Action') {
+                button = menuWrap.append(new Button({
+                    onClick: data.onClick,
+                    icon: data.icon,
+                    text: data.name,
+                    design: data.design || 'default'
+                })) as Button;
+            }
+            if (data.type === 'Select') {
+                button = menuWrap.append(new Button({
+                    icon: data.icon,
+                    text: data.name,
+                    className: 'opens',
+                    onClick: () => {
+                        const b = panel.open;
+                        this.closeAll();
+                        panel.toggle(!b);
+                    },
+                    design: data.design || 'default'
+                })) as Button;
+                panel = menuWrap.append(new MenuS(button, data.onChange, data.data)) as MenuS;
+                // button.append(new Icon({name: 'more_vert', weight: 200, offset: [0,0.5]}))
+            }
+            if (data.type === 'Panel') {
+                button = menuWrap.append(new Button({
+                    icon: data.icon,
+                    text: data.name,
+                    className: 'opens',
+                    onClick: () => {
+                        const b = panel.open;
+                        this.closeAll();
+                        panel.toggle(!b);
+                    },
+                    design: data.design || 'default'
+                })) as Button;
+                panel = menuWrap.append(new MenuP(button, data.data)) as MenuP;
+                // button.append(new Icon({name: 'more_vert', weight: 200, offset: [0,0.5]}))
+            }
+
+            this.buttons[data.key] = {
+                button,
+                panel
+            };
         }
 
-        this.buttons[data.key] = {
-            button,
-            panel
-        };
 
     }
     getButton(key: string) {
         return this.buttons[key];
     }
     closeAll() {
-        Object.values(this.buttons).forEach((b)=>{
+        Object.values(this.buttons).forEach((b) => {
             if (b.panel) b.panel.toggle(false);
-        })
+        });
     }
 }

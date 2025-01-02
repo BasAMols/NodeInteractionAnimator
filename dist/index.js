@@ -297,7 +297,7 @@ var MenuP = class extends DomElement {
     this.options[a.key] = {
       column,
       button: column.append(new Button({
-        text: a.name || "...",
+        text: a.name,
         onClick: () => {
           a.onClick();
           this.open = false;
@@ -367,48 +367,52 @@ var Menu = class extends DomElement {
       d.forEach((v) => this.addButton(v));
   }
   addButton(data) {
-    const menuWrap = this.child("div", { className: "menu_wrap menu_type_".concat(data.type.toLowerCase(), " ").concat(data.className || "") });
-    let button, panel;
-    if (data.type === "Action") {
-      button = menuWrap.append(new Button({
-        onClick: data.onClick,
-        icon: data.icon,
-        text: data.name,
-        design: data.design || "default"
-      }));
+    if (typeof data === "string") {
+      this.child("div", { className: "menu_space", text: data });
+    } else {
+      const menuWrap = this.child("div", { className: "menu_wrap menu_type_".concat(data.type.toLowerCase(), " ").concat(data.className || "") });
+      let button, panel;
+      if (data.type === "Action") {
+        button = menuWrap.append(new Button({
+          onClick: data.onClick,
+          icon: data.icon,
+          text: data.name,
+          design: data.design || "default"
+        }));
+      }
+      if (data.type === "Select") {
+        button = menuWrap.append(new Button({
+          icon: data.icon,
+          text: data.name,
+          className: "opens",
+          onClick: () => {
+            const b = panel.open;
+            this.closeAll();
+            panel.toggle(!b);
+          },
+          design: data.design || "default"
+        }));
+        panel = menuWrap.append(new MenuS(button, data.onChange, data.data));
+      }
+      if (data.type === "Panel") {
+        button = menuWrap.append(new Button({
+          icon: data.icon,
+          text: data.name,
+          className: "opens",
+          onClick: () => {
+            const b = panel.open;
+            this.closeAll();
+            panel.toggle(!b);
+          },
+          design: data.design || "default"
+        }));
+        panel = menuWrap.append(new MenuP(button, data.data));
+      }
+      this.buttons[data.key] = {
+        button,
+        panel
+      };
     }
-    if (data.type === "Select") {
-      button = menuWrap.append(new Button({
-        icon: data.icon,
-        text: data.name,
-        className: "opens",
-        onClick: () => {
-          const b = panel.open;
-          this.closeAll();
-          panel.toggle(!b);
-        },
-        design: data.design || "default"
-      }));
-      panel = menuWrap.append(new MenuS(button, data.onChange, data.data));
-    }
-    if (data.type === "Panel") {
-      button = menuWrap.append(new Button({
-        icon: data.icon,
-        text: data.name,
-        className: "opens",
-        onClick: () => {
-          const b = panel.open;
-          this.closeAll();
-          panel.toggle(!b);
-        },
-        design: data.design || "default"
-      }));
-      panel = menuWrap.append(new MenuP(button, data.data));
-    }
-    this.buttons[data.key] = {
-      button,
-      panel
-    };
   }
   getButton(key) {
     return this.buttons[key];
@@ -437,6 +441,7 @@ var Panel = class extends DomElement {
     this.content = this.child("div", {
       className: "panelContent"
     });
+    this.menu = this.header.append(new Menu());
   }
   resize() {
     const { width, height } = this.content.domElement.getBoundingClientRect();
@@ -522,6 +527,7 @@ var Section = class _Section extends DomElement {
     if (this.panel) {
       this.contentWrap.remove(this.panel);
       this.panel = void 0;
+      this.class(true, "empty");
     }
     this.panelSwitch.silentValue("empty");
   }
@@ -533,6 +539,7 @@ var Section = class _Section extends DomElement {
     (_a = this.sections) == null ? void 0 : _a.forEach((s) => s.empty(true));
     this.sections = void 0;
     this.percentage = void 0;
+    this.class(true, "empty");
     if (del) {
       (_b = this.parent) == null ? void 0 : _b.contentWrap.remove(this);
     }
@@ -543,15 +550,16 @@ var Section = class _Section extends DomElement {
     if (content && content.type !== "empty") {
       this.mode = content.type;
       if (content.type === "panel") {
-        this.domElement.classList.remove("s_split");
-        this.domElement.classList.add("s_panel");
+        this.class(false, "s_split");
+        this.class(true, "s_panel");
         this.panel = content.panel;
         $.panels.assign(this.panel, this);
         this.panelSwitch.silentValue((_a = this.panel) == null ? void 0 : _a.id);
+        this.class(!Boolean(this.panel), "empty");
         this.resizer.visible = false;
       } else {
-        this.domElement.classList.remove("s_panel");
-        this.domElement.classList.add("s_split");
+        this.class(true, "s_split");
+        this.class(false, "s_panel");
         this.sections = content.sections.map((d) => new _Section(this, d));
         this.direction = content.direction || (this.parent.direction === "v" ? "h" : "v");
         this.percentage = content.percentage || 50;
@@ -564,7 +572,7 @@ var Section = class _Section extends DomElement {
   }
   constructor(parent, content) {
     super("div", {
-      className: "section"
+      className: "section empty"
     });
     if (parent) {
       this.parent = parent;
@@ -831,17 +839,25 @@ var PanelManager = class {
   getSelectObject(key = "panel", switchPanel, close, splitH, splitV) {
     let buttons = [];
     let subMenu = [];
-    if (switchPanel)
+    if (switchPanel) {
+      let d = [[{ key: "empty", name: "", icon: Icon.make("more_horiz") }]];
+      let lastMenu = 0;
+      for (let i = 0; i < Object.entries(this.list).length; i++) {
+        const [k, v] = Object.entries(this.list)[i];
+        if (d[lastMenu].length > 2)
+          lastMenu = d.push([]) - 1;
+        d[lastMenu].push({ key: k, name: v.panel.name, icon: v.panel.icon });
+      }
       buttons.push({
         key,
         name: "Panel",
         type: "Select",
         onChange: switchPanel,
         icon: Icon.make("grid_view"),
-        data: [[{ key: "empty", name: "" }, ...Object.entries(this.list).map(([k, v]) => {
-          return { key: k, name: v.panel.name };
-        })]]
+        data: d
       });
+      buttons.push("|");
+    }
     if (splitV)
       buttons.push({
         type: "Action",
@@ -880,7 +896,7 @@ var Camera = class extends DomElement {
     this.contentSize = contentSize;
     this.clamp = clamp;
     this._dragging = false;
-    this.position = [0, 0];
+    this.position = v2();
     this.scale = 1;
     this.mover = this.child("div", {
       className: "panelCameraMover grid"
@@ -916,16 +932,11 @@ var Camera = class extends DomElement {
   }
   mouseMove(e) {
     if (this.dragging) {
-      this.move([e.movementX, e.movementY]);
+      this.move(v2(e.movementX, e.movementY));
     }
   }
   move(v) {
-    this.setPosition(
-      [
-        this.position[0] + v[0],
-        this.position[1] + v[1]
-      ]
-    );
+    this.setPosition(v2(this.position[0] + v[0], this.position[1] + v[1]));
   }
   resize() {
     [0, 1].forEach((i) => {
@@ -946,16 +957,30 @@ var Camera = class extends DomElement {
   }
 };
 
-// ts/panels/node/nodePanel.ts
-var NodeEditorPanel = class extends Panel {
-  constructor() {
-    super("node", "Node");
-    this.camera = this.content.append(new Camera(this, [500, 500]));
+// ts/panels/cameraPanel.ts
+var CameraPanel = class extends Panel {
+  constructor(id, name, cameraSize) {
+    super(id, name);
+    this.camera = this.content.append(new Camera(this, cameraSize, false));
+  }
+  childCamera(type, properties) {
+    return this.appendCamera(new DomElement(type, properties));
+  }
+  appendCamera(d) {
+    return this.camera.content.append(d);
   }
   resize() {
     var _a;
     super.resize();
     (_a = this.camera) == null ? void 0 : _a.resize();
+  }
+};
+
+// ts/panels/node/nodePanel.ts
+var NodeEditorPanel = class extends CameraPanel {
+  constructor() {
+    super("node", "Node", v2(2e3, 1e3));
+    this.icon = Icon.make("linked_services");
   }
 };
 
@@ -963,6 +988,7 @@ var NodeEditorPanel = class extends Panel {
 var OutlinerPanel = class extends Panel {
   constructor() {
     super("outliner", "Outliner");
+    this.icon = Icon.make("summarize");
   }
 };
 
@@ -970,6 +996,7 @@ var OutlinerPanel = class extends Panel {
 var PropertiesPanel = class extends Panel {
   constructor() {
     super("properties", "Properties");
+    this.icon = Icon.make("tune");
   }
 };
 
@@ -977,19 +1004,68 @@ var PropertiesPanel = class extends Panel {
 var TimelinePanel = class extends Panel {
   constructor() {
     super("timeline", "Timeline");
+    this.icon = Icon.make("timeline");
+    this.menu.addButton({
+      key: $.unique,
+      type: "Action",
+      design: "icon",
+      icon: Icon.make("skip_previous"),
+      onClick: () => {
+      }
+    });
+    this.menu.addButton({
+      key: $.unique,
+      type: "Action",
+      design: "icon",
+      icon: Icon.make("resume"),
+      onClick: () => {
+      }
+    });
+    this.menu.addButton({
+      key: $.unique,
+      type: "Action",
+      design: "icon",
+      icon: Icon.make("skip_next"),
+      onClick: () => {
+      }
+    });
+    this.menu.addButton({
+      key: $.unique,
+      type: "Action",
+      design: "icon",
+      icon: Icon.make("autoplay"),
+      onClick: () => {
+      }
+    });
   }
 };
 
 // ts/panels/graphic/graphicPanel.ts
-var GraphicPanel = class extends Panel {
+var GraphicPanel = class extends CameraPanel {
   constructor() {
-    super("graphic", "Graphic");
-    this.camera = this.content.append(new Camera(this, [505, 545], false));
+    super("graphic", "Graphic", v2(505, 545));
+    this._light = false;
+    this.icon = Icon.make("animation");
+    this.childCamera("div", {
+      className: "_graphic"
+    });
+    this.menu.addButton({
+      className: "panelMenu",
+      key: "graphic_light",
+      type: "Action",
+      design: "icon",
+      icon: Icon.make("light_mode"),
+      onClick: () => {
+        this.light = !this.light;
+      }
+    });
   }
-  resize() {
-    var _a;
-    super.resize();
-    (_a = this.camera) == null ? void 0 : _a.resize();
+  get light() {
+    return this._light;
+  }
+  set light(value) {
+    this._light = value;
+    this.class(value, "light");
   }
 };
 

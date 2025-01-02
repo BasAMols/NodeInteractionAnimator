@@ -26,12 +26,6 @@ textarea {
     color: var(--color-text);
     font-variation-settings: "wdth" 97;
 
-
-
-
-
-
-
     /* width */
     &::-webkit-scrollbar {
         width: 7px;
@@ -130,6 +124,7 @@ body {
         .section {
             background: var(--color-dark);
 
+
             >.section_content {
                 width: 100%;
                 height: 100%;
@@ -197,6 +192,9 @@ body {
                 }
             }
 
+            &:not(.empty)>*>*>button.button {
+                background-color: transparent !important;
+            }
 
         }
 
@@ -395,251 +393,6 @@ div.window {
     display: flex;
     flex-direction: column;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     &:not(.fullscreen).grabbing {
         cursor: grabbing;
     }
@@ -759,11 +512,6 @@ div.window {
     bottom: 6px;
     right: 5px;
 
-
-
-
-
-
     &>.icon {
         color: var(--color-grey);
         font-size: 30px;
@@ -782,6 +530,19 @@ div.window {
 #notes>.windowContent {
     padding: 7px 9px !important;
 }
+
+
+.menu_space {
+    padding: 0 1px;
+    margin-right: 8px;
+    display: flex;
+    justify-content: center;
+    line-height: 23px;
+    font-size: 17px;
+    color: #7b7b83;
+}
+
+
 
 
 .draggable {
@@ -932,4 +693,24 @@ div.window {
 .windowContent {
     flex-grow: 1;
     background: #28282b;
+}
+
+._graphic {
+    background: white;
+    width: 505px;
+    height: 545px;
+    filter: brightness(0.3);
+    transition: filter 0.2s;
+
+    .panel.light & {
+        filter: none;
+    }
+}
+
+.panelHeader {
+    z-index: 4;
+    position: absolute;
+    top: 4px;
+    right: -1px;
+    margin-right: auto;
 }

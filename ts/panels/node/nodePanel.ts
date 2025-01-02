@@ -1,14 +1,10 @@
-import { Panel } from '../../interface/panel';
-import { Camera } from '../utils/camera';
+import { Icon, IconProperties } from '../../lib/dom/icon';
+import { v2 } from '../../lib/utilities/vector2';
+import { CameraPanel } from '../cameraPanel';
 
-export class NodeEditorPanel extends Panel {
-    camera: Camera;
+export class NodeEditorPanel extends CameraPanel {
+    public icon: IconProperties = Icon.make('linked_services');
     constructor() {
-        super('node', 'Node');
-        this.camera = this.content.append(new Camera(this, [500,500])) as Camera;
-    }
-    public resize(): void {
-        super.resize();
-        this.camera?.resize();
+        super('node', 'Node', v2(2000,1000));
     }
 }

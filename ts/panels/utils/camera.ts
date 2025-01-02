@@ -1,6 +1,7 @@
 import { Panel } from '../../interface/panel';
 import { DomElement } from '../../lib/dom/domElement';
 import { Util } from '../../lib/utilities/utils';
+import { v2, Vector2 } from '../../lib/utilities/vector2';
 
 export class Camera extends DomElement<'div'> {
     private _dragging: boolean = false;
@@ -11,12 +12,12 @@ export class Camera extends DomElement<'div'> {
         this._dragging = value;
         this.domElement.classList[value ? 'add' : 'remove']('grabbing');
     }
-    private position: [number, number] = [0, 0];
+    private position: Vector2 = v2();
     private scale: number = 1;
 
     private mover: DomElement<"div">;
     public content: DomElement<"div">;
-    constructor(private parent: Panel, private contentSize?: [number, number], private clamp: boolean = true) {
+    constructor(private parent: Panel, private contentSize?: Vector2, private clamp: boolean = true) {
         super('div', {
             className: 'panelCamera draggable'
         });
@@ -48,15 +49,11 @@ export class Camera extends DomElement<'div'> {
     }
     mouseMove(e: MouseEvent) {
         if (this.dragging) {
-            this.move([e.movementX, e.movementY]);
+            this.move(v2(e.movementX, e.movementY));
         }
     }
-    move(v: [number, number]) {
-        this.setPosition(
-            [
-                this.position[0] + (v[0]),
-                this.position[1] + (v[1]),
-            ]);
+    move(v: Vector2) {
+        this.setPosition(v2(this.position[0] + (v[0]), this.position[1] + (v[1])));
     }
     resize() {
         [0, 1].forEach((i) => {
@@ -64,7 +61,7 @@ export class Camera extends DomElement<'div'> {
         });
         this.setPosition(this.position);
     }
-    setPosition(v: [number, number]) {
+    setPosition(v: Vector2) {
         [0, 1].forEach((i) => {
             this.position[i] = v[i];
         });

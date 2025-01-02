@@ -70,17 +70,31 @@ export class PanelManager {
             icon: IconProperties;
         }[] = [];
 
-                
-        if (switchPanel) buttons.push({
-            key: key,
-            name: 'Panel',
-            type: 'Select',
-            onChange: switchPanel,
-            icon: Icon.make('grid_view'),
-            data: [[{ key: 'empty', name: '' }, ...Object.entries(this.list).map(([k, v]) => {
-                return { key: k, name: v.panel.name };
-            })]]
-        });
+
+        if (switchPanel) {
+            let d: (string | {
+                key: string;
+                name: string;
+                icon?: IconProperties;
+            })[][] = [[{ key: 'empty', name: '', icon: Icon.make('more_horiz')}]];
+            let lastMenu = 0
+            for (let i = 0; i < Object.entries(this.list).length; i++) {
+                const [k, v] = Object.entries(this.list)[i];
+                if (d[lastMenu].length > 2) lastMenu = d.push([]) -1;
+                d[lastMenu].push({ key: k, name: v.panel.name, icon: v.panel.icon });
+            }
+
+            buttons.push({
+                key: key,
+                name: 'Panel',
+                type: 'Select',
+                onChange: switchPanel,
+                icon: Icon.make('grid_view'),
+                data: d
+            });
+
+            buttons.push('|');
+        }
 
         if (splitV) buttons.push({
             type: 'Action',
@@ -103,34 +117,6 @@ export class PanelManager {
             design: 'icon',
             onClick: close,
         });
-
-        // if (splitV) subMenu.push({
-        //     key: 'splitV',
-        //     name: 'Split Horizontal',
-        //     icon: { name: 'splitscreen_vertical_add', weight: 200 },
-        //     onClick: splitV,
-        // });
-        // if (splitH) subMenu.push({
-        //     key: 'splitH',
-        //     name: 'Split Vertical',
-        //     icon: { name: 'splitscreen_add', weight: 200 },
-        //     onClick: splitH,
-        // });
-        // if (close) subMenu.push({
-        //     key: 'close',
-        //     name: 'Close Section',
-        //     icon: { name: 'close', weight: 200 },
-        //     onClick: close,
-        // });
-
-        // if (subMenu.length > 0) buttons.push({
-        //     key: 'sub',
-        //     name: '',
-        //     type: 'Panel',
-        //     data: [subMenu],
-        //     icon: Icon.make('more_vert', 300),
-        //     design: 'icon'
-        // });
 
 
         return buttons;

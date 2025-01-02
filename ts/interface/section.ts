@@ -110,6 +110,7 @@ export class Section extends DomElement<'div'> {
         if (this.panel) {
             this.contentWrap.remove(this.panel);
             this.panel = undefined;
+            this.class(true, 'empty')
         }
         this.panelSwitch.silentValue('empty');
     }
@@ -121,6 +122,7 @@ export class Section extends DomElement<'div'> {
         this.sections?.forEach((s) => s.empty(true));
         this.sections = undefined;
         this.percentage = undefined;
+        this.class(true, 'empty')
 
         if (del) {
             this.parent?.contentWrap.remove(this);
@@ -132,17 +134,19 @@ export class Section extends DomElement<'div'> {
         if (content && content.type !== 'empty') {
             this.mode = content.type;
             if (content.type === 'panel') {
-                this.domElement.classList.remove('s_split');
-                this.domElement.classList.add('s_panel');
+                this.class(false, 's_split')
+                this.class(true, 's_panel')
 
                 this.panel = content.panel;
                 $.panels.assign(this.panel, this);
                 this.panelSwitch.silentValue(this.panel?.id);
 
+                this.class(!Boolean(this.panel), 'empty')
+
                 this.resizer.visible = false;
             } else {
-                this.domElement.classList.remove('s_panel');
-                this.domElement.classList.add('s_split');
+                this.class(true, 's_split')
+                this.class(false, 's_panel')
 
                 this.sections = content.sections.map((d) => new Section(this, d)) as typeof this.sections;
                 this.direction = content.direction || (this.parent.direction === 'v' ? 'h' : 'v');
@@ -157,7 +161,7 @@ export class Section extends DomElement<'div'> {
     }
     constructor(parent?: Section, content?: SectionContent) {
         super('div', {
-            className: 'section'
+            className: 'section empty'
         });
         if (parent) {
             this.parent = parent;
