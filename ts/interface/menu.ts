@@ -51,8 +51,8 @@ export class MenuP extends DomElement<'div'> {
         this.domElement.classList[value ? 'add' : 'remove']('open');
         this.button.active = value;
     }
-    public toggle() {
-        this.open = !this.open;
+    public toggle(b = !this.open) {
+        this.open = b;
     }
     protected columns: DomElement<'div'>[] = [];
     protected options: Record<string, {
@@ -193,7 +193,9 @@ export class Menu extends DomElement<'div'> {
                 text: data.name,
                 className: 'opens',
                 onClick: () => {
-                    panel.toggle();
+                    const b = panel.open
+                    this.closeAll();
+                    panel.toggle(!b);
                 },
                 design: data.design || 'default'
             })) as Button;
@@ -206,7 +208,9 @@ export class Menu extends DomElement<'div'> {
                 text: data.name,
                 className: 'opens',
                 onClick: () => {
-                    panel.toggle();
+                    const b = panel.open
+                    this.closeAll();
+                    panel.toggle(!b);
                 },
                 design: data.design || 'default'
             })) as Button;
@@ -222,5 +226,10 @@ export class Menu extends DomElement<'div'> {
     }
     getButton(key: string) {
         return this.buttons[key];
+    }
+    closeAll() {
+        Object.values(this.buttons).forEach((b)=>{
+            if (b.panel) b.panel.toggle(false);
+        })
     }
 }

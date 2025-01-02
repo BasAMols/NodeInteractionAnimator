@@ -281,8 +281,8 @@ var MenuP = class extends DomElement {
     this.domElement.classList[value ? "add" : "remove"]("open");
     this.button.active = value;
   }
-  toggle() {
-    this.open = !this.open;
+  toggle(b = !this.open) {
+    this.open = b;
   }
   addOption(a, i) {
     const column = this.columns[i];
@@ -383,7 +383,9 @@ var Menu = class extends DomElement {
         text: data.name,
         className: "opens",
         onClick: () => {
-          panel.toggle();
+          const b = panel.open;
+          this.closeAll();
+          panel.toggle(!b);
         },
         design: data.design || "default"
       }));
@@ -395,7 +397,9 @@ var Menu = class extends DomElement {
         text: data.name,
         className: "opens",
         onClick: () => {
-          panel.toggle();
+          const b = panel.open;
+          this.closeAll();
+          panel.toggle(!b);
         },
         design: data.design || "default"
       }));
@@ -408,6 +412,12 @@ var Menu = class extends DomElement {
   }
   getButton(key) {
     return this.buttons[key];
+  }
+  closeAll() {
+    Object.values(this.buttons).forEach((b) => {
+      if (b.panel)
+        b.panel.toggle(false);
+    });
   }
 };
 
@@ -668,6 +678,7 @@ var WorkSpace = class extends DomElement {
         name: "File",
         type: "Panel",
         design: "inline",
+        icon: { name: "draft", weight: 200 },
         data: [[
           { key: "new", name: "New", icon: Icon.make("library_add"), onClick: () => {
           } },
@@ -694,6 +705,7 @@ var WorkSpace = class extends DomElement {
         name: "Edit",
         type: "Panel",
         design: "inline",
+        icon: { name: "edit_square", weight: 200 },
         data: [[
           { key: "undo", name: "Undo", icon: Icon.make("undo"), onClick: () => {
           } },

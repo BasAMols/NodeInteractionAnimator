@@ -64,6 +64,7 @@ export class WorkSpace extends DomElement<'div'> {
                 name: 'File',
                 type: 'Panel',
                 design: 'inline',
+                icon: { name: 'draft', weight: 200 },
                 data: [[
                     { key: 'new', name: 'New', icon: Icon.make('library_add'), onClick: () => { } },
                     { key: 'open', name: 'Open...', icon: Icon.make('folder_open'), onClick: () => { } },
@@ -81,6 +82,7 @@ export class WorkSpace extends DomElement<'div'> {
                 name: 'Edit',
                 type: 'Panel',
                 design: 'inline',
+                icon: { name: 'edit_square', weight: 200 },
                 data: [[
                     { key: 'undo', name: 'Undo', icon: Icon.make('undo'), onClick: () => { } },
                     { key: 'redo', name: 'Redo...', icon: Icon.make('redo'), onClick: () => { } },
