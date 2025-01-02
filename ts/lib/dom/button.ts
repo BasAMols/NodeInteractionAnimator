@@ -4,6 +4,7 @@ import { Icon, IconProperties } from './icon';
 export type ButtonProperties = DomElementProperties & {
     enabled?: boolean,
     icon?: IconProperties
+    hover?: string,
     design?: 'default' | 'unset' | 'icon' | 'inline'
 }
 export class Button extends DomElement<'button'> {
@@ -33,6 +34,10 @@ export class Button extends DomElement<'button'> {
         }});
         if (properties.icon) this.append(new Icon(properties.icon));
         if (properties.text) this.span = this.child('span', {
+            text: properties.text
+        })
+        if (properties.hover) this.child('span', {
+            className: 'tooltip',
             text: properties.text
         })
         if (properties.enabled) this.enabled = properties.enabled;

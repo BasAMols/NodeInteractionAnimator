@@ -234,6 +234,11 @@ var Button = class extends DomElement {
       this.span = this.child("span", {
         text: properties.text
       });
+    if (properties.hover)
+      this.child("span", {
+        className: "tooltip",
+        text: properties.text
+      });
     if (properties.enabled)
       this.enabled = properties.enabled;
   }
@@ -377,7 +382,8 @@ var Menu = class extends DomElement {
           onClick: data.onClick,
           icon: data.icon,
           text: data.name,
-          design: data.design || "default"
+          design: data.design || "default",
+          hover: data.hover
         }));
       }
       if (data.type === "Select") {
@@ -385,6 +391,7 @@ var Menu = class extends DomElement {
           icon: data.icon,
           text: data.name,
           className: "opens",
+          hover: data.hover,
           onClick: () => {
             const b = panel.open;
             this.closeAll();
@@ -399,6 +406,7 @@ var Menu = class extends DomElement {
           icon: data.icon,
           text: data.name,
           className: "opens",
+          hover: data.hover,
           onClick: () => {
             const b = panel.open;
             this.closeAll();
@@ -427,25 +435,28 @@ var Menu = class extends DomElement {
 
 // ts/interface/panel.ts
 var Panel = class extends DomElement {
-  constructor(id, name) {
+  constructor(id, name, attr = {}) {
     super("div", {
       className: "panel",
       id
     });
     this.id = id;
     this.name = name;
-    this.size = [0, 0];
+    this.size = v2(0);
     this.header = this.child("div", {
       className: "panelHeader"
     });
     this.content = this.child("div", {
       className: "panelContent"
     });
-    this.menu = this.header.append(new Menu());
+    this.menu = this.header.append(new Menu(attr.buttons));
   }
   resize() {
     const { width, height } = this.content.domElement.getBoundingClientRect();
-    this.size = [width, height];
+    this.size = v2(width, height);
+  }
+  build() {
+    this.resize();
   }
 };
 
@@ -811,6 +822,9 @@ var PanelManager = class {
     var _a;
     return (_a = this.get(n)) == null ? void 0 : _a.panel;
   }
+  forEach(f) {
+    Object.entries(this.list).map(([k, d]) => [k, d.panel]).forEach(f);
+  }
   unassign(n) {
     if (!n)
       return;
@@ -893,23 +907,28 @@ var PanelManager = class {
 
 // ts/panels/utils/camera.ts
 var Camera = class extends DomElement {
-  constructor(parent, contentSize, clamp = true) {
+  constructor(parent, attr) {
+    var _a, _b;
     super("div", {
       className: "panelCamera"
     });
     this.parent = parent;
-    this.contentSize = contentSize;
-    this.clamp = clamp;
     this.position = v2();
     this.scale = 1;
-    this.mover = this.child("div", {
+    this.attr = {
+      scrollSpeed: 1,
+      minZoom: 1,
+      maxZoom: 1
+    };
+    Object.assign(this.attr, attr);
+    this.grid = this.child("div", {
       className: "panelCameraMover grid"
     });
     this.content = this.child("div", {
       className: "panelCameraContent",
       style: {
-        width: "".concat(this.contentSize[0], "px"),
-        height: "".concat(this.contentSize[1], "px")
+        width: "".concat((_a = this.attr.contentSize) == null ? void 0 : _a[0], "px"),
+        height: "".concat((_b = this.attr.contentSize) == null ? void 0 : _b[1], "px")
       }
     });
     this.draggerKey = $.mouse.registerDrag($.unique, {
@@ -923,9 +942,8 @@ var Camera = class extends DomElement {
       element: this,
       reference: this.content,
       scroll: (e) => {
-        const newScale = Util.clamp(this.scale + this.scale * (e.delta / 100) * -0.1, 0.1, 5);
-        const oldScale = this.scale / newScale;
-        this.move(e.relative.scale(1 - oldScale).scale(-1));
+        const newScale = Util.clamp(this.scale + this.scale * (e.delta / 100) * (-0.1 * this.attr.scrollSpeed), this.attr.minZoom, this.attr.maxZoom);
+        this.move(e.relative.scale(1 - newScale / this.scale));
         this.scale = newScale;
         this.resize();
       }
@@ -936,28 +954,42 @@ var Camera = class extends DomElement {
   }
   resize() {
     [0, 1].forEach((i) => {
-      this.mover.setStyle(["width", "height"][i], "".concat((this.parent.size[i] + 80 * this.scale) * (1 / this.scale), "px"));
+      this.grid.setStyle(["width", "height"][i], "".concat((this.parent.size[i] + 100 * this.scale) * (1 / this.scale), "px"));
     });
     this.setPosition(this.position);
   }
   setPosition(v) {
-    [0, 1].forEach((i) => {
-      this.position[i] = v[i];
-    });
-    this.mover.setStyle("transform", "translate(".concat(this.position.map((p) => {
-      return p % (40 * this.scale) - 40 * this.scale;
+    this.position = v;
+    this.grid.setStyle("transform", "translate(".concat(this.position.map((p) => {
+      return p % (50 * this.scale) - 50 * this.scale;
     }).join("px,"), "px) scale(").concat(this.scale, ")"));
     this.content.setStyle("transform", "translate(".concat(this.position.map((p) => {
       return p;
     }).join("px,"), "px) scale(").concat(this.scale, ")"));
   }
+  center() {
+    if (this.attr.contentSize) {
+      this.setPosition(this.parent.size.subtract(this.attr.contentSize.scale(this.scale)).scale(0.5));
+    } else {
+      this.setPosition(v2(0, 0));
+    }
+  }
 };
 
 // ts/panels/cameraPanel.ts
 var CameraPanel = class extends Panel {
-  constructor(id, name, cameraSize) {
-    super(id, name);
-    this.camera = this.content.append(new Camera(this, cameraSize, false));
+  constructor(id, name, attr = {}) {
+    super(id, name, __spreadValues(__spreadValues({}, attr), { buttons: [{
+      className: "panelMenu",
+      key: "graphic_center",
+      type: "Action",
+      design: "icon",
+      icon: Icon.make("recenter"),
+      onClick: () => {
+        this.camera.center();
+      }
+    }, ...attr.buttons || []] }));
+    this.camera = this.content.append(new Camera(this, attr.camera || {}));
   }
   childCamera(type, properties) {
     return this.appendCamera(new DomElement(type, properties));
@@ -970,12 +1002,17 @@ var CameraPanel = class extends Panel {
     super.resize();
     (_a = this.camera) == null ? void 0 : _a.resize();
   }
+  build() {
+    this.camera.center();
+  }
 };
 
 // ts/panels/node/nodePanel.ts
 var NodeEditorPanel = class extends CameraPanel {
   constructor() {
-    super("node", "Node", v2(2e3, 1e3));
+    super("node", "Node", {
+      camera: { contentSize: v2(505, 545), minZoom: 0.1, maxZoom: 5, scrollSpeed: 2 }
+    });
     this.icon = Icon.make("linked_services");
   }
 };
@@ -1039,21 +1076,23 @@ var TimelinePanel = class extends Panel {
 // ts/panels/graphic/graphicPanel.ts
 var GraphicPanel = class extends CameraPanel {
   constructor() {
-    super("graphic", "Graphic", v2(505, 545));
+    super("graphic", "Graphic", {
+      camera: { contentSize: v2(505, 545), minZoom: 0.1, maxZoom: 5, scrollSpeed: 2 },
+      buttons: [{
+        className: "panelMenu",
+        key: "graphic_light",
+        type: "Action",
+        design: "icon",
+        icon: Icon.make("light_mode"),
+        onClick: () => {
+          this.light = !this.light;
+        }
+      }]
+    });
     this._light = false;
     this.icon = Icon.make("animation");
     this.childCamera("div", {
       className: "_graphic"
-    });
-    this.menu.addButton({
-      className: "panelMenu",
-      key: "graphic_light",
-      type: "Action",
-      design: "icon",
-      icon: Icon.make("light_mode"),
-      onClick: () => {
-        this.light = !this.light;
-      }
     });
   }
   get light() {
@@ -1459,6 +1498,7 @@ var Main = class {
     $.workspace.resize();
     setTimeout(() => {
       $.workspace.resize();
+      $.panels.forEach(([k, p]) => p.build());
     }, 20);
   }
   tick() {

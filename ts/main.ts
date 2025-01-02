@@ -44,6 +44,7 @@ export class Main {
         $.workspace.resize();
         setTimeout(()=>{
             $.workspace.resize();
+            $.panels.forEach(([k, p])=>p.build())
         }, 20)
     }
 

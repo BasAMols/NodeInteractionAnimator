@@ -27,6 +27,9 @@ export class PanelManager {
     public getPanel(n: string): Panel {
         return this.get(n)?.panel;
     }
+    public forEach(f: (value: [string, Panel], index: number, array: [string, Panel][]) => void) {
+        Object.entries(this.list).map(([k,d])=>[k,d.panel]).forEach(f)
+    };
 
     public unassign(n: string | Panel | Section) {
         if (!n) return;

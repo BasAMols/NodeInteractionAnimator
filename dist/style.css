@@ -348,7 +348,7 @@ header>.menu>.menu_wrap .menu_panel {
 .grid {
     position: absolute;
     background: var(--color-dark);
-    background-size: 40px 40px;
+    background-size: 50px 50px;
     background-image: linear-gradient(to right, #303237 1px, transparent 1px), linear-gradient(to bottom, #303237 1px, transparent 1px);
     transform-origin: left top;
 }

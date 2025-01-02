@@ -30,6 +30,7 @@ export type MenuButton = ({
     name?: string,
     icon?: IconProperties;
     className?: string,
+    hover?: string,
     design?: 'unset' | 'icon' | 'inline' | 'default';
 } & (MenuButtonAction | MenuButtonSelect | MenuButtonPanel)) | string;
 
@@ -187,7 +188,8 @@ export class Menu extends DomElement<'div'> {
                     onClick: data.onClick,
                     icon: data.icon,
                     text: data.name,
-                    design: data.design || 'default'
+                    design: data.design || 'default',
+                    hover: data.hover
                 })) as Button;
             }
             if (data.type === 'Select') {
@@ -195,6 +197,7 @@ export class Menu extends DomElement<'div'> {
                     icon: data.icon,
                     text: data.name,
                     className: 'opens',
+                    hover: data.hover,
                     onClick: () => {
                         const b = panel.open;
                         this.closeAll();
@@ -210,6 +213,7 @@ export class Menu extends DomElement<'div'> {
                     icon: data.icon,
                     text: data.name,
                     className: 'opens',
+                    hover: data.hover,
                     onClick: () => {
                         const b = panel.open;
                         this.closeAll();

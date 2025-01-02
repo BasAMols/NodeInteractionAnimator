@@ -13,20 +13,22 @@ export class GraphicPanel extends CameraPanel {
         this.class(value, 'light');
     }
     constructor() {
-        super('graphic', 'Graphic', v2(505, 545));
+        super('graphic', 'Graphic', {
+            camera: {contentSize: v2(505, 545), minZoom: 0.1, maxZoom: 5, scrollSpeed: 2},
+            buttons: [{
+                className: 'panelMenu',
+                key: 'graphic_light',
+                type: 'Action',
+                design: 'icon',
+                icon: Icon.make('light_mode'),
+                onClick: () => {
+                    this.light = !this.light;
+                },
+            }]
+        });
         this.childCamera('div', {
             className: '_graphic'
         });
-
-        this.menu.addButton({
-            className: 'panelMenu',
-            key: 'graphic_light',
-            type: 'Action',
-            design: 'icon',
-            icon: Icon.make('light_mode'),
-            onClick: () => {
-                this.light = !this.light;
-            },
-        })
     }
+
 }

@@ -5,6 +5,8 @@ import { CameraPanel } from '../cameraPanel';
 export class NodeEditorPanel extends CameraPanel {
     public icon: IconProperties = Icon.make('linked_services');
     constructor() {
-        super('node', 'Node', v2(2000,1000));
+        super('node', 'Node', {
+            camera: {contentSize: v2(505, 545), minZoom: 0.1, maxZoom: 5, scrollSpeed: 2}
+        });
     }
 }
