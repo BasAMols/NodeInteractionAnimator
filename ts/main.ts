@@ -21,7 +21,7 @@ export class Main {
 
     public constructor() {
         $.main = this;
-        $.drag = new DragManager();
+        $.mouse = new DragManager();
         $.panels = new PanelManager([
             new GraphicPanel(),
             new NodeEditorPanel(),

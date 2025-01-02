@@ -56,7 +56,7 @@ export class Section extends DomElement<'div'> {
         this._direction = value;
         this.class(false, 'v' , 'h');
         this.class(true, this.direction)
-        $.drag.able(this.resizerKey, true, value === 'h'?'col-resize':'row-resize')
+        $.mouse.able(this.resizerKey, true, value === 'h'?'col-resize':'row-resize')
     }
 
     private _percentage: number | undefined;
@@ -195,7 +195,7 @@ export class Section extends DomElement<'div'> {
         this.child('div', {
             className: 'section_outline'
         });
-        this.resizerKey = $.drag.register($.unique, {
+        this.resizerKey = $.mouse.registerDrag($.unique, {
             element: this.resizer = this.child('span', {
                 className: `section_dragger`
             }),

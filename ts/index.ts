@@ -14,7 +14,7 @@ class Glob {
     public panels: PanelManager;
     public windows: WindowManager;
     public windowSize: Vector2;
-    public drag: DragManager;
+    public mouse: DragManager;
     public get unique():string{
       this.uniqueIndex++;
       return (this.uniqueIndex+1000).toString(16);

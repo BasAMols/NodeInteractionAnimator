@@ -23,7 +23,7 @@ export class WindowPanel extends DomElement<'div'> {
             this.setSize(this.preFullscreen[0]);
             this.setPosition(this.preFullscreen[1]);
         }
-        $.drag.able(`window_${this.id}`, !this.fullscreen);
+        $.mouse.able(`window_${this.id}`, !this.fullscreen);
 
     }
 
@@ -58,7 +58,7 @@ export class WindowPanel extends DomElement<'div'> {
             className: 'windowHeader'
         });
         this.header.append(new Icon({ name: 'drag_indicator', classList: 'drag' }));
-        $.drag.register(`window_${id}`, {
+        $.mouse.registerDrag(`window_${id}`, {
             element: this.header.child('span', {
                 text: name,
                 className: 'title'
@@ -71,7 +71,7 @@ export class WindowPanel extends DomElement<'div'> {
             }
         });
 
-        this.resizerKey = $.drag.register($.unique, {
+        this.resizerKey = $.mouse.registerDrag($.unique, {
             element: this.resizer = this.child('span', {
                 className: `window_resizer`
             }),

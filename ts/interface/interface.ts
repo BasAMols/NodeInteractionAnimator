@@ -32,7 +32,7 @@ export class WorkSpace extends DomElement<'div'> {
         });
 
         this.append($.windows);
-        this.append($.drag);
+        this.append($.mouse);
 
         this.buildToolbar(presets);
 

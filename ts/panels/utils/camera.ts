@@ -4,22 +4,17 @@ import { Util } from '../../lib/utilities/utils';
 import { v2, Vector2 } from '../../lib/utilities/vector2';
 
 export class Camera extends DomElement<'div'> {
-    private _dragging: boolean = false;
-    public get dragging(): boolean {
-        return this._dragging;
-    }
-    public set dragging(value: boolean) {
-        this._dragging = value;
-        this.domElement.classList[value ? 'add' : 'remove']('grabbing');
-    }
     private position: Vector2 = v2();
     private scale: number = 1;
 
     private mover: DomElement<"div">;
     public content: DomElement<"div">;
+    
+    private draggerKey: string;
+    private scrollKey: string;
     constructor(private parent: Panel, private contentSize?: Vector2, private clamp: boolean = true) {
         super('div', {
-            className: 'panelCamera draggable'
+            className: 'panelCamera'
         });
         this.mover = this.child('div', {
             className: 'panelCameraMover grid'
@@ -32,25 +27,28 @@ export class Camera extends DomElement<'div'> {
             }
 
         });
-        this.domElement.addEventListener('wheel', (e) => {
-            this.scale = Util.clamp(this.scale + this.scale * (e.deltaY / 100) * -0.1, 0.1, 5);
-            this.resize();
+
+        this.draggerKey = $.mouse.registerDrag($.unique, {
+            element: this,
+            cursor: 'grab',
+            move: (e) => {
+                this.move(e.delta);
+            },
         });
-        this.domElement.addEventListener('mouseleave', () => {
-            this.dragging = false;
+
+        this.scrollKey = $.mouse.registerScroll($.unique, {
+            element: this,
+            reference: this.content,
+            scroll: (e) => {
+                const newScale = Util.clamp(this.scale + this.scale * (e.delta / 100) * -0.1, 0.1, 5);
+                const oldScale = this.scale / newScale;
+                this.move(e.relative.scale(1-oldScale).scale(-1))
+
+                this.scale = newScale;
+                this.resize();
+            },
         });
-        this.domElement.addEventListener('mousedown', () => {
-            this.dragging = true;
-        });
-        this.domElement.addEventListener('mouseup', () => {
-            this.dragging = false;
-        });
-        this.domElement.addEventListener('mousemove', this.mouseMove.bind(this));
-    }
-    mouseMove(e: MouseEvent) {
-        if (this.dragging) {
-            this.move(v2(e.movementX, e.movementY));
-        }
+
     }
     move(v: Vector2) {
         this.setPosition(v2(this.position[0] + (v[0]), this.position[1] + (v[1])));

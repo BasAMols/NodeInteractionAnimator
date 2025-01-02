@@ -477,7 +477,7 @@ var Section = class _Section extends DomElement {
     this._direction = value;
     this.class(false, "v", "h");
     this.class(true, this.direction);
-    $.drag.able(this.resizerKey, true, value === "h" ? "col-resize" : "row-resize");
+    $.mouse.able(this.resizerKey, true, value === "h" ? "col-resize" : "row-resize");
   }
   get percentage() {
     return this._percentage;
@@ -601,7 +601,7 @@ var Section = class _Section extends DomElement {
     this.child("div", {
       className: "section_outline"
     });
-    this.resizerKey = $.drag.register($.unique, {
+    this.resizerKey = $.mouse.registerDrag($.unique, {
       element: this.resizer = this.child("span", {
         className: "section_dragger"
       }),
@@ -659,7 +659,7 @@ var WorkSpace = class extends DomElement {
       className: "content"
     });
     this.append($.windows);
-    this.append($.drag);
+    this.append($.mouse);
     this.buildToolbar(presets);
     this.mainSection = this.append(new Section());
     this.setPreset(presets ? Object.keys(presets)[0] : "empty");
@@ -895,12 +895,11 @@ var PanelManager = class {
 var Camera = class extends DomElement {
   constructor(parent, contentSize, clamp = true) {
     super("div", {
-      className: "panelCamera draggable"
+      className: "panelCamera"
     });
     this.parent = parent;
     this.contentSize = contentSize;
     this.clamp = clamp;
-    this._dragging = false;
     this.position = v2();
     this.scale = 1;
     this.mover = this.child("div", {
@@ -913,32 +912,24 @@ var Camera = class extends DomElement {
         height: "".concat(this.contentSize[1], "px")
       }
     });
-    this.domElement.addEventListener("wheel", (e) => {
-      this.scale = Util.clamp(this.scale + this.scale * (e.deltaY / 100) * -0.1, 0.1, 5);
-      this.resize();
+    this.draggerKey = $.mouse.registerDrag($.unique, {
+      element: this,
+      cursor: "grab",
+      move: (e) => {
+        this.move(e.delta);
+      }
     });
-    this.domElement.addEventListener("mouseleave", () => {
-      this.dragging = false;
+    this.scrollKey = $.mouse.registerScroll($.unique, {
+      element: this,
+      reference: this.content,
+      scroll: (e) => {
+        const newScale = Util.clamp(this.scale + this.scale * (e.delta / 100) * -0.1, 0.1, 5);
+        const oldScale = this.scale / newScale;
+        this.move(e.relative.scale(1 - oldScale).scale(-1));
+        this.scale = newScale;
+        this.resize();
+      }
     });
-    this.domElement.addEventListener("mousedown", () => {
-      this.dragging = true;
-    });
-    this.domElement.addEventListener("mouseup", () => {
-      this.dragging = false;
-    });
-    this.domElement.addEventListener("mousemove", this.mouseMove.bind(this));
-  }
-  get dragging() {
-    return this._dragging;
-  }
-  set dragging(value) {
-    this._dragging = value;
-    this.domElement.classList[value ? "add" : "remove"]("grabbing");
-  }
-  mouseMove(e) {
-    if (this.dragging) {
-      this.move(v2(e.movementX, e.movementY));
-    }
   }
   move(v) {
     this.setPosition(v2(this.position[0] + v[0], this.position[1] + v[1]));
@@ -1130,7 +1121,7 @@ var WindowPanel = class extends DomElement {
       className: "windowHeader"
     });
     this.header.append(new Icon({ name: "drag_indicator", classList: "drag" }));
-    $.drag.register("window_".concat(id), {
+    $.mouse.registerDrag("window_".concat(id), {
       element: this.header.child("span", {
         text: name,
         className: "title"
@@ -1142,7 +1133,7 @@ var WindowPanel = class extends DomElement {
         this.focus();
       }
     });
-    this.resizerKey = $.drag.register($.unique, {
+    this.resizerKey = $.mouse.registerDrag($.unique, {
       element: this.resizer = this.child("span", {
         className: "window_resizer"
       }),
@@ -1213,7 +1204,7 @@ var WindowPanel = class extends DomElement {
       this.setSize(this.preFullscreen[0]);
       this.setPosition(this.preFullscreen[1]);
     }
-    $.drag.able("window_".concat(this.id), !this.fullscreen);
+    $.mouse.able("window_".concat(this.id), !this.fullscreen);
   }
   get open() {
     return this._open;
@@ -1277,7 +1268,8 @@ var DragManager = class extends DomElement {
   constructor() {
     super("div", { className: "dragOverlay" });
     this._dragging = false;
-    this.listeners = {};
+    this.dragListeners = {};
+    this.scrollListeners = {};
     this.domElement.addEventListener("mousemove", (e) => {
       if (this.dragging)
         this.move(e);
@@ -1291,49 +1283,63 @@ var DragManager = class extends DomElement {
     this._dragging = value;
     this.domElement.classList[value ? "add" : "remove"]("dragging");
   }
-  register(key, reg) {
+  registerDrag(key, reg) {
     var _a;
-    this.listeners[key] = __spreadValues(__spreadValues({}, reg), { enabled: true });
+    this.dragListeners[key] = __spreadValues(__spreadValues({}, reg), { enabled: true });
     reg.element.domElement.addEventListener("mousedown", (e) => {
-      if (this.listeners[key].enabled) {
+      if (this.dragListeners[key].enabled) {
         this.start(key, e);
       }
     });
     reg.element.class(true, "cursor_".concat((_a = reg.cursor) != null ? _a : "grab"), "draggable");
     return key;
   }
+  registerScroll(key, reg) {
+    this.scrollListeners[key] = __spreadValues(__spreadValues({}, reg), { enabled: true });
+    reg.element.domElement.addEventListener("wheel", (e) => {
+      if (this.scrollListeners[key].enabled) {
+        this.scroll(key, e);
+      }
+    });
+    reg.element.class(true, "scrollable");
+    return key;
+  }
   able(key, b, c) {
     var _a, _b;
-    if (!this.listeners[key])
-      return;
-    this.listeners[key].enabled = b;
-    this.listeners[key].element.domElement.classList[b ? "add" : "remove"]("draggable");
-    if (c) {
-      this.listeners[key].element.class(false, "cursor_".concat((_a = this.listeners[key].cursor) != null ? _a : "grab"));
-      this.listeners[key].cursor = c;
-      this.listeners[key].element.class(true, "cursor_".concat((_b = this.listeners[key].cursor) != null ? _b : "grab"));
+    if (this.dragListeners[key]) {
+      this.dragListeners[key].enabled = b;
+      this.dragListeners[key].element.domElement.classList[b ? "add" : "remove"]("draggable");
+      if (c) {
+        this.dragListeners[key].element.class(false, "cursor_".concat((_a = this.dragListeners[key].cursor) != null ? _a : "grab"));
+        this.dragListeners[key].cursor = c;
+        this.dragListeners[key].element.class(true, "cursor_".concat((_b = this.dragListeners[key].cursor) != null ? _b : "grab"));
+      }
+    }
+    if (this.scrollListeners[key]) {
+      this.scrollListeners[key].enabled = b;
+      this.scrollListeners[key].element.domElement.classList[b ? "add" : "remove"]("scrollable");
     }
   }
   cursor(key, c) {
     var _a, _b;
-    if (!key || !this.listeners[key])
+    if (!key || !this.dragListeners[key])
       return;
-    this.listeners[key].element.class(false, "cursor_".concat((_a = this.listeners[key].cursor) != null ? _a : "grab"));
-    this.listeners[key].cursor = c;
-    this.listeners[key].element.class(true, "cursor_".concat((_b = this.listeners[key].cursor) != null ? _b : "grab"));
+    this.dragListeners[key].element.class(false, "cursor_".concat((_a = this.dragListeners[key].cursor) != null ? _a : "grab"));
+    this.dragListeners[key].cursor = c;
+    this.dragListeners[key].element.class(true, "cursor_".concat((_b = this.dragListeners[key].cursor) != null ? _b : "grab"));
   }
   calcOffsets(key, e) {
-    if (!this.listeners[key])
+    if (!this.dragListeners[key])
       return;
-    let elementStart = v2(this.listeners[key].element.domElement.getBoundingClientRect());
+    let elementStart = v2(this.dragListeners[key].element.domElement.getBoundingClientRect());
     let mouseStart = v2(e.x, e.y);
-    this.listeners[key].elementStart = elementStart;
-    this.listeners[key].startOffset = elementStart.subtract(mouseStart);
+    this.dragListeners[key].elementStart = elementStart;
+    this.dragListeners[key].startOffset = elementStart.subtract(mouseStart);
   }
   start(key, e) {
     var _a, _b;
     if (!this.dragging) {
-      this.current = this.listeners[key];
+      this.current = this.dragListeners[key];
       this.dragging = true;
       this.calcOffsets(key, e);
       (_b = (_a = this.current).start) == null ? void 0 : _b.call(_a);
@@ -1356,6 +1362,27 @@ var DragManager = class extends DomElement {
         offset: this.current.startOffset,
         delta: v2(e.movementX, e.movementY),
         total: absolute.add(this.current.startOffset).subtract(this.current.elementStart),
+        factor,
+        e
+      });
+    }
+  }
+  scroll(key, e) {
+    if (key && this.scrollListeners[key] && this.scrollListeners[key].enabled) {
+      const target = this.scrollListeners[key];
+      const absolute = v2(e.clientX, e.clientY);
+      let relative, factor = v2();
+      if (target.reference) {
+        const ref = target.reference.domElement.getBoundingClientRect();
+        relative = absolute.subtract(v2(ref));
+        factor = relative.divideComponents(v2(ref.width, ref.height));
+      } else {
+        relative = absolute;
+      }
+      target.scroll({
+        relative,
+        absolute,
+        delta: e.deltaY,
         factor,
         e
       });
@@ -1409,7 +1436,7 @@ var ExportPanel = class extends WindowPanel {
 var Main = class {
   constructor() {
     $.main = this;
-    $.drag = new DragManager();
+    $.mouse = new DragManager();
     $.panels = new PanelManager([
       new GraphicPanel(),
       new NodeEditorPanel(),
