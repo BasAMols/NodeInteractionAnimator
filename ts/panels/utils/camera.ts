@@ -10,7 +10,7 @@ export interface CameraProps {
 }
 export class Camera extends DomElement<'div'> {
     private position: Vector2 = v2();
-    private scale: number = 1;
+    public scale: number = 1;
 
     private grid: DomElement<"div">;
     public content: DomElement<"div">;

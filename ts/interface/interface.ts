@@ -119,6 +119,26 @@ export class WorkSpace extends DomElement<'div'> {
                     },
                 ]]
             },
+            {
+                key: 'select',
+                name: 'Selected',
+                design: 'inline',
+                className:'menuSelect',
+                icon: { name: 'ink_selection', weight: 200 },
+                type: 'Panel',
+                data: [[
+                    {
+                        key: 'des', name: 'Deselect', icon: Icon.make('deselect'), onClick: () => {
+                            $.scene.focus()
+                        }
+                    },
+                    {
+                        key: 'del', name: 'Delete', icon: Icon.make('delete'), onClick: () => {
+                            $.scene.remove($.scene.selected)
+                        }
+                    },
+                ]]
+            },
         ]));
 
         this.presets = Object.fromEntries(Object.entries(p).map(([k, v]) => {

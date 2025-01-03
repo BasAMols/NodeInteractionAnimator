@@ -85,9 +85,9 @@ var DomElement = class _DomElement {
   child(type, properties = {}) {
     return this.append(new _DomElement(type, properties));
   }
-  click() {
+  click(e) {
     var _a;
-    (_a = this.onClick) == null ? void 0 : _a.call(this);
+    (_a = this.onClick) == null ? void 0 : _a.call(this, e);
   }
   remove(d) {
     try {
@@ -212,6 +212,12 @@ var Vector2 = class _Vector2 extends Array {
       return new _Vector2(this[0] / v[0], this[1] / v[1]);
     }
     return new _Vector2(0, 0);
+  }
+  floor() {
+    return new _Vector2(
+      Math.floor(this.x),
+      Math.floor(this.y)
+    );
   }
   c() {
     return new _Vector2(this[0], this[1]);
@@ -772,6 +778,32 @@ var WorkSpace = class extends DomElement {
             }
           }
         ]]
+      },
+      {
+        key: "select",
+        name: "Selected",
+        design: "inline",
+        className: "menuSelect",
+        icon: { name: "ink_selection", weight: 200 },
+        type: "Panel",
+        data: [[
+          {
+            key: "des",
+            name: "Deselect",
+            icon: Icon.make("deselect"),
+            onClick: () => {
+              $.scene.focus();
+            }
+          },
+          {
+            key: "del",
+            name: "Delete",
+            icon: Icon.make("delete"),
+            onClick: () => {
+              $.scene.remove($.scene.selected);
+            }
+          }
+        ]]
       }
     ]));
     this.presets = Object.fromEntries(Object.entries(p).map(([k, v]) => {
@@ -1078,16 +1110,26 @@ var GraphicPanel = class extends CameraPanel {
   constructor() {
     super("graphic", "Graphic", {
       camera: { contentSize: v2(505, 545), minZoom: 0.1, maxZoom: 5, scrollSpeed: 2 },
-      buttons: [{
-        className: "panelMenu",
-        key: "graphic_light",
-        type: "Action",
-        design: "icon",
-        icon: Icon.make("light_mode"),
-        onClick: () => {
-          this.light = !this.light;
+      buttons: [
+        {
+          key: "graphic_light",
+          type: "Action",
+          design: "icon",
+          icon: Icon.make("light_mode"),
+          onClick: () => {
+            this.light = !this.light;
+          }
+        },
+        {
+          key: "graphic_deselect",
+          type: "Action",
+          design: "icon",
+          icon: Icon.make("deselect"),
+          onClick: () => {
+            $.scene.focus();
+          }
         }
-      }]
+      ]
     });
     this._light = false;
     this.icon = Icon.make("animation");
@@ -1333,6 +1375,7 @@ var DragManager = class extends DomElement {
   set dragging(value) {
     this._dragging = value;
     this.domElement.classList[value ? "add" : "remove"]("dragging");
+    $.state[value ? "set" : "unset"]("dragging");
   }
   registerDrag(key, reg) {
     var _a;
@@ -1494,6 +1537,8 @@ var SceneObjectManager = class {
    * @return Returns the `SceneObject`
   */
   add(n) {
+    if (!n)
+      return;
     this.sceneObjects[n.key] = n;
     n.build();
     return n;
@@ -1503,9 +1548,11 @@ var SceneObjectManager = class {
    * @remarks This method will call the {@link SceneObject.delete() `delete()`} method on the sceneobject to ensure neat deletion. 
   */
   remove(n) {
-    if (!this.sceneObjects[n.key])
+    if (!n || !this.sceneObjects[n.key])
       return;
     n.delete();
+    if (n === this.selected)
+      this.focus();
     delete this.sceneObjects[n.key];
   }
   /** 
@@ -1531,12 +1578,21 @@ var SceneObjectManager = class {
    * @remarks Often used for importing an entire scene
    * @param clear Should the {@link SceneObjectManager.clear() `clear()`} method be run to empty the scene? 
   */
-  bulk(clear) {
+  bulk(v, clear) {
     if (clear)
       this.clear();
-    Object.values(this.sceneObjects).forEach((n) => {
-      this.remove(n);
+    v.forEach((n) => {
+      this.add(n);
     });
+  }
+  focus(s) {
+    this.selected = void 0;
+    Object.values(this.sceneObjects).forEach((n) => {
+      n.selected = n === s;
+      if (n.selected)
+        this.selected = n;
+    });
+    $.state[this.selected ? "set" : "unset"]("selected");
   }
   getComponentsByType(type) {
     return Object.values(this.sceneObjects).map((so) => so.getComponentsByType(type)).flat(1);
@@ -1550,8 +1606,20 @@ var SceneObjectManager = class {
 // ts/sceneobjects/components/sceneobjectComponent.ts
 var SceneObjectComponent = class {
   constructor(type, { key }) {
+    this._selected = false;
     this.type = type;
     this.key = key;
+  }
+  get selected() {
+    return this._selected;
+  }
+  set selected(value) {
+    if (this._selected !== value) {
+      this._selected = value;
+      this.updateState();
+    }
+  }
+  updateState() {
   }
   build() {
     $.scene.update(this.type);
@@ -1577,11 +1645,15 @@ var VisualImage = class extends VisualAsset {
     this.set(data);
   }
   set(d = this.data) {
-    var _a;
-    this.data = d;
+    Object.assign(this.data, d);
     this.setStyle("width", "".concat(this.data.size.x, "px"));
     this.setStyle("height", "".concat(this.data.size.y, "px"));
-    this.setStyle("background-image", "url(".concat((_a = this.data.url) != null ? _a : "https://placeholder.pics/svg/".concat(this.data.size.x, "x").concat(this.data.size.y, "/49514E-3A3247/FFFFFF-FFFFFF/%20placeholder"), ")"));
+    if (this.data.url) {
+      this.setStyle("background-image", "url(".concat(this.data.url, ")"));
+    } else {
+      this.setStyle("background-color", "#dbdbdb");
+      this.setStyle("background-image", void 0);
+    }
   }
 };
 var SceneObjectComponentVisual = class extends SceneObjectComponent {
@@ -1590,12 +1662,68 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
     this.dict = {
       image: VisualImage
     };
-    this.element = new DomElement("span", {
+    this.panel = $.panels.getPanel("graphic");
+    this.element = new DomElement("div", {
       className: "SceneObjectVisual"
     });
     this.visualType = attr.asset.visualType;
-    this.element.append(new this.dict[this.visualType](attr.asset));
-    this.setPosition(attr.position);
+    this.visual = new this.dict[this.visualType](attr.asset);
+    this.element.append(this.visual);
+    this.setPosition(attr.position.floor());
+    $.mouse.registerDrag($.unique, {
+      element: this.element,
+      cursor: "move",
+      reference: this.panel.graphic,
+      start: () => {
+        this.sceneObject.focus();
+      },
+      move: (e) => {
+        if (e.e.ctrlKey && e.e.shiftKey) {
+          attr.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).scale(0.05).floor().scale(20);
+        } else if (e.e.ctrlKey) {
+          attr.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).scale(0.1).floor().scale(10);
+        } else if (e.e.shiftKey) {
+          attr.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).scale(0.2).floor().scale(5);
+        } else {
+          attr.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).floor();
+        }
+        this.setPosition(attr.position);
+      }
+    });
+    this.resizerKey = $.mouse.registerDrag($.unique, {
+      element: this.resizer = this.element.child("span", {
+        className: "window_resizer"
+      }),
+      reference: this.element,
+      cursor: "nw-resize",
+      start: () => {
+        this.sceneObject.focus();
+      },
+      move: (e) => {
+        if (e.e.ctrlKey && e.e.shiftKey) {
+          this.visual.set({
+            size: e.relative.scale(1 / this.panel.camera.scale).scale(0.05).floor().scale(20)
+          });
+        } else if (e.e.ctrlKey) {
+          this.visual.set({
+            size: e.relative.scale(1 / this.panel.camera.scale).scale(0.1).floor().scale(10)
+          });
+        } else if (e.e.shiftKey) {
+          this.visual.set({
+            size: e.relative.scale(1 / this.panel.camera.scale).scale(0.2).floor().scale(5)
+          });
+        } else {
+          this.visual.set({
+            size: e.relative.scale(1 / this.panel.camera.scale).floor()
+          });
+        }
+      }
+    });
+    this.resizer.append(new Icon({ name: "aspect_ratio", weight: 200 }));
+  }
+  updateState() {
+    super.updateState();
+    this.element.class(this.selected, "selected");
   }
   build() {
     super.build();
@@ -1619,10 +1747,19 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
 var SceneObject = class {
   constructor({ key, components = [] }) {
     this.active = true;
-    this.selected = false;
+    this._selected = false;
     this.components = [];
     this.key = key;
     this.assign(components);
+  }
+  get selected() {
+    return this._selected;
+  }
+  set selected(value) {
+    if (this._selected !== value) {
+      this._selected = value;
+      this.components.forEach((c) => c.selected = value);
+    }
   }
   getComponentsByType(type) {
     return this.components.filter((c) => c.type === type);
@@ -1631,6 +1768,7 @@ var SceneObject = class {
     components.forEach((c) => {
       this.components.push(c);
       c.sceneObject = this;
+      c.selected = this.selected;
     });
   }
   resize() {
@@ -1646,6 +1784,9 @@ var SceneObject = class {
   }
   delete() {
     this.clear();
+  }
+  focus() {
+    $.scene.focus(this);
   }
   build() {
     this.components.forEach((c) => {
@@ -1712,6 +1853,26 @@ var Main = class {
 // ts/index.ts
 var Glob = class {
   constructor() {
+    this.state = new class state {
+      constructor() {
+        this.list = [];
+      }
+      set(n) {
+        if (!this.list.includes(n)) {
+          this.list.push(n);
+          document.body.classList.add("state_".concat(n));
+        }
+      }
+      unset(n) {
+        if (this.list.includes(n)) {
+          this.list.splice(this.list.indexOf(n), 1);
+          document.body.classList.remove("state_".concat(n));
+        }
+      }
+      check(n) {
+        return this.list.includes(n);
+      }
+    }();
     this.uniqueIndex = 0;
   }
   get unique() {

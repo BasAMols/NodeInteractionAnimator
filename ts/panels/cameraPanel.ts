@@ -7,7 +7,7 @@ export interface CameraPanelAttr extends PanelAttr {
     camera?: CameraProps,
 }
 export abstract class CameraPanel extends Panel {
-    protected camera: Camera;
+    public camera: Camera;
     constructor(id: string, name: string, attr: CameraPanelAttr = {}) {
         super(id, name, {
             ...attr,

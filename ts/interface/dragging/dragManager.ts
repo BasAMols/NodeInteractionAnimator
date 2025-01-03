@@ -47,6 +47,7 @@ export class DragManager extends DomElement<'div'> {
     public set dragging(value: boolean) {
         this._dragging = value;
         this.domElement.classList[value ? 'add' : 'remove']('dragging');
+        $.state[value?'set':'unset']('dragging')
     }
     private dragListeners: Record<string, DragStorageType> = {};
     private scrollListeners: Record<string, ScrollStorageType> = {};

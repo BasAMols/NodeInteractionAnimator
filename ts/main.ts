@@ -83,9 +83,6 @@ export class Main {
             }));
 
         }, 20);
-        // setTimeout(() => {
-        //     $.scene.update('visual')
-        // }, 200);
     }
 
     public tick() {

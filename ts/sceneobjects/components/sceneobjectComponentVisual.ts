@@ -1,5 +1,7 @@
 import { DomElement } from '../../lib/dom/domElement';
+import { Icon } from '../../lib/dom/icon';
 import { Vector2 } from '../../lib/utilities/vector2';
+import { GraphicPanel } from '../../panels/graphic/graphicPanel';
 import { SceneObjectComponentAttr, SceneObjectComponent } from './sceneobjectComponent';
 
 export abstract class VisualAsset<T extends keyof SceneObjectComponentVisual['dict'] = any> extends DomElement<'div'> {
@@ -24,11 +26,16 @@ export class VisualImage extends VisualAsset<'image'> {
         this.set(data);
     }
 
-    set(d: VisualImage['data'] = this.data) {
-        this.data = d;
+    set(d: VisualImage['data'] | {} = this.data) {
+        Object.assign(this.data, d);
         this.setStyle('width', `${this.data.size.x}px`);
         this.setStyle('height', `${this.data.size.y}px`);
-        this.setStyle('background-image', `url(${this.data.url ?? `https://placeholder.pics/svg/${this.data.size.x}x${this.data.size.y}/49514E-3A3247/FFFFFF-FFFFFF/%20placeholder`})`);
+        if (this.data.url) {
+            this.setStyle('background-image', `url(${this.data.url})`);
+        } else {
+            this.setStyle('background-color', `#dbdbdb`);
+            this.setStyle('background-image', undefined);
+        }
     }
 }
 
@@ -41,23 +48,88 @@ export class SceneObjectComponentVisual extends SceneObjectComponent<'visual'> {
     private dict: {
         'image': typeof VisualImage;
     } = {
-        image: VisualImage
-    };
+            image: VisualImage
+        };
 
-    public element: DomElement<"span">;
+    public element: DomElement<"div">;
     public readonly visualType: SceneObjectComponentVisualAttr['asset']['visualType'];
+    visual: VisualImage;
+    resizerKey: string;
+    resizer: any;
+    panel: GraphicPanel = $.panels.getPanel('graphic') as GraphicPanel;
+
+    protected updateState() {
+        super.updateState();
+        this.element.class(this.selected, 'selected');
+    }
+
     constructor(attr: SceneObjectComponentVisualAttr) {
         super('visual', attr);
 
-        this.element = new DomElement('span', {
-            className: 'SceneObjectVisual'
+        this.element = new DomElement('div', {
+            className: 'SceneObjectVisual',
         });
 
         this.visualType = attr.asset.visualType;
-        this.element.append(new (this.dict[this.visualType])(attr.asset));
+        this.visual = new (this.dict[this.visualType])(attr.asset);
+        this.element.append(this.visual);
 
-        this.setPosition(attr.position);
+        this.setPosition(attr.position.floor());
+
+        $.mouse.registerDrag($.unique, {
+            element: this.element,
+            cursor: 'move',
+            reference: this.panel.graphic,
+            start: () => {
+                this.sceneObject.focus();
+            },
+            move: (e) => {
+                if (e.e.ctrlKey && e.e.shiftKey) {
+                    attr.position = e.relative.add(e.offset).scale((1 / this.panel.camera.scale)).scale(0.05).floor().scale(20);
+                } else if (e.e.ctrlKey) {
+                    attr.position = e.relative.add(e.offset).scale((1 / this.panel.camera.scale)).scale(0.1).floor().scale(10);
+                } else if (e.e.shiftKey) {
+                    attr.position = e.relative.add(e.offset).scale((1 / this.panel.camera.scale)).scale(0.2).floor().scale(5);
+                } else {
+                    attr.position = e.relative.add(e.offset).scale((1 / this.panel.camera.scale)).floor();
+                }
+                this.setPosition(attr.position);
+            }
+        });
+
+        this.resizerKey = $.mouse.registerDrag($.unique, {
+            element: this.resizer = this.element.child('span', {
+                className: `window_resizer`
+            }),
+            reference: this.element,
+            cursor: 'nw-resize',
+            start: () => {
+                this.sceneObject.focus();
+            },
+            move: (e) => {
+                if (e.e.ctrlKey && e.e.shiftKey) {
+                    this.visual.set({
+                        size: e.relative.scale(1 / (this.panel.camera.scale)).scale(0.05).floor().scale(20)
+                    });
+                }else if (e.e.ctrlKey) {
+                    this.visual.set({
+                        size: e.relative.scale(1 / (this.panel.camera.scale)).scale(0.1).floor().scale(10)
+                    });
+                } else if (e.e.shiftKey) {
+                    this.visual.set({
+                        size: e.relative.scale(1 / (this.panel.camera.scale)).scale(0.2).floor().scale(5)
+                    });
+                } else {
+                    this.visual.set({
+                        size: e.relative.scale(1 / (this.panel.camera.scale)).floor()
+                    });
+                }
+            },
+        });
+        this.resizer.append(new Icon({ name: 'aspect_ratio', weight: 200 }));
+
     }
+
     build(): void {
         super.build();
     }

@@ -7,7 +7,16 @@ export interface SceneObjectAttr {
 }
 export class SceneObject {
     active: boolean = true;
-    selected: boolean = false;
+    private _selected: boolean = false;
+    public get selected(): boolean {
+        return this._selected;
+    }
+    public set selected(value: boolean) {
+        if (this._selected !== value){
+            this._selected = value;
+            this.components.forEach((c)=>c.selected = value);
+        }
+    }
     key: string;
     components: SceneObjectComponent[] = [];
     public visualPanel: GraphicPanel;
@@ -25,6 +34,7 @@ export class SceneObject {
         components.forEach((c) => {
             this.components.push(c);
             c.sceneObject = this;
+            c.selected = this.selected;
         });
     }
     resize() {
@@ -40,6 +50,9 @@ export class SceneObject {
     }
     delete() {
         this.clear();
+    }
+    focus() {
+        $.scene.focus(this)
     }
     build() {
         this.components.forEach((c) => {

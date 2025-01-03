@@ -19,13 +19,21 @@ export class GraphicPanel extends CameraPanel {
         super('graphic', 'Graphic', {
             camera: { contentSize: v2(505, 545), minZoom: 0.1, maxZoom: 5, scrollSpeed: 2 },
             buttons: [{
-                className: 'panelMenu',
                 key: 'graphic_light',
                 type: 'Action',
                 design: 'icon',
                 icon: Icon.make('light_mode'),
                 onClick: () => {
                     this.light = !this.light;
+                },
+            },
+            {
+                key: 'graphic_deselect',
+                type: 'Action',
+                design: 'icon',
+                icon: Icon.make('deselect'),
+                onClick: () => {
+                    $.scene.focus();
                 },
             }]
         });

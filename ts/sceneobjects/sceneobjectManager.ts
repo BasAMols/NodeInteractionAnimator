@@ -21,6 +21,7 @@ export interface SceneObjectManagerPanels {
 export class SceneObjectManager {
 
     private sceneObjects: Record<string, SceneObject> = {};
+    public selected: SceneObject;
     constructor(private panels: SceneObjectManagerPanels) {
 
     }
@@ -29,6 +30,7 @@ export class SceneObjectManager {
      * @return Returns the `SceneObject`
     */
     public add(n: SceneObject) {
+        if (!n) return;
         this.sceneObjects[n.key] = n;
         n.build();
         return n;
@@ -39,8 +41,9 @@ export class SceneObjectManager {
      * @remarks This method will call the {@link SceneObject.delete() `delete()`} method on the sceneobject to ensure neat deletion. 
     */
     public remove(n: SceneObject) {
-        if (!this.sceneObjects[n.key]) return;
+        if (!n || !this.sceneObjects[n.key]) return;
         n.delete();
+        if (n === this.selected) this.focus()
         delete this.sceneObjects[n.key];
     }
 
@@ -69,11 +72,20 @@ export class SceneObjectManager {
      * @remarks Often used for importing an entire scene
      * @param clear Should the {@link SceneObjectManager.clear() `clear()`} method be run to empty the scene? 
     */
-    public bulk(clear: boolean) {
+    public bulk(v: SceneObject[], clear: boolean) {
         if (clear) this.clear();
-        Object.values(this.sceneObjects).forEach((n) => {
-            this.remove(n);
+        v.forEach((n) => {
+            this.add(n);
         });
+    }
+
+    public focus(s?: SceneObject) {
+        this.selected = undefined;
+        Object.values(this.sceneObjects).forEach((n) => {
+            n.selected = n === s;
+            if (n.selected) this.selected = n;
+        });
+        $.state[this.selected ? 'set' : 'unset']('selected');
     }
 
     public getComponentsByType<T extends keyof SceneObjectComponentDict>(type: T): SceneObjectComponentDict[T][] {

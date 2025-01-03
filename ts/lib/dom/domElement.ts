@@ -4,7 +4,7 @@ export interface DomElementProperties {
     className?: string;
     id?: string;
     attr?: Record<string, string>;
-    onClick?: ()=>void;
+    onClick?: (e: MouseEvent)=>void;
     visible?: boolean,
 }
 export class DomElement<T extends keyof HTMLElementTagNameMap = keyof HTMLElementTagNameMap> {
@@ -12,11 +12,11 @@ export class DomElement<T extends keyof HTMLElementTagNameMap = keyof HTMLElemen
     public class(b: boolean = undefined, ...d: string[]):void {
         this.domElement.classList[b?'add':'remove'](...d)
     };
-    private _onClick?: () => void;
-    public get onClick(): () => void {
+    private _onClick?: (e: MouseEvent) => void;
+    public get onClick(): (e: MouseEvent) => void {
         return this._onClick;
     }
-    public set onClick(func: () => void|undefined) {
+    public set onClick(func: (e: MouseEvent) => void|undefined) {
         this._onClick = func;
     }
     private props: DomElementProperties
@@ -76,8 +76,8 @@ export class DomElement<T extends keyof HTMLElementTagNameMap = keyof HTMLElemen
         return this.append(new DomElement(type, properties)) as DomElement<T3>
     }
 
-    private click() {
-        this.onClick?.()
+    private click(e: MouseEvent) {
+        this.onClick?.(e)
     }
 
     public remove(d: DomElement<any>) {

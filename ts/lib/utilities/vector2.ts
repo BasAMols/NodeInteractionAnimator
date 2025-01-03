@@ -44,6 +44,12 @@ export class Vector2 extends Array<number> {
         }
         return new Vector2(0,0)
     }
+    public floor() {
+        return new Vector2(
+            Math.floor(this.x),
+            Math.floor(this.y),
+        )
+    }
     public c() {
         return new Vector2(this[0], this[1])
     }

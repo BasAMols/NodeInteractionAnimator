@@ -696,15 +696,55 @@ div.window {
 }
 
 ._graphic {
-    background: white;
+    background: var(--color-blue1);
     width: 505px;
     height: 545px;
-    filter: brightness(0.3);
-    transition: filter 0.2s;
+    transition: background 0.2s;
+
+    &>.SceneObjectVisual {
+        &>.window_resizer span{
+            color: var(--color-verydark);
+            transition: color 0.2s;
+        } 
+        &>.visual {
+            transition: filter 0.2s;
+            filter: brightness(0.4);
+        }
+        &.selected::after {
+            content: '';
+            position: absolute;
+            left: -5px;
+            right: -5px;
+            top: -5px;
+            bottom: -5px;
+            border: 4px dashed var(--color-blue3);
+            transition: border 0.2s;
+        }
+        
+    }
+
+
 
     .panel.light & {
-        filter: none;
+        background: white;
+
+        &>.SceneObjectVisual {
+            &>.window_resizer span{
+                color: var(--color-dark);
+            } 
+            &>.visual {
+                filter: none;
+            }
+            &.selected::after {
+                border: 4px dashed var(--color-blue2);
+            }
+        }
     }
+
+}
+
+body.state_dragging .SceneObjectVisual.selected::after{
+    opacity: 0.1;
 }
 
 .panelHeader {
@@ -713,4 +753,18 @@ div.window {
     top: 4px;
     right: -1px;
     margin-right: auto;
+}
+
+.SceneObjectVisual {
+    width: max-content;
+    height: max-content;
+    cursor: pointer;
+}
+
+.state_selected .menuSelect {
+    display: block !important;
+}
+
+.menuSelect {
+    display: none !important;
 }
