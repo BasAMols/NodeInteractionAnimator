@@ -3,11 +3,11 @@ import { NodeEditorPanel } from '../panels/node/nodePanel';
 import { OutlinerPanel } from '../panels/outliner';
 import { PropertiesPanel } from '../panels/properties';
 import { TimelinePanel } from '../panels/timeline';
-import { SceneObjectComponentDict, SceneObjectComponent } from './components/sceneobjectComponent';
+import { SceneObjectComponentDict } from './components/sceneobjectComponent';
 import { SceneObject } from './sceneobject';
 
 
-export interface SceneObjectManagerPanels { 
+export interface SceneObjectManagerPanels {
     graphic: GraphicPanel,
     properties: PropertiesPanel,
     node: NodeEditorPanel,
@@ -76,11 +76,11 @@ export class SceneObjectManager {
         });
     }
 
-    public getComponentsByType<T extends keyof SceneObjectComponentDict>(type: T): SceneObjectComponent<T>[] {
-        return Object.values(this.sceneObjects).map((so)=>so.getComponentsByType(type)).flat(1)
+    public getComponentsByType<T extends keyof SceneObjectComponentDict>(type: T): SceneObjectComponentDict[T][] {
+        return Object.values(this.sceneObjects).map((so) => so.getComponentsByType(type)).flat(1);
     }
 
-    public update<T extends keyof SceneObjectComponentDict>(type: T) {
-        if (type === 'visual') this.panels.graphic.update(this.getComponentsByType(type as 'visual'));
+    public update<T extends keyof SceneObjectComponentDict>(type: T | 'all' = 'all') {
+        if (type === 'visual' || type === 'all') this.panels.graphic.update(this.getComponentsByType('visual'));
     }
 }

@@ -1,11 +1,12 @@
 import { Icon, IconProperties } from '../../lib/dom/icon';
 import { v2 } from '../../lib/utilities/vector2';
-import { SceneObjectComponent } from '../../sceneobjects/components/sceneobjectComponent';
+import { SceneObjectComponentVisual } from '../../sceneobjects/components/sceneobjectComponentVisual';
 import { CameraPanel } from '../cameraPanel';
 
 export class GraphicPanel extends CameraPanel {
     private _light: boolean = false;
     public icon: IconProperties = Icon.make('animation');
+    graphic: import("c:/Users/basm/Documents/Development/NodeInteractionAnimator/ts/lib/dom/domElement").DomElement<"div">;
     public get light(): boolean {
         return this._light;
     }
@@ -13,6 +14,7 @@ export class GraphicPanel extends CameraPanel {
         this._light = value;
         this.class(value, 'light');
     }
+    private components: SceneObjectComponentVisual[] = [];
     constructor() {
         super('graphic', 'Graphic', {
             camera: { contentSize: v2(505, 545), minZoom: 0.1, maxZoom: 5, scrollSpeed: 2 },
@@ -27,13 +29,22 @@ export class GraphicPanel extends CameraPanel {
                 },
             }]
         });
-        this.childCamera('div', {
+        this.graphic = this.childCamera('div', {
             className: '_graphic'
         });
         
     }
-    update(d: SceneObjectComponent<"visual">[]) {
-        console.log(d);
+    clear() {
+        this.components.forEach((v)=>{
+            v.delete();
+        });
+    }
+    update(d: SceneObjectComponentVisual[]) {
+        this.clear();
+        
+        d.forEach((v)=>{
+            v.add(this.graphic)
+        })
         
     }
 

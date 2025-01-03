@@ -17,16 +17,14 @@ export class SceneObject {
         this.assign(components);
     }
 
-    getComponentsByType<T extends keyof SceneObjectComponentDict>(type: T): SceneObjectComponent<T>[] {
-        return this.components.filter((c)=>c.type === type) as (SceneObjectComponent<T>)[]
+    getComponentsByType<T extends keyof SceneObjectComponentDict>(type: T): SceneObjectComponentDict[T][] {
+        return this.components.filter((c)=>c.type === type) as (SceneObjectComponentDict[T])[]
     } 
 
     assign(components: SceneObjectComponent[]) {
         components.forEach((c) => {
             this.components.push(c);
             c.sceneObject = this;
-            c.build();
-            $.scene.update(c.type);
         });
     }
     resize() {
@@ -44,6 +42,9 @@ export class SceneObject {
         this.clear();
     }
     build() {
-
+        this.components.forEach((c) => {
+            c.sceneObject = this;
+            c.build();
+        });
     }
 }

@@ -1091,7 +1091,8 @@ var GraphicPanel = class extends CameraPanel {
     });
     this._light = false;
     this.icon = Icon.make("animation");
-    this.childCamera("div", {
+    this.components = [];
+    this.graphic = this.childCamera("div", {
       className: "_graphic"
     });
   }
@@ -1102,8 +1103,16 @@ var GraphicPanel = class extends CameraPanel {
     this._light = value;
     this.class(value, "light");
   }
+  clear() {
+    this.components.forEach((v) => {
+      v.delete();
+    });
+  }
   update(d) {
-    console.log(d);
+    this.clear();
+    d.forEach((v) => {
+      v.add(this.graphic);
+    });
   }
 };
 
@@ -1532,9 +1541,9 @@ var SceneObjectManager = class {
   getComponentsByType(type) {
     return Object.values(this.sceneObjects).map((so) => so.getComponentsByType(type)).flat(1);
   }
-  update(type) {
-    if (type === "visual")
-      this.panels.graphic.update(this.getComponentsByType(type));
+  update(type = "all") {
+    if (type === "visual" || type === "all")
+      this.panels.graphic.update(this.getComponentsByType("visual"));
   }
 };
 
@@ -1545,6 +1554,7 @@ var SceneObjectComponent = class {
     this.key = key;
   }
   build() {
+    $.scene.update(this.type);
   }
   resize() {
   }
@@ -1553,16 +1563,46 @@ var SceneObjectComponent = class {
 };
 
 // ts/sceneobjects/components/sceneobjectComponentVisual.ts
+var VisualAsset = class extends DomElement {
+  constructor(data) {
+    super("div", {
+      className: "visual visual_".concat(data.visualType)
+    });
+    this.data = data;
+  }
+};
+var VisualImage = class extends VisualAsset {
+  constructor(data) {
+    super(data);
+    this.set(data);
+  }
+  set(d = this.data) {
+    var _a;
+    this.data = d;
+    this.setStyle("width", "".concat(this.data.size.x, "px"));
+    this.setStyle("height", "".concat(this.data.size.y, "px"));
+    this.setStyle("background-image", "url(".concat((_a = this.data.url) != null ? _a : "https://placeholder.pics/svg/".concat(this.data.size.x, "x").concat(this.data.size.y, "/49514E-3A3247/FFFFFF-FFFFFF/%20placeholder"), ")"));
+  }
+};
 var SceneObjectComponentVisual = class extends SceneObjectComponent {
   constructor(attr) {
     super("visual", attr);
+    this.dict = {
+      image: VisualImage
+    };
     this.element = new DomElement("span", {
       className: "SceneObjectVisual"
     });
+    this.visualType = attr.asset.visualType;
+    this.element.append(new this.dict[this.visualType](attr.asset));
     this.setPosition(attr.position);
   }
   build() {
     super.build();
+  }
+  add(parent) {
+    this.delete();
+    parent.append(this.element);
   }
   delete() {
     if (this.element.domElement.parentElement) {
@@ -1591,8 +1631,6 @@ var SceneObject = class {
     components.forEach((c) => {
       this.components.push(c);
       c.sceneObject = this;
-      c.build();
-      $.scene.update(c.type);
     });
   }
   resize() {
@@ -1610,6 +1648,10 @@ var SceneObject = class {
     this.clear();
   }
   build() {
+    this.components.forEach((c) => {
+      c.sceneObject = this;
+      c.build();
+    });
   }
 };
 
@@ -1653,14 +1695,15 @@ var Main = class {
         components: [
           new SceneObjectComponentVisual({
             key: $.unique,
-            position: v2(10, 10)
+            position: v2(10, 10),
+            asset: {
+              visualType: "image",
+              size: v2(100, 100)
+            }
           })
         ]
       }));
     }, 20);
-    setTimeout(() => {
-      $.scene.update("visual");
-    }, 200);
   }
   tick() {
   }

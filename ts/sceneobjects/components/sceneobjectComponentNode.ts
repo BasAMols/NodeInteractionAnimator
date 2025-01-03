@@ -3,8 +3,8 @@ import { SceneObjectComponentAttr, SceneObjectComponent } from './sceneobjectCom
 export interface SceneObjectComponentNodeAttr extends SceneObjectComponentAttr {
 
 }
-export class SceneObjectComponentNode extends SceneObjectComponent<'sceneobject'> {
+export class SceneObjectComponentNode extends SceneObjectComponent<'node'> {
     constructor(attr: SceneObjectComponentNodeAttr) {
-        super('sceneobject', attr);
+        super('node', attr);
     }
 }

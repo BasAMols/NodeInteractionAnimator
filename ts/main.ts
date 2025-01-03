@@ -72,15 +72,20 @@ export class Main {
                 components: [
                     new SceneObjectComponentVisual({
                         key: $.unique,
-                        position: v2(10, 10)
+                        position: v2(10, 10),
+                        asset: {
+                            visualType: 'image',
+                            size: v2(100,100),
+
+                        }
                     })
                 ]
             }));
 
         }, 20);
-        setTimeout(() => {
-            $.scene.update('visual')
-        }, 200);
+        // setTimeout(() => {
+        //     $.scene.update('visual')
+        // }, 200);
     }
 
     public tick() {

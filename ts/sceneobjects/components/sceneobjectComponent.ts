@@ -1,14 +1,14 @@
 import { SceneObject } from '../sceneobject';
-import { SceneObjectComponentNodeAttr } from './sceneobjectComponentNode';
-import { SceneObjectComponentPropertiesAttr } from './sceneobjectComponentProperties';
-import { SceneObjectComponentTimelineAttr } from './sceneobjectComponentTimeline';
-import { SceneObjectComponentVisualAttr } from './sceneobjectComponentVisual';
+import { SceneObjectComponentNode } from './sceneobjectComponentNode';
+import { SceneObjectComponentProperties } from './sceneobjectComponentProperties';
+import { SceneObjectComponentTimeline } from './sceneobjectComponentTimeline';
+import { SceneObjectComponentVisual } from './sceneobjectComponentVisual';
 
 export interface SceneObjectComponentDict {
-    timeline: SceneObjectComponentTimelineAttr;
-    sceneObject: SceneObjectComponentNodeAttr;
-    properties: SceneObjectComponentPropertiesAttr;
-    visual: SceneObjectComponentVisualAttr;
+    timeline: SceneObjectComponentTimeline;
+    node: SceneObjectComponentNode;
+    properties: SceneObjectComponentProperties;
+    visual: SceneObjectComponentVisual;
 }
 export interface SceneObjectComponentAttr {
     key: string;
@@ -19,13 +19,13 @@ export class SceneObjectComponent<T extends keyof SceneObjectComponentDict = key
     key: string;
     type: T;
 
-    constructor(type: T, { key }: SceneObjectComponentDict[T]) {
+    constructor(type: T, { key }: SceneObjectComponentAttr) {
         this.type = type;
         this.key = key;
     }
 
     build() {
-
+        $.scene.update(this.type);
     }
     resize() {
         //void
