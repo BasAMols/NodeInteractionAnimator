@@ -85,7 +85,7 @@ export class SceneObjectComponentVisual extends SceneObjectComponent<'visual'> {
             },
             move: (e) => {
                 if (e.e.ctrlKey && e.e.shiftKey) {
-                    attr.position = e.relative.add(e.offset).scale((1 / this.panel.camera.scale)).scale(0.05).floor().scale(20);
+                    attr.position = e.relative.add(e.offset).scale((1 / this.panel.camera.scale)).scale(0.04).floor().scale(25);
                 } else if (e.e.ctrlKey) {
                     attr.position = e.relative.add(e.offset).scale((1 / this.panel.camera.scale)).scale(0.1).floor().scale(10);
                 } else if (e.e.shiftKey) {
@@ -109,7 +109,7 @@ export class SceneObjectComponentVisual extends SceneObjectComponent<'visual'> {
             move: (e) => {
                 if (e.e.ctrlKey && e.e.shiftKey) {
                     this.visual.set({
-                        size: e.relative.scale(1 / (this.panel.camera.scale)).scale(0.05).floor().scale(20)
+                        size: e.relative.scale(1 / (this.panel.camera.scale)).scale(0.04).floor().scale(25)
                     });
                 }else if (e.e.ctrlKey) {
                     this.visual.set({

@@ -1055,6 +1055,18 @@ var OutlinerPanel = class extends Panel {
     super("outliner", "Outliner");
     this.icon = Icon.make("summarize");
   }
+  empty() {
+    this.content.domElement.innerHTML = "";
+  }
+  addLine(o) {
+    this.content.append(o.getComponentsByType("outline")[0].element);
+  }
+  update(data) {
+    this.empty();
+    data.forEach((s) => {
+      this.addLine(s);
+    });
+  }
 };
 
 // ts/panels/properties.ts
@@ -1598,6 +1610,7 @@ var SceneObjectManager = class {
     return Object.values(this.sceneObjects).map((so) => so.getComponentsByType(type)).flat(1);
   }
   update(type = "all") {
+    this.panels.outliner.update(Object.values(this.sceneObjects));
     if (type === "visual" || type === "all")
       this.panels.graphic.update(this.getComponentsByType("visual"));
   }
@@ -1679,7 +1692,7 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
       },
       move: (e) => {
         if (e.e.ctrlKey && e.e.shiftKey) {
-          attr.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).scale(0.05).floor().scale(20);
+          attr.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).scale(0.04).floor().scale(25);
         } else if (e.e.ctrlKey) {
           attr.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).scale(0.1).floor().scale(10);
         } else if (e.e.shiftKey) {
@@ -1702,7 +1715,7 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
       move: (e) => {
         if (e.e.ctrlKey && e.e.shiftKey) {
           this.visual.set({
-            size: e.relative.scale(1 / this.panel.camera.scale).scale(0.05).floor().scale(20)
+            size: e.relative.scale(1 / this.panel.camera.scale).scale(0.04).floor().scale(25)
           });
         } else if (e.e.ctrlKey) {
           this.visual.set({
@@ -1743,12 +1756,67 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
   }
 };
 
+// ts/sceneobjects/components/sceneobjectComponentOutline.ts
+var SceneObjectComponentOutline = class extends SceneObjectComponent {
+  constructor(attr) {
+    super("outline", attr);
+    this._toggle = false;
+  }
+  get toggle() {
+    return this._toggle;
+  }
+  set toggle(value) {
+    this._toggle = value;
+    this.element.class(value, "open");
+  }
+  updateState() {
+    super.updateState();
+    this.element.class(this.selected, "selected");
+  }
+  build() {
+    this.element = new DomElement("div", { className: "sceneline" });
+    const head = this.element.child("div", { className: "sceneline_head" });
+    head.append(new Button({
+      className: "sceneline_head_collapse",
+      icon: Icon.make("keyboard_arrow_down"),
+      design: "icon",
+      onClick: () => {
+        this.toggle = !this.toggle;
+      }
+    }));
+    head.child("div", { className: "sceneline_head_content", text: this.sceneObject.key });
+    const meta = head.child("div", { className: "sceneline_head_meta" });
+    meta.append(new Button({
+      className: "sceneline_select",
+      icon: Icon.make("arrow_selector_tool"),
+      design: "icon",
+      onClick: () => {
+        this.sceneObject.focus();
+      }
+    }));
+    const content = this.element.child("div", { className: "sceneline_content" });
+    let count = 0;
+    this.sceneObject.components.forEach((c) => {
+      if (c.type !== "outline") {
+        count++;
+        this.addLineChild(content, c);
+      }
+    });
+    content.setStyle("max-height", "".concat(count * 30, "px"));
+  }
+  addLineChild(parent, o) {
+    const line = parent.child("div", { className: "sceneline" });
+    const head = line.child("div", { className: "sceneline_head" });
+    head.child("div", { className: "sceneline_head_content", text: o.type });
+  }
+};
+
 // ts/sceneobjects/sceneobject.ts
 var SceneObject = class {
   constructor({ key, components = [] }) {
     this.active = true;
     this._selected = false;
-    this.components = [];
+    this.components = [new SceneObjectComponentOutline({ key: $.unique })];
     this.key = key;
     this.assign(components);
   }
@@ -1778,7 +1846,8 @@ var SceneObject = class {
   }
   clear() {
     this.components.forEach((c) => {
-      c.delete();
+      if (c.type !== "outline")
+        c.delete();
     });
     this.components = [];
   }
@@ -1796,6 +1865,39 @@ var SceneObject = class {
   }
 };
 
+// ts/panels/library/libraryItem.ts
+var LibraryItem = class extends DomElement {
+  constructor(attr) {
+    super("div", {
+      className: "library_item",
+      onClick: () => {
+      }
+    });
+    if (typeof attr.image === "string") {
+      this.child("div", { className: "library_item_image", style: {
+        "background-image": "url(".concat(attr.image, ")")
+      } });
+    } else {
+      this.append(attr.image);
+    }
+    this.child("div", { className: "library_item_name", text: attr.name });
+  }
+};
+
+// ts/panels/library/libraryPanel.ts
+var LibraryPanel = class extends Panel {
+  constructor(list = []) {
+    super("library", "Library");
+    this.icon = Icon.make("video_library");
+    list.forEach((l) => {
+      this.addItem(l);
+    });
+  }
+  addItem(l) {
+    this.content.append(new LibraryItem(l));
+  }
+};
+
 // ts/main.ts
 var Main = class {
   constructor() {
@@ -1806,7 +1908,29 @@ var Main = class {
       new NodeEditorPanel(),
       new OutlinerPanel(),
       new PropertiesPanel(),
-      new TimelinePanel()
+      new TimelinePanel(),
+      new LibraryPanel([
+        {
+          image: new Icon({ name: "grid_view" }),
+          name: "Grid",
+          key: "grid"
+        },
+        {
+          image: new Icon({ name: "grid_view" }),
+          name: "Grid",
+          key: "grid"
+        },
+        {
+          image: new Icon({ name: "grid_view" }),
+          name: "Grid",
+          key: "grid"
+        },
+        {
+          image: new Icon({ name: "grid_view" }),
+          name: "Grid",
+          key: "grid"
+        }
+      ])
     ]);
     $.windows = new WindowManager([
       new SettingsPanel(),
@@ -1817,7 +1941,7 @@ var Main = class {
     $.workspace = new WorkSpace({
       default: {
         name: "Default",
-        data: [1, "v", 80, [1, "h", 70, [2, "graphic"], [1, "v", 50, [2, "outliner"], [2, "properties"]]], [2, "timeline"]]
+        data: [1, "h", 15, [2, "library"], [1, "h", 80, [2, "graphic"], [1, "v", 50, [2, "outliner"], [2, "properties"]]]]
       }
     });
     $.scene = new SceneObjectManager({
@@ -1831,8 +1955,8 @@ var Main = class {
     setTimeout(() => {
       $.workspace.resize();
       $.panels.forEach(([k, p]) => p.build());
-      const t1 = $.scene.add(new SceneObject({
-        key: "test1",
+      $.scene.add(new SceneObject({
+        key: $.unique,
         components: [
           new SceneObjectComponentVisual({
             key: $.unique,
@@ -1840,6 +1964,19 @@ var Main = class {
             asset: {
               visualType: "image",
               size: v2(100, 100)
+            }
+          })
+        ]
+      }));
+      $.scene.add(new SceneObject({
+        key: $.unique,
+        components: [
+          new SceneObjectComponentVisual({
+            key: $.unique,
+            position: v2(0, 405),
+            asset: {
+              visualType: "image",
+              size: v2(505, 100)
             }
           })
         ]
@@ -1877,7 +2014,7 @@ var Glob = class {
   }
   get unique() {
     this.uniqueIndex++;
-    return (this.uniqueIndex + 1e3).toString(16);
+    return (this.uniqueIndex + 1e4).toString(16);
   }
 };
 window.$ = new Glob();

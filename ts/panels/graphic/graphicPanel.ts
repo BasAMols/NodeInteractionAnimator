@@ -53,7 +53,5 @@ export class GraphicPanel extends CameraPanel {
         d.forEach((v)=>{
             v.add(this.graphic)
         })
-        
     }
-
 }

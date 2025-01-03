@@ -1,5 +1,6 @@
 import { SceneObject } from '../sceneobject';
 import { SceneObjectComponentNode } from './sceneobjectComponentNode';
+import { SceneObjectComponentOutline } from './sceneobjectComponentOutline';
 import { SceneObjectComponentProperties } from './sceneobjectComponentProperties';
 import { SceneObjectComponentTimeline } from './sceneobjectComponentTimeline';
 import { SceneObjectComponentVisual } from './sceneobjectComponentVisual';
@@ -9,6 +10,7 @@ export interface SceneObjectComponentDict {
     node: SceneObjectComponentNode;
     properties: SceneObjectComponentProperties;
     visual: SceneObjectComponentVisual;
+    outline: SceneObjectComponentOutline;
 }
 export interface SceneObjectComponentAttr {
     key: string;

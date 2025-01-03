@@ -1,5 +1,6 @@
 import { GraphicPanel } from '../panels/graphic/graphicPanel';
 import { SceneObjectComponent, SceneObjectComponentDict } from './components/sceneobjectComponent';
+import { SceneObjectComponentOutline } from './components/sceneobjectComponentOutline';
 
 export interface SceneObjectAttr {
     key: string,
@@ -12,13 +13,13 @@ export class SceneObject {
         return this._selected;
     }
     public set selected(value: boolean) {
-        if (this._selected !== value){
+        if (this._selected !== value) {
             this._selected = value;
-            this.components.forEach((c)=>c.selected = value);
+            this.components.forEach((c) => c.selected = value);
         }
     }
     key: string;
-    components: SceneObjectComponent[] = [];
+    components: SceneObjectComponent[] = [new SceneObjectComponentOutline({key: $.unique})];
     public visualPanel: GraphicPanel;
 
     constructor({ key, components = [] }: SceneObjectAttr) {
@@ -27,8 +28,8 @@ export class SceneObject {
     }
 
     getComponentsByType<T extends keyof SceneObjectComponentDict>(type: T): SceneObjectComponentDict[T][] {
-        return this.components.filter((c)=>c.type === type) as (SceneObjectComponentDict[T])[]
-    } 
+        return this.components.filter((c) => c.type === type) as (SceneObjectComponentDict[T])[];
+    }
 
     assign(components: SceneObjectComponent[]) {
         components.forEach((c) => {
@@ -44,7 +45,7 @@ export class SceneObject {
     }
     clear() {
         this.components.forEach((c) => {
-            c.delete();
+            if (c.type !== 'outline') c.delete();
         });
         this.components = [];
     }
@@ -52,7 +53,7 @@ export class SceneObject {
         this.clear();
     }
     focus() {
-        $.scene.focus(this)
+        $.scene.focus(this);
     }
     build() {
         this.components.forEach((c) => {

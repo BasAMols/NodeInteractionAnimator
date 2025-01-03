@@ -361,7 +361,7 @@ header>.menu>.menu_wrap .menu_panel {
     transform-origin: left top;
 }
 
-.panelContent:after {
+.panelContent:before {
     content: '';
     position: absolute;
     left: 0;
@@ -767,4 +767,96 @@ body.state_dragging .SceneObjectVisual.selected::after{
 
 .menuSelect {
     display: none !important;
+}
+
+.sceneline_head {
+    display: flex;
+    width: 100%;
+    padding: 4px;
+    height: 30px;
+    align-items: center;
+}
+
+.sceneline_head_collapse {
+    flex-shrink: 0;
+}
+
+.sceneline_head_meta {
+    flex-shrink: 0;
+}
+
+.sceneline_head_content {
+    width: 100%;
+    padding: 2px 3px;
+}
+
+.sceneline_content {
+    padding-left: 27px;
+}
+
+#outliner > .panelContent {
+    background: repeating-linear-gradient(180deg, #37373b 0, #37373b 30px, transparent 30px, transparent 60px);
+}
+
+.sceneline.selected .sceneline_select span {
+    color: var(--color-link);
+}
+.sceneline:not(.open) > .sceneline_content {
+    max-height: 0px !IMPORTANT;
+}
+
+.sceneline_content {
+    transition: max-height 0.2s;
+    overflow: hidden;
+}
+
+.sceneline.open .sceneline_head_collapse span {
+    transform: rotate(0deg);
+    color: var(--color-link);
+}
+
+.sceneline .sceneline_head_collapse > span {
+    transform: rotate(-90deg);
+    transition: transform 0.2s, color 0.2s;
+    color: var(--color-text);
+}
+
+.panelContent > .sceneline {
+    padding: 0 8px;
+}
+
+.sceneline_content .sceneline_head_content {
+    color: #9d9baf;
+}
+.SceneObjectVisual {
+    position: absolute;
+}
+
+#library .panelContent {
+    padding: 15px 5px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: row;
+    align-content: flex-start;
+    overflow-y: scroll;
+}
+
+#library .panelContent > .library_item {
+    margin: 4px;
+    width: 80px;
+    height: 80px;
+    background: var(--color-verydark);
+    padding: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    cursor: pointer;
+    transition: opacity 0.1s;
+}
+
+#library .panelContent > .library_item:hover {
+    opacity: 0.8;
 }

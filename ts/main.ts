@@ -16,6 +16,8 @@ import { SceneObjectManager } from './sceneobjects/sceneobjectManager';
 import { v2 } from './lib/utilities/vector2';
 import { SceneObjectComponentVisual } from './sceneobjects/components/sceneobjectComponentVisual';
 import { SceneObject } from './sceneobjects/sceneobject';
+import { LibraryPanel } from './panels/library/libraryPanel';
+import { Icon } from './lib/dom/icon';
 
 
 
@@ -41,6 +43,28 @@ export class Main {
             new OutlinerPanel(),
             new PropertiesPanel(),
             new TimelinePanel(),
+            new LibraryPanel([
+                {
+                    image: new Icon({name: 'grid_view'}),
+                    name: 'Grid',
+                    key: 'grid',
+                },
+                {
+                    image: new Icon({name: 'grid_view'}),
+                    name: 'Grid',
+                    key: 'grid',
+                },
+                {
+                    image: new Icon({name: 'grid_view'}),
+                    name: 'Grid',
+                    key: 'grid',
+                },
+                {
+                    image: new Icon({name: 'grid_view'}),
+                    name: 'Grid',
+                    key: 'grid',
+                },
+            ]),
         ]);
         $.windows = new WindowManager([
             new SettingsPanel(),
@@ -51,7 +75,7 @@ export class Main {
         $.workspace = new WorkSpace({
             default: {
                 name: 'Default',
-                data: [1, 'v', 80, [1, 'h', 70, [2, 'graphic'], [1, 'v', 50, [2, 'outliner'], [2, 'properties']]], [2, 'timeline']]
+                data: [1, 'h', 15, [2, 'library'], [1, 'h', 80, [2, 'graphic'], [1, 'v', 50, [2, 'outliner'], [2, 'properties']]]]
             }
         });
         $.scene = new SceneObjectManager({
@@ -67,15 +91,29 @@ export class Main {
             $.workspace.resize();
             $.panels.forEach(([k, p]) => p.build());
 
-            const t1 = $.scene.add(new SceneObject({
-                key: 'test1',
+            $.scene.add(new SceneObject({
+                key: $.unique,
                 components: [
                     new SceneObjectComponentVisual({
                         key: $.unique,
                         position: v2(10, 10),
                         asset: {
                             visualType: 'image',
-                            size: v2(100,100),
+                            size: v2(100, 100),
+
+                        }
+                    })
+                ]
+            }));
+            $.scene.add(new SceneObject({
+                key: $.unique,
+                components: [
+                    new SceneObjectComponentVisual({
+                        key: $.unique,
+                        position: v2(0, 405),
+                        asset: {
+                            visualType: 'image',
+                            size: v2(505, 100),
 
                         }
                     })

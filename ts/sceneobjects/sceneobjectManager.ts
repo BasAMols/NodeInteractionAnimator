@@ -93,6 +93,7 @@ export class SceneObjectManager {
     }
 
     public update<T extends keyof SceneObjectComponentDict>(type: T | 'all' = 'all') {
+        this.panels.outliner.update(Object.values(this.sceneObjects));
         if (type === 'visual' || type === 'all') this.panels.graphic.update(this.getComponentsByType('visual'));
     }
 }

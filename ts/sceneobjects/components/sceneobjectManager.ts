@@ -15,6 +15,7 @@ export class SceneObjectManager {
     */
     public add(n: SceneObject) {
         this.sceneobjects[n.key] = n;
+        
     }
 
     /** 
@@ -52,10 +53,10 @@ export class SceneObjectManager {
      * @remarks Often used for importing an entire scene
      * @param clear Should the {@link SceneObjectManager.clear() `clear()`} method be run to empty the scene? 
     */
-    public bulk(clear: boolean) {
+    public bulk(clear: boolean, n: SceneObject[]) {
         if (clear) this.clear()
-        Object.values(this.sceneobjects).forEach((n) => {
-            this.remove(n);
+        n.forEach((s) => {
+            this.add(s);
         });
     }
 }

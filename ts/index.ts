@@ -19,7 +19,7 @@ class Glob {
   public scene: SceneObjectManager;
   public get unique(): string {
     this.uniqueIndex++;
-    return (this.uniqueIndex + 1000).toString(16);
+    return (this.uniqueIndex + 10000).toString(16);
   }
   public state = new (class state {
     private list: string[] = [];
