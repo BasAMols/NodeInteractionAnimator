@@ -1,4 +1,6 @@
 var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __propIsEnum = Object.prototype.propertyIsEnumerable;
@@ -14,6 +16,7 @@ var __spreadValues = (a, b) => {
     }
   return a;
 };
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 
 // ts/lib/dom/domElement.ts
 var DomElement = class _DomElement {
@@ -1614,6 +1617,9 @@ var SceneObjectManager = class {
     if (type === "visual" || type === "all")
       this.panels.graphic.update(this.getComponentsByType("visual"));
   }
+  keyExists(n) {
+    return Boolean(this.sceneObjects[n]);
+  }
 };
 
 // ts/sceneobjects/components/sceneobjectComponent.ts
@@ -1662,9 +1668,10 @@ var VisualImage = class extends VisualAsset {
     this.setStyle("width", "".concat(this.data.size.x, "px"));
     this.setStyle("height", "".concat(this.data.size.y, "px"));
     if (this.data.url) {
+      this.class(false, "empty");
       this.setStyle("background-image", "url(".concat(this.data.url, ")"));
     } else {
-      this.setStyle("background-color", "#dbdbdb");
+      this.class(true, "empty");
       this.setStyle("background-image", void 0);
     }
   }
@@ -1675,14 +1682,22 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
     this.dict = {
       image: VisualImage
     };
-    this.panel = $.panels.getPanel("graphic");
     this.element = new DomElement("div", {
       className: "SceneObjectVisual"
     });
+    this.attr = attr;
     this.visualType = attr.asset.visualType;
-    this.visual = new this.dict[this.visualType](attr.asset);
+  }
+  updateState() {
+    super.updateState();
+    this.element.class(this.selected, "selected");
+  }
+  build() {
+    super.build();
+    this.panel = $.panels.getPanel("graphic");
+    this.visual = new this.dict[this.visualType](this.attr.asset);
     this.element.append(this.visual);
-    this.setPosition(attr.position.floor());
+    this.setPosition(this.attr.position.floor());
     $.mouse.registerDrag($.unique, {
       element: this.element,
       cursor: "move",
@@ -1692,15 +1707,15 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
       },
       move: (e) => {
         if (e.e.ctrlKey && e.e.shiftKey) {
-          attr.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).scale(0.04).floor().scale(25);
+          this.attr.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).scale(0.04).floor().scale(25);
         } else if (e.e.ctrlKey) {
-          attr.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).scale(0.1).floor().scale(10);
+          this.attr.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).scale(0.1).floor().scale(10);
         } else if (e.e.shiftKey) {
-          attr.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).scale(0.2).floor().scale(5);
+          this.attr.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).scale(0.2).floor().scale(5);
         } else {
-          attr.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).floor();
+          this.attr.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).floor();
         }
-        this.setPosition(attr.position);
+        this.setPosition(this.attr.position);
       }
     });
     this.resizerKey = $.mouse.registerDrag($.unique, {
@@ -1733,13 +1748,6 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
       }
     });
     this.resizer.append(new Icon({ name: "aspect_ratio", weight: 200 }));
-  }
-  updateState() {
-    super.updateState();
-    this.element.class(this.selected, "selected");
-  }
-  build() {
-    super.build();
   }
   add(parent) {
     this.delete();
@@ -1784,7 +1792,7 @@ var SceneObjectComponentOutline = class extends SceneObjectComponent {
         this.toggle = !this.toggle;
       }
     }));
-    head.child("div", { className: "sceneline_head_content", text: this.sceneObject.key });
+    head.child("div", { className: "sceneline_head_content", text: this.sceneObject.name || this.sceneObject.key });
     const meta = head.child("div", { className: "sceneline_head_meta" });
     meta.append(new Button({
       className: "sceneline_select",
@@ -1813,11 +1821,13 @@ var SceneObjectComponentOutline = class extends SceneObjectComponent {
 
 // ts/sceneobjects/sceneobject.ts
 var SceneObject = class {
-  constructor({ key, components = [] }) {
+  constructor({ key, components = [], name }) {
     this.active = true;
+    this.name = "";
     this._selected = false;
     this.components = [new SceneObjectComponentOutline({ key: $.unique })];
     this.key = key;
+    this.name = name || "";
     this.assign(components);
   }
   get selected() {
@@ -1871,6 +1881,12 @@ var LibraryItem = class extends DomElement {
     super("div", {
       className: "library_item",
       onClick: () => {
+        attr.content.forEach((s) => {
+          const attr2 = __spreadProps(__spreadValues({}, s), {
+            key: $.scene.keyExists(s.key) ? $.unique : s.key
+          });
+          $.scene.add(new SceneObject(attr2));
+        });
       }
     });
     if (typeof attr.image === "string") {
@@ -1912,23 +1928,84 @@ var Main = class {
       new LibraryPanel([
         {
           image: new Icon({ name: "grid_view" }),
-          name: "Grid",
-          key: "grid"
+          name: "Grid (2x2)",
+          key: "grid1",
+          content: [
+            {
+              key: $.unique,
+              name: "top left",
+              components: [
+                new SceneObjectComponentVisual({
+                  key: $.unique,
+                  position: v2(10, 35),
+                  asset: {
+                    visualType: "image",
+                    size: v2(240, 240)
+                  }
+                })
+              ]
+            },
+            {
+              key: $.unique,
+              name: "top right",
+              components: [
+                new SceneObjectComponentVisual({
+                  key: $.unique,
+                  position: v2(255, 35),
+                  asset: {
+                    visualType: "image",
+                    size: v2(240, 240)
+                  }
+                })
+              ]
+            },
+            {
+              key: $.unique,
+              name: "bottom left",
+              components: [
+                new SceneObjectComponentVisual({
+                  key: $.unique,
+                  position: v2(10, 280),
+                  asset: {
+                    visualType: "image",
+                    size: v2(240, 240)
+                  }
+                })
+              ]
+            },
+            {
+              key: $.unique,
+              name: "bottom right",
+              components: [
+                new SceneObjectComponentVisual({
+                  key: $.unique,
+                  position: v2(255, 280),
+                  asset: {
+                    visualType: "image",
+                    size: v2(240, 240)
+                  }
+                })
+              ]
+            }
+          ]
         },
         {
           image: new Icon({ name: "grid_view" }),
           name: "Grid",
-          key: "grid"
+          key: "grid",
+          content: []
         },
         {
           image: new Icon({ name: "grid_view" }),
           name: "Grid",
-          key: "grid"
+          key: "grid",
+          content: []
         },
         {
           image: new Icon({ name: "grid_view" }),
           name: "Grid",
-          key: "grid"
+          key: "grid",
+          content: []
         }
       ])
     ]);

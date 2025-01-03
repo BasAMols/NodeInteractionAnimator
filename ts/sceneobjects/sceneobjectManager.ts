@@ -96,4 +96,7 @@ export class SceneObjectManager {
         this.panels.outliner.update(Object.values(this.sceneObjects));
         if (type === 'visual' || type === 'all') this.panels.graphic.update(this.getComponentsByType('visual'));
     }
+    public keyExists(n: string) {
+        return Boolean(this.sceneObjects[n]);
+    }
 }

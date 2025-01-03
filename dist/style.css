@@ -1,6 +1,5 @@
 :root {
     --radius: 4px;
-    --shadow: 0px 0px 53px #00000057;
     --color-text: #f9f8fcf2;
     --color-link: #9f9df5;
     --color-dark: #222226;
@@ -123,7 +122,7 @@ body {
 
         .section {
             background: var(--color-dark);
-
+            overflow: hidden;
 
             >.section_content {
                 width: 100%;
@@ -139,7 +138,7 @@ body {
                     align-items: center;
 
                     &:before {
-                        content: '';
+                        content: 'test';
                         font-size: 90px;
                         position: absolute;
                         padding: 3px 5px;
@@ -171,7 +170,7 @@ body {
                 top: 4px;
                 left: 4px;
                 margin-right: auto;
-
+                max-width: calc(100% - 8px);
 
                 &>.menu_type_select {
                     .menu_panel {
@@ -216,6 +215,7 @@ body {
                 height: calc(100% - 34px);
                 padding: 0;
                 margin-top: 34px;
+                overflow-y: scroll;
                 /* box-shadow: inset 0px 0px 8px #1b1a1ee3; */
             }
         }
@@ -542,9 +542,6 @@ div.window {
     color: #7b7b83;
 }
 
-
-
-
 .draggable {
     cursor: grab;
 
@@ -723,8 +720,6 @@ div.window {
         
     }
 
-
-
     .panel.light & {
         background: white;
 
@@ -788,6 +783,9 @@ body.state_dragging .SceneObjectVisual.selected::after{
 .sceneline_head_content {
     width: 100%;
     padding: 2px 3px;
+    text-wrap-mode: nowrap;
+    overflow: hidden;
+    flex-shrink: 1;
 }
 
 .sceneline_content {
@@ -819,10 +817,6 @@ body.state_dragging .SceneObjectVisual.selected::after{
     transform: rotate(-90deg);
     transition: transform 0.2s, color 0.2s;
     color: var(--color-text);
-}
-
-.panelContent > .sceneline {
-    padding: 0 8px;
 }
 
 .sceneline_content .sceneline_head_content {
@@ -859,4 +853,16 @@ body.state_dragging .SceneObjectVisual.selected::after{
 
 #library .panelContent > .library_item:hover {
     opacity: 0.8;
+}
+.visual.visual_image.empty {
+    background: repeating-linear-gradient(45deg, #00000040, #00000040 10px, transparent 10px, transparent 15px);
+    display: flex; 
+    justify-content: center; 
+    align-items: center
+}
+
+.visual.visual_image.empty:before {
+    content: 'Empty'; 
+    color: white; 
+    font-size: 16px
 }

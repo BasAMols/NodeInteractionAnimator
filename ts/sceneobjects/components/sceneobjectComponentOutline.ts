@@ -33,7 +33,7 @@ export class SceneObjectComponentOutline extends SceneObjectComponent<'outline'>
                 this.toggle = !this.toggle;
             }
         }));
-        head.child('div', { className: 'sceneline_head_content', text: this.sceneObject.key });
+        head.child('div', { className: 'sceneline_head_content', text: this.sceneObject.name || this.sceneObject.key });
         const meta = head.child('div', { className: 'sceneline_head_meta' });
         meta.append(new Button({
             className: 'sceneline_select', icon: Icon.make('arrow_selector_tool'), design: 'icon', onClick: () => {

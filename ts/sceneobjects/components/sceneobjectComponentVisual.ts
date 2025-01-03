@@ -31,9 +31,10 @@ export class VisualImage extends VisualAsset<'image'> {
         this.setStyle('width', `${this.data.size.x}px`);
         this.setStyle('height', `${this.data.size.y}px`);
         if (this.data.url) {
+            this.class(false, 'empty');
             this.setStyle('background-image', `url(${this.data.url})`);
         } else {
-            this.setStyle('background-color', `#dbdbdb`);
+            this.class(true, 'empty');
             this.setStyle('background-image', undefined);
         }
     }
@@ -56,7 +57,8 @@ export class SceneObjectComponentVisual extends SceneObjectComponent<'visual'> {
     visual: VisualImage;
     resizerKey: string;
     resizer: any;
-    panel: GraphicPanel = $.panels.getPanel('graphic') as GraphicPanel;
+    panel: GraphicPanel;
+    attr: SceneObjectComponentVisualAttr;
 
     protected updateState() {
         super.updateState();
@@ -70,11 +72,19 @@ export class SceneObjectComponentVisual extends SceneObjectComponent<'visual'> {
             className: 'SceneObjectVisual',
         });
 
-        this.visualType = attr.asset.visualType;
-        this.visual = new (this.dict[this.visualType])(attr.asset);
-        this.element.append(this.visual);
+        this.attr = attr;
 
-        this.setPosition(attr.position.floor());
+        this.visualType = attr.asset.visualType;
+ 
+
+    }
+
+    build(): void {
+        super.build();
+        this.panel = $.panels.getPanel('graphic') as GraphicPanel
+        this.visual = new (this.dict[this.visualType])(this.attr.asset);
+        this.element.append(this.visual);
+        this.setPosition(this.attr.position.floor());
 
         $.mouse.registerDrag($.unique, {
             element: this.element,
@@ -85,15 +95,15 @@ export class SceneObjectComponentVisual extends SceneObjectComponent<'visual'> {
             },
             move: (e) => {
                 if (e.e.ctrlKey && e.e.shiftKey) {
-                    attr.position = e.relative.add(e.offset).scale((1 / this.panel.camera.scale)).scale(0.04).floor().scale(25);
+                    this.attr.position = e.relative.add(e.offset).scale((1 / this.panel.camera.scale)).scale(0.04).floor().scale(25);
                 } else if (e.e.ctrlKey) {
-                    attr.position = e.relative.add(e.offset).scale((1 / this.panel.camera.scale)).scale(0.1).floor().scale(10);
+                    this.attr.position = e.relative.add(e.offset).scale((1 / this.panel.camera.scale)).scale(0.1).floor().scale(10);
                 } else if (e.e.shiftKey) {
-                    attr.position = e.relative.add(e.offset).scale((1 / this.panel.camera.scale)).scale(0.2).floor().scale(5);
+                    this.attr.position = e.relative.add(e.offset).scale((1 / this.panel.camera.scale)).scale(0.2).floor().scale(5);
                 } else {
-                    attr.position = e.relative.add(e.offset).scale((1 / this.panel.camera.scale)).floor();
+                    this.attr.position = e.relative.add(e.offset).scale((1 / this.panel.camera.scale)).floor();
                 }
-                this.setPosition(attr.position);
+                this.setPosition(this.attr.position);
             }
         });
 
@@ -127,11 +137,6 @@ export class SceneObjectComponentVisual extends SceneObjectComponent<'visual'> {
             },
         });
         this.resizer.append(new Icon({ name: 'aspect_ratio', weight: 200 }));
-
-    }
-
-    build(): void {
-        super.build();
     }
     add(parent: DomElement) {
         this.delete();

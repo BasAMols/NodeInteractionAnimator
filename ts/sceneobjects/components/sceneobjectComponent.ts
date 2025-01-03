@@ -37,7 +37,7 @@ export class SceneObjectComponent<T extends keyof SceneObjectComponentDict = key
     key: string;
     type: T;
 
-    constructor(type: T, { key }: SceneObjectComponentAttr) {
+    constructor(type: T, { key}: SceneObjectComponentAttr) {
         this.type = type;
         this.key = key;
     }

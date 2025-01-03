@@ -4,10 +4,12 @@ import { SceneObjectComponentOutline } from './components/sceneobjectComponentOu
 
 export interface SceneObjectAttr {
     key: string,
+    name?: string,
     components?: SceneObjectComponent[];
 }
 export class SceneObject {
     active: boolean = true;
+    name: string = ''
     private _selected: boolean = false;
     public get selected(): boolean {
         return this._selected;
@@ -22,8 +24,9 @@ export class SceneObject {
     components: SceneObjectComponent[] = [new SceneObjectComponentOutline({key: $.unique})];
     public visualPanel: GraphicPanel;
 
-    constructor({ key, components = [] }: SceneObjectAttr) {
+    constructor({ key, components = [], name }: SceneObjectAttr) {
         this.key = key;
+        this.name = name || ''
         this.assign(components);
     }
 

@@ -46,23 +46,87 @@ export class Main {
             new LibraryPanel([
                 {
                     image: new Icon({name: 'grid_view'}),
-                    name: 'Grid',
-                    key: 'grid',
+                    name: 'Grid (2x2)',
+                    key: 'grid1',
+                    content: [
+                        {
+                            key: $.unique,
+                            name: 'top left',
+                            components: [
+                                new SceneObjectComponentVisual({
+                                    key: $.unique,
+                                    position: v2(10, 35),
+                                    asset: {
+                                        visualType: 'image',
+                                        size: v2(240, 240),
+            
+                                    }
+                                })
+                            ]
+                        },
+                        {
+                            key: $.unique,
+                            name: 'top right',
+                            components: [
+                                new SceneObjectComponentVisual({
+                                    key: $.unique,
+                                    position: v2(255, 35),
+                                    asset: {
+                                        visualType: 'image',
+                                        size: v2(240, 240),
+            
+                                    }
+                                })
+                            ]
+                        },
+                        {
+                            key: $.unique,
+                            name: 'bottom left',
+                            components: [
+                                new SceneObjectComponentVisual({
+                                    key: $.unique,
+                                    position: v2(10, 280),
+                                    asset: {
+                                        visualType: 'image',
+                                        size: v2(240, 240),
+            
+                                    }
+                                })
+                            ]
+                        },
+                        {
+                            key: $.unique,
+                            name: 'bottom right',
+                            components: [
+                                new SceneObjectComponentVisual({
+                                    key: $.unique,
+                                    position: v2(255, 280),
+                                    asset: {
+                                        visualType: 'image',
+                                        size: v2(240, 240),
+                                    }
+                                })
+                            ]
+                        }
+                    ],
                 },
                 {
                     image: new Icon({name: 'grid_view'}),
                     name: 'Grid',
                     key: 'grid',
+                    content: [],
                 },
                 {
                     image: new Icon({name: 'grid_view'}),
                     name: 'Grid',
                     key: 'grid',
+                    content: [],
                 },
                 {
                     image: new Icon({name: 'grid_view'}),
                     name: 'Grid',
                     key: 'grid',
+                    content: [],
                 },
             ]),
         ]);
