@@ -40,9 +40,9 @@ export class SceneObjectComponentOutline extends SceneObjectComponent<'outline'>
                 this.sceneObject.focus();
             }
         }));
-        // meta.append(new Button({ icon: Icon.make('visibility'), design: 'icon', onClick: ()=>{
-        //     $.scene.focus(this.sceneObject);
-        // } }));
+        meta.append(new Button({ icon: Icon.make('delete_forever'), design: 'icon', onClick: ()=>{
+            $.scene.remove(this.sceneObject);
+        } }));
         // meta.append(new Button({ icon: Icon.make('visibility_off'), design: 'icon' }));
         const content = this.element.child('div', { className: 'sceneline_content' });
         let count = 0;
@@ -59,9 +59,9 @@ export class SceneObjectComponentOutline extends SceneObjectComponent<'outline'>
         const line = parent.child('div', { className: 'sceneline' });
         const head = line.child('div', { className: 'sceneline_head' });
         head.child('div', { className: 'sceneline_head_content', text: o.type });
-        // const meta = head.child('div', { className: 'sceneline_head_meta' });
-        // meta.append(new Button({ icon: Icon.make('arrow_selector_tool'), design: 'icon' }));
-        // meta.append(new Button({ icon: Icon.make('visibility'), design: 'icon' }));
-        // meta.append(new Button({ icon: Icon.make('visibility_off'), design: 'icon' }));
+    }
+    delete(): void {
+        super.delete();
+        if (this.element.domElement.parentElement)this.element.domElement.parentElement.removeChild(this.element.domElement)
     }
 }

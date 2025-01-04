@@ -15,9 +15,9 @@ import { ExportPanel } from './interface/windows/export';
 import { SceneObjectManager } from './sceneobjects/sceneobjectManager';
 import { v2 } from './lib/utilities/vector2';
 import { SceneObjectComponentVisual } from './sceneobjects/components/sceneobjectComponentVisual';
-import { SceneObject } from './sceneobjects/sceneobject';
 import { LibraryPanel } from './panels/library/libraryPanel';
 import { Icon } from './lib/dom/icon';
+import { ViewerPanel } from './panels/graphic/viewerPanel';
 
 
 
@@ -27,10 +27,6 @@ export class Main {
 
     public constructor() {
         /*  TODO
-        - Global Node Manager
-        - Outliner that visualises nodes
-        - Visual component in graphic panel
-        - Node component in node panel
         - Timeline for specific animation nodes
         - Properties panel that shows options for each node. 
         */
@@ -39,15 +35,60 @@ export class Main {
         $.mouse = new DragManager();
         $.panels = new PanelManager([
             new GraphicPanel(),
+            new ViewerPanel(),
             new NodeEditorPanel(),
             new OutlinerPanel(),
             new PropertiesPanel(),
             new TimelinePanel(),
             new LibraryPanel([
+                ['Images', [{
+                    image: new Icon({ name: 'image' }),
+                    name: 'Image',
+                    key: 'image',
+                    content: [
+                        {
+                            key: $.unique,
+                            name: 'Image',
+                            components: [
+                                new SceneObjectComponentVisual({
+                                    key: $.unique,
+                                    position: v2(0, 0),
+                                    asset: {
+                                        visualType: 'image',
+                                        size: v2(50, 50),
+
+                                    }
+                                })
+                            ]
+                        },
+                    ]
+                },
                 {
-                    image: new Icon({name: 'grid_view'}),
+                    image: new Icon({ name: 'fullscreen' }),
+                    name: 'Fullscreen',
+                    key: 'fullscreen',
+                    content: [
+                        {
+                            key: $.unique,
+                            name: 'Fullscreen image',
+                            components: [
+                                new SceneObjectComponentVisual({
+                                    key: $.unique,
+                                    position: v2(0, 0),
+                                    asset: {
+                                        visualType: 'image',
+                                        size: v2(505, 545),
+
+                                    }
+                                })
+                            ]
+                        },
+                    ]
+                }]],
+                ['Templates', [{
+                    image: new Icon({ name: 'grid_view' }),
                     name: 'Grid (2x2)',
-                    key: 'grid1',
+                    key: 'template1',
                     content: [
                         {
                             key: $.unique,
@@ -59,7 +100,7 @@ export class Main {
                                     asset: {
                                         visualType: 'image',
                                         size: v2(240, 240),
-            
+
                                     }
                                 })
                             ]
@@ -74,7 +115,7 @@ export class Main {
                                     asset: {
                                         visualType: 'image',
                                         size: v2(240, 240),
-            
+
                                     }
                                 })
                             ]
@@ -89,7 +130,7 @@ export class Main {
                                     asset: {
                                         visualType: 'image',
                                         size: v2(240, 240),
-            
+
                                     }
                                 })
                             ]
@@ -108,26 +149,8 @@ export class Main {
                                 })
                             ]
                         }
-                    ],
-                },
-                {
-                    image: new Icon({name: 'grid_view'}),
-                    name: 'Grid',
-                    key: 'grid',
-                    content: [],
-                },
-                {
-                    image: new Icon({name: 'grid_view'}),
-                    name: 'Grid',
-                    key: 'grid',
-                    content: [],
-                },
-                {
-                    image: new Icon({name: 'grid_view'}),
-                    name: 'Grid',
-                    key: 'grid',
-                    content: [],
-                },
+                    ]
+                }]]
             ]),
         ]);
         $.windows = new WindowManager([
@@ -138,12 +161,19 @@ export class Main {
         ]);
         $.workspace = new WorkSpace({
             default: {
-                name: 'Default',
+                name: 'Builder',
+                icon: Icon.make('space_dashboard'),
                 data: [1, 'h', 15, [2, 'library'], [1, 'h', 80, [2, 'graphic'], [1, 'v', 50, [2, 'outliner'], [2, 'properties']]]]
-            }
+            },
+            grid: {
+                name: 'Grid',
+                icon: Icon.make('window'),
+                data: [1, 'h', 50, [1, 'v', 50, [0], [0]], [1, 'v', 50, [0], [0]]]
+            },
         });
         $.scene = new SceneObjectManager({
             graphic: $.panels.getPanel('graphic') as GraphicPanel,
+            viewer: $.panels.getPanel('viewer') as ViewerPanel,
             properties: $.panels.getPanel('properties') as PropertiesPanel,
             node: $.panels.getPanel('node') as NodeEditorPanel,
             timeline: $.panels.getPanel('timeline') as TimelinePanel,
@@ -151,40 +181,45 @@ export class Main {
         });
 
         $.workspace.resize();
+
+        $.panels.forEach(([k, p]) => p.build());
+
+        // $.scene.bulk([
+        //     {
+        //         key: $.unique,
+        //         components: [
+        //             new SceneObjectComponentVisual({
+        //                 key: $.unique,
+        //                 position: v2(10, 10),
+        //                 asset: {
+        //                     visualType: 'image',
+        //                     size: v2(100, 100),
+
+        //                 }
+        //             })
+        //         ]
+        //     },
+        //     {
+        //         key: $.unique,
+        //         components: [
+        //             new SceneObjectComponentVisual({
+        //                 key: $.unique,
+        //                 position: v2(0, 405),
+        //                 asset: {
+        //                     visualType: 'image',
+        //                     size: v2(505, 100),
+
+        //                 }
+        //             })
+        //         ]
+        //     }
+        // ]
+        // );
+
         setTimeout(() => {
             $.workspace.resize();
-            $.panels.forEach(([k, p]) => p.build());
-
-            $.scene.add(new SceneObject({
-                key: $.unique,
-                components: [
-                    new SceneObjectComponentVisual({
-                        key: $.unique,
-                        position: v2(10, 10),
-                        asset: {
-                            visualType: 'image',
-                            size: v2(100, 100),
-
-                        }
-                    })
-                ]
-            }));
-            $.scene.add(new SceneObject({
-                key: $.unique,
-                components: [
-                    new SceneObjectComponentVisual({
-                        key: $.unique,
-                        position: v2(0, 405),
-                        asset: {
-                            visualType: 'image',
-                            size: v2(505, 100),
-
-                        }
-                    })
-                ]
-            }));
-
-        }, 20);
+            ($.panels.getPanel('graphic') as GraphicPanel).camera.center();
+        }, 1);
     }
 
     public tick() {

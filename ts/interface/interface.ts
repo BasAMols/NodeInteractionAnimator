@@ -1,6 +1,6 @@
 import { Button } from '../lib/dom/button';
 import { DomElement } from '../lib/dom/domElement';
-import { Icon } from '../lib/dom/icon';
+import { Icon, IconProperties } from '../lib/dom/icon';
 import { v2 } from '../lib/utilities/vector2';
 import { Menu } from './menu';
 import { Section, SectionContent } from './section';
@@ -13,6 +13,7 @@ export type WorkspacePresetData = WorkspacePresetEmpty | WorkspacePresetSplit | 
 export interface WorkspacePreset {
     name: string,
     data: WorkspacePresetData;
+    icon?: IconProperties
 }
 export type WorkspacePresetStorage = WorkspacePreset & {
     button: Button,
@@ -52,7 +53,7 @@ export class WorkSpace extends DomElement<'div'> {
     }
     private buildToolbar(presets?: Record<string, WorkspacePreset>) {
 
-        const p = { empty: { name: 'Empty', data: [0] } };
+        const p:Record<string, WorkspacePreset> = { empty: { name: 'Empty', data: [0], icon: Icon.make('grid_off') } };
         if (presets) Object.assign(p, presets);
 
         this.header = this.child('header', {
@@ -89,6 +90,12 @@ export class WorkSpace extends DomElement<'div'> {
                     { key: 'undo', name: 'Undo', icon: Icon.make('undo'), onClick: () => { } },
                     { key: 'redo', name: 'Redo...', icon: Icon.make('redo'), onClick: () => { } },
                     {
+                        key: 'empty', name: 'Empty scene', onClick: () => {
+                            $.scene.clear();
+                        }
+                    },
+                    '',
+                    {
                         key: 'options', name: 'Options...', icon: Icon.make('settings'), onClick: () => {
                             $.windows.open('settings');
                         }
@@ -102,7 +109,7 @@ export class WorkSpace extends DomElement<'div'> {
                 icon: { name: 'dashboard', weight: 200 },
                 type: 'Panel',
                 data: [Object.entries(p).map(([k, v]) => {
-                    return { key: k, name: v.name, onClick: ()=>{this.setPreset(k)} };
+                    return { key: k, icon:v.icon, name: v.name, onClick: ()=>{this.setPreset(k)}};
                 })]
             },
             {
@@ -128,7 +135,7 @@ export class WorkSpace extends DomElement<'div'> {
                 type: 'Panel',
                 data: [[
                     {
-                        key: 'des', name: 'Deselect', icon: Icon.make('deselect'), onClick: () => {
+                        key: 'des', name: 'Deselect', icon: Icon.make('remove_selection'), onClick: () => {
                             $.scene.focus()
                         }
                     },

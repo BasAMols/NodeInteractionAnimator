@@ -1,13 +1,15 @@
 import { GraphicPanel } from '../panels/graphic/graphicPanel';
+import { ViewerPanel } from '../panels/graphic/viewerPanel';
 import { NodeEditorPanel } from '../panels/node/nodePanel';
 import { OutlinerPanel } from '../panels/outliner';
 import { PropertiesPanel } from '../panels/properties';
 import { TimelinePanel } from '../panels/timeline';
 import { SceneObjectComponentDict } from './components/sceneobjectComponent';
-import { SceneObject } from './sceneobject';
+import { SceneObject, SceneObjectAttr } from './sceneobject';
 
 
 export interface SceneObjectManagerPanels {
+    viewer: ViewerPanel,
     graphic: GraphicPanel,
     properties: PropertiesPanel,
     node: NodeEditorPanel,
@@ -29,10 +31,12 @@ export class SceneObjectManager {
      * Adds a `SceneObject` to the scene 
      * @return Returns the `SceneObject`
     */
-    public add(n: SceneObject) {
+    public add(n: SceneObjectAttr) {
         if (!n) return;
-        this.sceneObjects[n.key] = n;
-        n.build();
+        const d = new SceneObject(n)
+        this.sceneObjects[n.key] = d;
+        d.build();
+        
         return n;
     }
 
@@ -43,7 +47,7 @@ export class SceneObjectManager {
     public remove(n: SceneObject) {
         if (!n || !this.sceneObjects[n.key]) return;
         n.delete();
-        if (n === this.selected) this.focus()
+        if (n === this.selected) this.focus();
         delete this.sceneObjects[n.key];
     }
 
@@ -68,11 +72,11 @@ export class SceneObjectManager {
     }
 
     /** 
-     * Bulk add multple {@link SceneObject `sceneObjects`} to the scene.
+     * Bulk creates and adds multple {@link SceneObject `sceneObjects`} to the scene.
      * @remarks Often used for importing an entire scene
      * @param clear Should the {@link SceneObjectManager.clear() `clear()`} method be run to empty the scene? 
     */
-    public bulk(v: SceneObject[], clear: boolean) {
+    public bulk(v: SceneObjectAttr[], clear: boolean = false) {
         if (clear) this.clear();
         v.forEach((n) => {
             this.add(n);
@@ -94,7 +98,10 @@ export class SceneObjectManager {
 
     public update<T extends keyof SceneObjectComponentDict>(type: T | 'all' = 'all') {
         this.panels.outliner.update(Object.values(this.sceneObjects));
-        if (type === 'visual' || type === 'all') this.panels.graphic.update(this.getComponentsByType('visual'));
+        if (type === 'visual' || type === 'all') {
+            this.panels.viewer.update(this.getComponentsByType('visual'));
+            this.panels.graphic.update(this.getComponentsByType('visual'));
+        }
     }
     public keyExists(n: string) {
         return Boolean(this.sceneObjects[n]);

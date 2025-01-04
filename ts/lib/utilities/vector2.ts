@@ -53,4 +53,7 @@ export class Vector2 extends Array<number> {
     public c() {
         return new Vector2(this[0], this[1])
     }
+    public magnitude(): number {
+        return (this.x * this.x) + (this.y * this.y)
+    }
 }

@@ -48,7 +48,7 @@ export class SceneObject {
     }
     clear() {
         this.components.forEach((c) => {
-            if (c.type !== 'outline') c.delete();
+            c.delete();
         });
         this.components = [];
     }

@@ -1,6 +1,4 @@
 var __defProp = Object.defineProperty;
-var __defProps = Object.defineProperties;
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __propIsEnum = Object.prototype.propertyIsEnumerable;
@@ -16,7 +14,6 @@ var __spreadValues = (a, b) => {
     }
   return a;
 };
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 
 // ts/lib/dom/domElement.ts
 var DomElement = class _DomElement {
@@ -224,6 +221,9 @@ var Vector2 = class _Vector2 extends Array {
   }
   c() {
     return new _Vector2(this[0], this[1]);
+  }
+  magnitude() {
+    return this.x * this.x + this.y * this.y;
   }
 };
 
@@ -694,7 +694,7 @@ var WorkSpace = class extends DomElement {
     this.mainSection.resize();
   }
   buildToolbar(presets) {
-    const p = { empty: { name: "Empty", data: [0] } };
+    const p = { empty: { name: "Empty", data: [0], icon: Icon.make("grid_off") } };
     if (presets)
       Object.assign(p, presets);
     this.header = this.child("header", {
@@ -744,6 +744,14 @@ var WorkSpace = class extends DomElement {
           { key: "redo", name: "Redo...", icon: Icon.make("redo"), onClick: () => {
           } },
           {
+            key: "empty",
+            name: "Empty scene",
+            onClick: () => {
+              $.scene.clear();
+            }
+          },
+          "",
+          {
             key: "options",
             name: "Options...",
             icon: Icon.make("settings"),
@@ -760,7 +768,7 @@ var WorkSpace = class extends DomElement {
         icon: { name: "dashboard", weight: 200 },
         type: "Panel",
         data: [Object.entries(p).map(([k, v]) => {
-          return { key: k, name: v.name, onClick: () => {
+          return { key: k, icon: v.icon, name: v.name, onClick: () => {
             this.setPreset(k);
           } };
         })]
@@ -793,7 +801,7 @@ var WorkSpace = class extends DomElement {
           {
             key: "des",
             name: "Deselect",
-            icon: Icon.make("deselect"),
+            icon: Icon.make("remove_selection"),
             onClick: () => {
               $.scene.focus();
             }
@@ -898,7 +906,7 @@ var PanelManager = class {
       let lastMenu = 0;
       for (let i = 0; i < Object.entries(this.list).length; i++) {
         const [k, v] = Object.entries(this.list)[i];
-        if (d[lastMenu].length > 2)
+        if (d[lastMenu].length > Math.ceil(Math.sqrt(Object.entries(this.list).length + 1)))
           lastMenu = d.push([]) - 1;
         d[lastMenu].push({ key: k, name: v.panel.name, icon: v.panel.icon });
       }
@@ -1125,26 +1133,15 @@ var GraphicPanel = class extends CameraPanel {
   constructor() {
     super("graphic", "Graphic", {
       camera: { contentSize: v2(505, 545), minZoom: 0.1, maxZoom: 5, scrollSpeed: 2 },
-      buttons: [
-        {
-          key: "graphic_light",
-          type: "Action",
-          design: "icon",
-          icon: Icon.make("light_mode"),
-          onClick: () => {
-            this.light = !this.light;
-          }
-        },
-        {
-          key: "graphic_deselect",
-          type: "Action",
-          design: "icon",
-          icon: Icon.make("deselect"),
-          onClick: () => {
-            $.scene.focus();
-          }
+      buttons: [{
+        key: "graphic_light",
+        type: "Action",
+        design: "icon",
+        icon: Icon.make("light_mode"),
+        onClick: () => {
+          this.light = !this.light;
         }
-      ]
+      }]
     });
     this._light = false;
     this.icon = Icon.make("animation");
@@ -1394,7 +1391,7 @@ var DragManager = class extends DomElement {
   }
   registerDrag(key, reg) {
     var _a;
-    this.dragListeners[key] = __spreadValues(__spreadValues({}, reg), { enabled: true });
+    this.dragListeners[key] = __spreadValues(__spreadValues({}, reg), { enabled: true, brokeTolerance: false });
     reg.element.domElement.addEventListener("mousedown", (e) => {
       if (this.dragListeners[key].enabled) {
         this.start(key, e);
@@ -1452,11 +1449,19 @@ var DragManager = class extends DomElement {
       this.dragging = true;
       this.calcOffsets(key, e);
       (_b = (_a = this.current).start) == null ? void 0 : _b.call(_a);
+      this.current.brokeTolerance = !this.current.initialTolerance;
     }
   }
   move(e) {
     if (this.dragging && this.current.move) {
       const absolute = v2(e.clientX, e.clientY);
+      if (!this.current.brokeTolerance) {
+        if (this.current.elementStart.subtract(this.current.startOffset).subtract(absolute).magnitude() > this.current.initialTolerance) {
+          this.current.brokeTolerance = true;
+        } else {
+          return;
+        }
+      }
       let relative, factor = v2();
       if (this.current.reference) {
         const ref = this.current.reference.domElement.getBoundingClientRect();
@@ -1541,6 +1546,151 @@ var ExportPanel = class extends WindowPanel {
   }
 };
 
+// ts/sceneobjects/components/sceneobjectComponent.ts
+var SceneObjectComponent = class {
+  constructor(type, { key }) {
+    this._selected = false;
+    this.type = type;
+    this.key = key;
+  }
+  get selected() {
+    return this._selected;
+  }
+  set selected(value) {
+    if (this._selected !== value) {
+      this._selected = value;
+      this.updateState();
+    }
+  }
+  updateState() {
+  }
+  build() {
+    $.scene.update(this.type);
+  }
+  resize() {
+  }
+  delete() {
+  }
+};
+
+// ts/sceneobjects/components/sceneobjectComponentOutline.ts
+var SceneObjectComponentOutline = class extends SceneObjectComponent {
+  constructor(attr) {
+    super("outline", attr);
+    this._toggle = false;
+  }
+  get toggle() {
+    return this._toggle;
+  }
+  set toggle(value) {
+    this._toggle = value;
+    this.element.class(value, "open");
+  }
+  updateState() {
+    super.updateState();
+    this.element.class(this.selected, "selected");
+  }
+  build() {
+    this.element = new DomElement("div", { className: "sceneline" });
+    const head = this.element.child("div", { className: "sceneline_head" });
+    head.append(new Button({
+      className: "sceneline_head_collapse",
+      icon: Icon.make("keyboard_arrow_down"),
+      design: "icon",
+      onClick: () => {
+        this.toggle = !this.toggle;
+      }
+    }));
+    head.child("div", { className: "sceneline_head_content", text: this.sceneObject.name || this.sceneObject.key });
+    const meta = head.child("div", { className: "sceneline_head_meta" });
+    meta.append(new Button({
+      className: "sceneline_select",
+      icon: Icon.make("arrow_selector_tool"),
+      design: "icon",
+      onClick: () => {
+        this.sceneObject.focus();
+      }
+    }));
+    meta.append(new Button({ icon: Icon.make("delete_forever"), design: "icon", onClick: () => {
+      $.scene.remove(this.sceneObject);
+    } }));
+    const content = this.element.child("div", { className: "sceneline_content" });
+    let count = 0;
+    this.sceneObject.components.forEach((c) => {
+      if (c.type !== "outline") {
+        count++;
+        this.addLineChild(content, c);
+      }
+    });
+    content.setStyle("max-height", "".concat(count * 30, "px"));
+  }
+  addLineChild(parent, o) {
+    const line = parent.child("div", { className: "sceneline" });
+    const head = line.child("div", { className: "sceneline_head" });
+    head.child("div", { className: "sceneline_head_content", text: o.type });
+  }
+  delete() {
+    super.delete();
+    if (this.element.domElement.parentElement)
+      this.element.domElement.parentElement.removeChild(this.element.domElement);
+  }
+};
+
+// ts/sceneobjects/sceneobject.ts
+var SceneObject = class {
+  constructor({ key, components = [], name }) {
+    this.active = true;
+    this.name = "";
+    this._selected = false;
+    this.components = [new SceneObjectComponentOutline({ key: $.unique })];
+    this.key = key;
+    this.name = name || "";
+    this.assign(components);
+  }
+  get selected() {
+    return this._selected;
+  }
+  set selected(value) {
+    if (this._selected !== value) {
+      this._selected = value;
+      this.components.forEach((c) => c.selected = value);
+    }
+  }
+  getComponentsByType(type) {
+    return this.components.filter((c) => c.type === type);
+  }
+  assign(components) {
+    components.forEach((c) => {
+      this.components.push(c);
+      c.sceneObject = this;
+      c.selected = this.selected;
+    });
+  }
+  resize() {
+    this.components.forEach((c) => {
+      c.resize();
+    });
+  }
+  clear() {
+    this.components.forEach((c) => {
+      c.delete();
+    });
+    this.components = [];
+  }
+  delete() {
+    this.clear();
+  }
+  focus() {
+    $.scene.focus(this);
+  }
+  build() {
+    this.components.forEach((c) => {
+      c.sceneObject = this;
+      c.build();
+    });
+  }
+};
+
 // ts/sceneobjects/sceneobjectManager.ts
 var SceneObjectManager = class {
   constructor(panels) {
@@ -1554,8 +1704,9 @@ var SceneObjectManager = class {
   add(n) {
     if (!n)
       return;
-    this.sceneObjects[n.key] = n;
-    n.build();
+    const d = new SceneObject(n);
+    this.sceneObjects[n.key] = d;
+    d.build();
     return n;
   }
   /** 
@@ -1589,11 +1740,11 @@ var SceneObjectManager = class {
     });
   }
   /** 
-   * Bulk add multple {@link SceneObject `sceneObjects`} to the scene.
+   * Bulk creates and adds multple {@link SceneObject `sceneObjects`} to the scene.
    * @remarks Often used for importing an entire scene
    * @param clear Should the {@link SceneObjectManager.clear() `clear()`} method be run to empty the scene? 
   */
-  bulk(v, clear) {
+  bulk(v, clear = false) {
     if (clear)
       this.clear();
     v.forEach((n) => {
@@ -1614,38 +1765,13 @@ var SceneObjectManager = class {
   }
   update(type = "all") {
     this.panels.outliner.update(Object.values(this.sceneObjects));
-    if (type === "visual" || type === "all")
+    if (type === "visual" || type === "all") {
+      this.panels.viewer.update(this.getComponentsByType("visual"));
       this.panels.graphic.update(this.getComponentsByType("visual"));
+    }
   }
   keyExists(n) {
     return Boolean(this.sceneObjects[n]);
-  }
-};
-
-// ts/sceneobjects/components/sceneobjectComponent.ts
-var SceneObjectComponent = class {
-  constructor(type, { key }) {
-    this._selected = false;
-    this.type = type;
-    this.key = key;
-  }
-  get selected() {
-    return this._selected;
-  }
-  set selected(value) {
-    if (this._selected !== value) {
-      this._selected = value;
-      this.updateState();
-    }
-  }
-  updateState() {
-  }
-  build() {
-    $.scene.update(this.type);
-  }
-  resize() {
-  }
-  delete() {
   }
 };
 
@@ -1702,6 +1828,7 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
       element: this.element,
       cursor: "move",
       reference: this.panel.graphic,
+      initialTolerance: 400,
       start: () => {
         this.sceneObject.focus();
       },
@@ -1723,6 +1850,7 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
         className: "window_resizer"
       }),
       reference: this.element,
+      initialTolerance: 400,
       cursor: "nw-resize",
       start: () => {
         this.sceneObject.focus();
@@ -1754,6 +1882,7 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
     parent.append(this.element);
   }
   delete() {
+    super.delete();
     if (this.element.domElement.parentElement) {
       this.element.domElement.parentElement.removeChild(this.element.domElement);
     }
@@ -1764,128 +1893,20 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
   }
 };
 
-// ts/sceneobjects/components/sceneobjectComponentOutline.ts
-var SceneObjectComponentOutline = class extends SceneObjectComponent {
-  constructor(attr) {
-    super("outline", attr);
-    this._toggle = false;
-  }
-  get toggle() {
-    return this._toggle;
-  }
-  set toggle(value) {
-    this._toggle = value;
-    this.element.class(value, "open");
-  }
-  updateState() {
-    super.updateState();
-    this.element.class(this.selected, "selected");
-  }
-  build() {
-    this.element = new DomElement("div", { className: "sceneline" });
-    const head = this.element.child("div", { className: "sceneline_head" });
-    head.append(new Button({
-      className: "sceneline_head_collapse",
-      icon: Icon.make("keyboard_arrow_down"),
-      design: "icon",
-      onClick: () => {
-        this.toggle = !this.toggle;
-      }
-    }));
-    head.child("div", { className: "sceneline_head_content", text: this.sceneObject.name || this.sceneObject.key });
-    const meta = head.child("div", { className: "sceneline_head_meta" });
-    meta.append(new Button({
-      className: "sceneline_select",
-      icon: Icon.make("arrow_selector_tool"),
-      design: "icon",
-      onClick: () => {
-        this.sceneObject.focus();
-      }
-    }));
-    const content = this.element.child("div", { className: "sceneline_content" });
-    let count = 0;
-    this.sceneObject.components.forEach((c) => {
-      if (c.type !== "outline") {
-        count++;
-        this.addLineChild(content, c);
-      }
-    });
-    content.setStyle("max-height", "".concat(count * 30, "px"));
-  }
-  addLineChild(parent, o) {
-    const line = parent.child("div", { className: "sceneline" });
-    const head = line.child("div", { className: "sceneline_head" });
-    head.child("div", { className: "sceneline_head_content", text: o.type });
-  }
-};
-
-// ts/sceneobjects/sceneobject.ts
-var SceneObject = class {
-  constructor({ key, components = [], name }) {
-    this.active = true;
-    this.name = "";
-    this._selected = false;
-    this.components = [new SceneObjectComponentOutline({ key: $.unique })];
-    this.key = key;
-    this.name = name || "";
-    this.assign(components);
-  }
-  get selected() {
-    return this._selected;
-  }
-  set selected(value) {
-    if (this._selected !== value) {
-      this._selected = value;
-      this.components.forEach((c) => c.selected = value);
-    }
-  }
-  getComponentsByType(type) {
-    return this.components.filter((c) => c.type === type);
-  }
-  assign(components) {
-    components.forEach((c) => {
-      this.components.push(c);
-      c.sceneObject = this;
-      c.selected = this.selected;
-    });
-  }
-  resize() {
-    this.components.forEach((c) => {
-      c.resize();
-    });
-  }
-  clear() {
-    this.components.forEach((c) => {
-      if (c.type !== "outline")
-        c.delete();
-    });
-    this.components = [];
-  }
-  delete() {
-    this.clear();
-  }
-  focus() {
-    $.scene.focus(this);
-  }
-  build() {
-    this.components.forEach((c) => {
-      c.sceneObject = this;
-      c.build();
-    });
-  }
-};
-
 // ts/panels/library/libraryItem.ts
 var LibraryItem = class extends DomElement {
   constructor(attr) {
     super("div", {
       className: "library_item",
       onClick: () => {
-        attr.content.forEach((s) => {
-          const attr2 = __spreadProps(__spreadValues({}, s), {
-            key: $.scene.keyExists(s.key) ? $.unique : s.key
-          });
-          $.scene.add(new SceneObject(attr2));
+        attr.content.forEach((s, i) => {
+          const bttr = __spreadValues({}, s);
+          if ($.scene.keyExists(s.key)) {
+            Object.assign(bttr, {
+              key: $.unique
+            });
+          }
+          $.scene.add(new SceneObject(bttr));
         });
       }
     });
@@ -1906,11 +1927,60 @@ var LibraryPanel = class extends Panel {
     super("library", "Library");
     this.icon = Icon.make("video_library");
     list.forEach((l) => {
-      this.addItem(l);
+      this.addCategories(l);
     });
   }
-  addItem(l) {
-    this.content.append(new LibraryItem(l));
+  addCategories([k, items]) {
+    const w = this.content.child("div", { className: "library_category" });
+    w.child("div", { className: "library_category_name", text: k });
+    items.forEach((l) => {
+      this.addItem(w, l);
+    });
+  }
+  addItem(parent, l) {
+    parent.append(new LibraryItem(l));
+  }
+};
+
+// ts/panels/graphic/viewerPanel.ts
+var ViewerPanel = class extends CameraPanel {
+  constructor() {
+    super("viewer", "Viewer", {
+      camera: { contentSize: v2(505, 545), minZoom: 0.1, maxZoom: 5, scrollSpeed: 2 },
+      buttons: [{
+        key: "graphic_light",
+        type: "Action",
+        design: "icon",
+        icon: Icon.make("light_mode"),
+        onClick: () => {
+          this.light = !this.light;
+        }
+      }]
+    });
+    this._light = false;
+    this.icon = Icon.make("view_in_ar");
+    this.components = [];
+    this.graphic = this.childCamera("div", {
+      className: "_graphic"
+    });
+  }
+  get light() {
+    return this._light;
+  }
+  set light(value) {
+    this._light = value;
+    this.class(value, "light");
+  }
+  clear() {
+    this.components.forEach((v) => {
+      v.delete();
+    });
+  }
+  update(d) {
+    this.clear();
+    d.forEach((v) => {
+      v.add(this.graphic);
+    });
   }
 };
 
@@ -1921,15 +1991,60 @@ var Main = class {
     $.mouse = new DragManager();
     $.panels = new PanelManager([
       new GraphicPanel(),
+      new ViewerPanel(),
       new NodeEditorPanel(),
       new OutlinerPanel(),
       new PropertiesPanel(),
       new TimelinePanel(),
       new LibraryPanel([
-        {
+        ["Images", [
+          {
+            image: new Icon({ name: "image" }),
+            name: "Image",
+            key: "image",
+            content: [
+              {
+                key: $.unique,
+                name: "Image",
+                components: [
+                  new SceneObjectComponentVisual({
+                    key: $.unique,
+                    position: v2(0, 0),
+                    asset: {
+                      visualType: "image",
+                      size: v2(50, 50)
+                    }
+                  })
+                ]
+              }
+            ]
+          },
+          {
+            image: new Icon({ name: "fullscreen" }),
+            name: "Fullscreen",
+            key: "fullscreen",
+            content: [
+              {
+                key: $.unique,
+                name: "Fullscreen image",
+                components: [
+                  new SceneObjectComponentVisual({
+                    key: $.unique,
+                    position: v2(0, 0),
+                    asset: {
+                      visualType: "image",
+                      size: v2(505, 545)
+                    }
+                  })
+                ]
+              }
+            ]
+          }
+        ]],
+        ["Templates", [{
           image: new Icon({ name: "grid_view" }),
           name: "Grid (2x2)",
-          key: "grid1",
+          key: "template1",
           content: [
             {
               key: $.unique,
@@ -1988,25 +2103,7 @@ var Main = class {
               ]
             }
           ]
-        },
-        {
-          image: new Icon({ name: "grid_view" }),
-          name: "Grid",
-          key: "grid",
-          content: []
-        },
-        {
-          image: new Icon({ name: "grid_view" }),
-          name: "Grid",
-          key: "grid",
-          content: []
-        },
-        {
-          image: new Icon({ name: "grid_view" }),
-          name: "Grid",
-          key: "grid",
-          content: []
-        }
+        }]]
       ])
     ]);
     $.windows = new WindowManager([
@@ -2017,48 +2114,30 @@ var Main = class {
     ]);
     $.workspace = new WorkSpace({
       default: {
-        name: "Default",
+        name: "Builder",
+        icon: Icon.make("space_dashboard"),
         data: [1, "h", 15, [2, "library"], [1, "h", 80, [2, "graphic"], [1, "v", 50, [2, "outliner"], [2, "properties"]]]]
+      },
+      grid: {
+        name: "Grid",
+        icon: Icon.make("window"),
+        data: [1, "h", 50, [1, "v", 50, [0], [0]], [1, "v", 50, [0], [0]]]
       }
     });
     $.scene = new SceneObjectManager({
       graphic: $.panels.getPanel("graphic"),
+      viewer: $.panels.getPanel("viewer"),
       properties: $.panels.getPanel("properties"),
       node: $.panels.getPanel("node"),
       timeline: $.panels.getPanel("timeline"),
       outliner: $.panels.getPanel("outliner")
     });
     $.workspace.resize();
+    $.panels.forEach(([k, p]) => p.build());
     setTimeout(() => {
       $.workspace.resize();
-      $.panels.forEach(([k, p]) => p.build());
-      $.scene.add(new SceneObject({
-        key: $.unique,
-        components: [
-          new SceneObjectComponentVisual({
-            key: $.unique,
-            position: v2(10, 10),
-            asset: {
-              visualType: "image",
-              size: v2(100, 100)
-            }
-          })
-        ]
-      }));
-      $.scene.add(new SceneObject({
-        key: $.unique,
-        components: [
-          new SceneObjectComponentVisual({
-            key: $.unique,
-            position: v2(0, 405),
-            asset: {
-              visualType: "image",
-              size: v2(505, 100)
-            }
-          })
-        ]
-      }));
-    }, 20);
+      $.panels.getPanel("graphic").camera.center();
+    }, 1);
   }
   tick() {
   }

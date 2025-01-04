@@ -13,11 +13,15 @@ export class LibraryItem extends DomElement<'div'>{
         super('div', {
             className: 'library_item',
             onClick: ()=> {
-                attr.content.forEach((s)=>{
-                    const attr:SceneObjectAttr = {...s, 
-                        key: $.scene.keyExists(s.key)?$.unique:s.key
+                
+                attr.content.forEach((s,i)=>{
+                    const bttr:SceneObjectAttr = {...s}
+                    if ($.scene.keyExists(s.key)){
+                        Object.assign(bttr, {
+                            key: $.unique
+                        })
                     }
-                    $.scene.add(new SceneObject(attr));
+                    $.scene.add(new SceneObject(bttr));
                 })
             }
         })

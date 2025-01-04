@@ -138,12 +138,8 @@ body {
                     align-items: center;
 
                     &:before {
-                        content: 'test';
-                        font-size: 90px;
+                        content: '';
                         position: absolute;
-                        padding: 3px 5px;
-                        font-weight: 200;
-                        color: #19191c;
                         text-wrap-mode: nowrap;
                         background: repeating-linear-gradient(160deg, var(--color-dark) 0, var(--color-dark) 30px, var(--color-verydark) 30px, var(--color-verydark) 60px);
                         width: 100%;
@@ -826,18 +822,40 @@ body.state_dragging .SceneObjectVisual.selected::after{
     position: absolute;
 }
 
-#library .panelContent {
-    padding: 15px 5px;
+#library .panelContent .library_category {
+    padding: 5px 5px;
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-start;
     align-items: flex-start;
     flex-direction: row;
     align-content: flex-start;
+    /* border-left: 15px solid var(--color-verydark); */
     overflow-y: scroll;
+    margin-left: 5px;
+    padding-left: 0;
+    padding-top: 0;
+    margin-bottom: 3px;
+    /* border-radius: 10px; */
+    overflow-x: hidden;
+}
+.library_category_name {
+    /* width: 100%; */
+    /* clear: right; */
+    margin-right: 100%;
+    /* text-align: center; */
+    margin-bottom: 2px;
+    padding: 5px 17px;
+    font-size: 16px;
+    background: var(--color-blue2);
+    margin-left: 5px;
+    margin-top: 5px;
+    padding-bottom: 7px;
+    border-radius: var(--radius);
 }
 
-#library .panelContent > .library_item {
+
+#library .panelContent > .library_category > .library_item {
     margin: 4px;
     width: 80px;
     height: 80px;
@@ -849,20 +867,12 @@ body.state_dragging .SceneObjectVisual.selected::after{
     flex-direction: column;
     cursor: pointer;
     transition: opacity 0.1s;
+    border-radius: var(--radius);
 }
 
-#library .panelContent > .library_item:hover {
+#library .panelContent > .library_category >  .library_item:hover {
     opacity: 0.8;
 }
 .visual.visual_image.empty {
     background: repeating-linear-gradient(45deg, #00000040, #00000040 10px, transparent 10px, transparent 15px);
-    display: flex; 
-    justify-content: center; 
-    align-items: center
-}
-
-.visual.visual_image.empty:before {
-    content: 'Empty'; 
-    color: white; 
-    font-size: 16px
 }

@@ -90,6 +90,7 @@ export class SceneObjectComponentVisual extends SceneObjectComponent<'visual'> {
             element: this.element,
             cursor: 'move',
             reference: this.panel.graphic,
+            initialTolerance: 400,
             start: () => {
                 this.sceneObject.focus();
             },
@@ -112,6 +113,7 @@ export class SceneObjectComponentVisual extends SceneObjectComponent<'visual'> {
                 className: `window_resizer`
             }),
             reference: this.element,
+            initialTolerance: 400,
             cursor: 'nw-resize',
             start: () => {
                 this.sceneObject.focus();
@@ -143,6 +145,7 @@ export class SceneObjectComponentVisual extends SceneObjectComponent<'visual'> {
         parent.append(this.element);
     }
     delete(): void {
+        super.delete();
         if (this.element.domElement.parentElement) {
             this.element.domElement.parentElement.removeChild(this.element.domElement);
         }

@@ -14,6 +14,7 @@ export interface DragRegisterType {
     element: DomElement,
     reference?: DomElement,
     cursor?: string,
+    initialTolerance?: number,
     move?: (e: DragReturnType) => void,
     start?: () => void,
     end?: () => void,
@@ -22,6 +23,7 @@ export interface DragStorageType extends DragRegisterType {
     startOffset?: Vector2;
     elementStart?: Vector2;
     enabled: boolean;
+    brokeTolerance: boolean
 }
 export interface ScrollReturnType {
     delta: number,
@@ -47,7 +49,7 @@ export class DragManager extends DomElement<'div'> {
     public set dragging(value: boolean) {
         this._dragging = value;
         this.domElement.classList[value ? 'add' : 'remove']('dragging');
-        $.state[value?'set':'unset']('dragging')
+        $.state[value?'set':'unset']('dragging');
     }
     private dragListeners: Record<string, DragStorageType> = {};
     private scrollListeners: Record<string, ScrollStorageType> = {};
@@ -60,7 +62,7 @@ export class DragManager extends DomElement<'div'> {
         this.domElement.addEventListener('mouseup', this.end.bind(this));
     }
     public registerDrag(key: string, reg: DragRegisterType) {
-        this.dragListeners[key] = { ...reg, ...{ enabled: true } };
+        this.dragListeners[key] = { ...reg, ...{ enabled: true, brokeTolerance: false } };
         reg.element.domElement.addEventListener('mousedown', (e: MouseEvent) => {
             if (this.dragListeners[key].enabled) {
                 this.start(key, e);
@@ -116,11 +118,21 @@ export class DragManager extends DomElement<'div'> {
             this.dragging = true;
             this.calcOffsets(key, e);
             this.current.start?.();
+            this.current.brokeTolerance = !this.current.initialTolerance;
         }
     }
     private move(e: MouseEvent) {
         if (this.dragging && this.current.move) {
             const absolute = v2(e.clientX, e.clientY);
+
+            if (!this.current.brokeTolerance) {
+                if (this.current.elementStart.subtract(this.current.startOffset).subtract(absolute).magnitude() > this.current.initialTolerance) {
+                    this.current.brokeTolerance = true;
+                } else {
+                    return
+                }
+            }
+
             let relative: Vector2, factor: Vector2 = v2();
             if (this.current.reference) {
                 const ref = this.current.reference.domElement.getBoundingClientRect();

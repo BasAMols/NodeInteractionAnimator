@@ -83,7 +83,7 @@ export class PanelManager {
             let lastMenu = 0
             for (let i = 0; i < Object.entries(this.list).length; i++) {
                 const [k, v] = Object.entries(this.list)[i];
-                if (d[lastMenu].length > 2) lastMenu = d.push([]) -1;
+                if (d[lastMenu].length > Math.ceil(Math.sqrt(Object.entries(this.list).length + 1))) lastMenu = d.push([]) -1;
                 d[lastMenu].push({ key: k, name: v.panel.name, icon: v.panel.icon });
             }
 

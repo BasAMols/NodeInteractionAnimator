@@ -4,9 +4,9 @@ import { v2 } from '../../lib/utilities/vector2';
 import { SceneObjectComponentVisual } from '../../sceneobjects/components/sceneobjectComponentVisual';
 import { CameraPanel } from '../cameraPanel';
 
-export class GraphicPanel extends CameraPanel {
+export class ViewerPanel extends CameraPanel {
     private _light: boolean = false;
-    public icon: IconProperties = Icon.make('animation');
+    public icon: IconProperties = Icon.make('view_in_ar');
     graphic: DomElement<"div">;
     public get light(): boolean {
         return this._light;
@@ -17,7 +17,7 @@ export class GraphicPanel extends CameraPanel {
     }
     private components: SceneObjectComponentVisual[] = [];
     constructor() {
-        super('graphic', 'Graphic', {
+        super('viewer', 'Viewer', {
             camera: { contentSize: v2(505, 545), minZoom: 0.1, maxZoom: 5, scrollSpeed: 2 },
             buttons: [{
                 key: 'graphic_light',
