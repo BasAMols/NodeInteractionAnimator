@@ -5,7 +5,6 @@ import { OutlinerPanel } from '../panels/outliner';
 import { PropertiesPanel } from '../panels/properties/propertiesPanel';
 import { TimelinePanel } from '../panels/timeline';
 import { SceneObjectComponentDict } from './components/sceneobjectComponent';
-import { SceneObjectComponentProperties } from './components/sceneobjectComponentProperties';
 import { SceneObject, SceneObjectAttr } from './sceneobject';
 
 
@@ -33,11 +32,14 @@ export class SceneObjectManager {
      * @return Returns the `SceneObject`
     */
     public add(n: SceneObjectAttr) {
+        console.log('add');
+        
         if (!n) return;
         const d = new SceneObject(n);
-        this.sceneObjects[n.key] = d;
+        this.sceneObjects[d.key] = d;
+        
         d.build();
-
+        this.update('outline')
         return n;
     }
 
@@ -50,6 +52,7 @@ export class SceneObjectManager {
         n.delete();
         if (n === this.selected) this.focus();
         delete this.sceneObjects[n.key];
+        this.update('all')
     }
 
     /** 
@@ -91,6 +94,7 @@ export class SceneObjectManager {
             if (n.selected) this.selected = n;
         });
         $.state[this.selected ? 'set' : 'unset']('selected');
+        this.update('all')
     }
 
     public getComponentsByType<T extends keyof SceneObject['components']>(type: T): SceneObject['components'][T][] {
@@ -100,11 +104,13 @@ export class SceneObjectManager {
     public update<T extends keyof SceneObjectComponentDict>(type: T | 'all' = 'all') {
         this.panels.outliner.update(Object.values(this.sceneObjects));
         if (type === 'visual' || type === 'all') {
-            this.panels.viewer.update(this.getComponentsByType('visual'));
             this.panels.graphic.update(this.getComponentsByType('visual'));
         }
         if (type === 'properties' || type === 'all') {
-            this.panels.properties.update(this.getComponentsByType('properties')[0] as SceneObjectComponentProperties);
+            const d = Object.values(this.sceneObjects).find((o)=>o.selected)
+            if (d) {
+                this.panels.properties.update(d.components.properties);
+            }
         }
     }
     public keyExists(n: string) {

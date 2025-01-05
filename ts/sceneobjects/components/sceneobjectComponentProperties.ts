@@ -44,7 +44,7 @@ export class SceneObjectComponentProperties extends SceneObjectComponent<'proper
 
     remove(key: string) {
         if (this.data[key]) {
-            this.element.append(this.data[key].element);
+            this.element.remove(this.data[key].element);
             delete this.data[key]
         }
     }
@@ -55,6 +55,13 @@ export class SceneObjectComponentProperties extends SceneObjectComponent<'proper
     }) {
         Object.assign(this.data[key], obj);
         this.updateValue(key);
+    }
+
+    delete(): void {
+        super.delete();
+        Object.keys(this.data).forEach((d)=>{
+            this.remove(d)
+        }) 
     }
 
     updateValue(key: string) {

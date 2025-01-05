@@ -14,7 +14,11 @@ export class PropertiesPanel extends Panel {
     update(p: SceneObjectComponentProperties) {
         if (this.active) {
             this.content.remove(this.active.element)
+            this.active = undefined;
         }
-        this.content.append(p.element)
+        if (p) {
+            this.content.append(p.element)
+            this.active = p
+        }
     }
 }

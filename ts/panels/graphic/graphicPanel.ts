@@ -37,13 +37,31 @@ export class GraphicPanel extends CameraPanel {
     clear() {
         this.components.forEach((v)=>{
             v.delete();
+            this.components.splice(this.components.indexOf(v), 1)
         });
     }
     update(d: SceneObjectComponentVisual[]) {
-        this.clear();
-        
+        const rem:SceneObjectComponentVisual[] = [...this.components]
+        const add:SceneObjectComponentVisual[] = []
         d.forEach((v)=>{
-            v.add(this.graphic)
+            if (this.components.includes(v)){
+                v.update()
+                rem.splice(rem.indexOf(v), 1)
+            } else {
+                add.push(v)
+            }
         })
+        if (rem.length > 0){
+            rem.forEach((v)=>{
+                v.delete()
+                this.components.splice(this.components.indexOf(v), 1)
+            })
+        }
+        if (add.length > 0){
+            add.forEach((v)=>{
+                v.add(this.graphic);
+                this.components.push(v)
+            })
+        }
     }
 }

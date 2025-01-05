@@ -46,10 +46,8 @@ export class Main {
                     key: 'image',
                     content: [
                         {
-                            key: $.unique,
                             name: 'Image',
                             visual: {
-                                key: $.unique,
                                 position: v2(0, 0),
                                 asset: {
                                     visualType: 'image',
@@ -66,10 +64,8 @@ export class Main {
                     key: 'fullscreen',
                     content: [
                         {
-                            key: $.unique,
                             name: 'Fullscreen image',
                             visual: {
-                                key: $.unique,
                                 position: v2(0, 0),
                                 asset: {
                                     visualType: 'image',
@@ -86,23 +82,18 @@ export class Main {
                     key: 'template1',
                     content: [
                         {
-                            key: $.unique,
                             name: 'top left',
                             visual: {
-                                key: $.unique,
                                 position: v2(10, 35),
                                 asset: {
                                     visualType: 'image',
                                     size: v2(240, 240),
-
                                 }
                             }
                         },
                         {
-                            key: $.unique,
                             name: 'top right',
                             visual: {
-                                key: $.unique,
                                 position: v2(255, 35),
                                 asset: {
                                     visualType: 'image',
@@ -111,10 +102,8 @@ export class Main {
                             }
                         },
                         {
-                            key: $.unique,
                             name: 'bottom left',
                             visual: {
-                                key: $.unique,
                                 position: v2(10, 280),
                                 asset: {
                                     visualType: 'image',
@@ -124,10 +113,8 @@ export class Main {
                             }
                         },
                         {
-                            key: $.unique,
                             name: 'bottom right',
                             visual: {
-                                key: $.unique,
                                 position: v2(255, 280),
                                 asset: {
                                     visualType: 'image',

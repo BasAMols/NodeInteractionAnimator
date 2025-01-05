@@ -13,18 +13,17 @@ export interface SceneObjectComponentDict {
     outline: SceneObjectComponentOutline;
 }
 export interface SceneObjectComponentAttr {
-    key: string;
 }
 
 export class SceneObjectComponent<T extends keyof SceneObjectComponentDict = keyof SceneObjectComponentDict> {
     sceneObject: SceneObject;
-    
+
     private _selected: boolean = false;
     public get selected(): boolean {
         return this._selected;
     }
     public set selected(value: boolean) {
-        if (this._selected !== value){
+        if (this._selected !== value) {
             this._selected = value;
             this.updateState();
         }
@@ -37,9 +36,9 @@ export class SceneObjectComponent<T extends keyof SceneObjectComponentDict = key
     key: string;
     type: T;
 
-    constructor(type: T, { key}: SceneObjectComponentAttr) {
+    constructor(type: T, { }: SceneObjectComponentAttr = {}) {
         this.type = type;
-        this.key = key;
+        this.key = $.unique;
     }
 
     build() {

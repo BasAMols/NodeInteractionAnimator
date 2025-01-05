@@ -1,12 +1,11 @@
 import { DomElement } from '../../lib/dom/domElement';
 import { Icon } from '../../lib/dom/icon';
-import { v2, Vector2 } from '../../lib/utilities/vector2';
+import { Vector2 } from '../../lib/utilities/vector2';
 import { GraphicPanel } from '../../panels/graphic/graphicPanel';
-import { PropsNumberInput } from '../../panels/properties/propsNumberInput';
-import { PropsStringInput } from '../../panels/properties/propsStringInput';
+import { PropsInputString } from '../../panels/properties/propsInputString';
+import { PropsInputVector } from '../../panels/properties/propsInputVector';
 import { SceneObject } from '../sceneobject';
 import { SceneObjectComponentAttr, SceneObjectComponent } from './sceneobjectComponent';
-import { PropsInput } from 'c:/Users/basm/Documents/Development/NodeInteractionAnimator/ts/panels/properties/propsInput';
 
 export abstract class VisualAsset<T extends keyof SceneObjectComponentVisual['dict'] = any> extends DomElement<'div'> {
     data: {
@@ -32,9 +31,8 @@ export class VisualImage extends VisualAsset<'image'> {
         size: Vector2;
         url?: string;
     };
-    width: PropsNumberInput;
-    height: PropsNumberInput;
-    url: PropsStringInput;
+    url: PropsInputString;
+    sizeInput: PropsInputVector;
     constructor(data: VisualImage['data']) {
         super(data);
         Object.assign(this.data, data);
@@ -43,38 +41,25 @@ export class VisualImage extends VisualAsset<'image'> {
 
     build(s: SceneObject): void {
         super.build(s);
-        this.width = this.sceneObject.defineProperty($.unique, {
-            input: new PropsNumberInput((v) => {
-                this.set({
-                    size: v2(
-                        v,
-                        this.data.size.y,
-                    )
-                });
-            }),
-            name: 'width'
-        }) as PropsNumberInput;
 
-        this.height = this.sceneObject.defineProperty($.unique, {
-            input: new PropsNumberInput((v) => {
+
+        this.sizeInput = this.sceneObject.defineProperty($.unique, {
+            input: new PropsInputVector((v) => {
                 this.set({
-                    size: v2(
-                        this.data.size.x,
-                        v,
-                    )
+                    size: v.c()
                 });
             }),
-            name: 'height'
-        }) as PropsNumberInput;
+            name: 'position'
+        }) as PropsInputVector
         
         this.url = this.sceneObject.defineProperty($.unique, {
-            input: new PropsStringInput((v) => {
+            input: new PropsInputString((v) => {
                 this.set({
                     url: v
                 });
             }, 'https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg'),
             name: 'image'
-        }) as PropsStringInput;
+        }) as PropsInputString;
         this.set({url: 'https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg'});
     }
 
@@ -89,8 +74,7 @@ export class VisualImage extends VisualAsset<'image'> {
             this.class(true, 'empty');
             this.setStyle('background-image', undefined);
         }
-        this.width?.silent(this.data.size.x)
-        this.height?.silent(this.data.size.y)
+        this.sizeInput?.silent(this.data.size)
         this.url?.silent(this.data.url)
 
     }
@@ -116,8 +100,8 @@ export class SceneObjectComponentVisual extends SceneObjectComponent<'visual'> {
     resizer: any;
     panel: GraphicPanel;
     attr: SceneObjectComponentVisualAttr;
-    x: PropsInput<string | number | Vector2>;
-    y: PropsInput<string | number | Vector2>;
+    parent: DomElement<keyof HTMLElementTagNameMap>;
+    positionInput: PropsInputVector;
 
     protected updateState() {
         super.updateState();
@@ -131,36 +115,20 @@ export class SceneObjectComponentVisual extends SceneObjectComponent<'visual'> {
             className: 'SceneObjectVisual',
         });
 
-        this.attr = attr;
-
+        this.attr = {...attr};
         this.visualType = attr.asset.visualType;
-
-
     }
 
     build(): void {
         super.build();
         this.panel = $.panels.getPanel('graphic') as GraphicPanel;
 
-        this.x = this.sceneObject.defineProperty($.unique, {
-            input: new PropsNumberInput((v) => {
-                this.setPosition(v2(
-                    v,
-                    this.attr.position.y,
-                ));
+        this.positionInput = this.sceneObject.defineProperty($.unique, {
+            input: new PropsInputVector((v) => {
+                this.setPosition(v.c());
             }),
-            name: 'x'
-        });
-
-        this.y = this.sceneObject.defineProperty($.unique, {
-            input: new PropsNumberInput((v) => {
-                this.setPosition(v2(
-                    this.attr.position.x,
-                    v,
-                ));
-            }),
-            name: 'y'
-        });
+            name: 'position'
+        }) as PropsInputVector
 
         this.visual = new (this.dict[this.visualType])(this.attr.asset);
         this.visual.build(this.sceneObject);
@@ -226,19 +194,23 @@ export class SceneObjectComponentVisual extends SceneObjectComponent<'visual'> {
     }
     add(parent: DomElement) {
         this.delete();
-        parent.append(this.element);
+        this.parent = parent
+        this.parent.append(this.element);
     }
     delete(): void {
         super.delete();
-        if (this.element.domElement.parentElement) {
-            this.element.domElement.parentElement.removeChild(this.element.domElement);
+        if (this.parent){
+            this.parent.remove(this.element)
         }
     }
-    setPosition(v: Vector2) {
-        this.attr.position = v;
+    update() {
+        this.setPosition();
+        this.visual.set();
+    }
+    setPosition(v?: Vector2) {
+        if (v) this.attr.position = v;
         this.element.setStyle('left', `${this.attr.position[0]}px`);
         this.element.setStyle('top', `${this.attr.position[1]}px`);
-        this.x?.silent(v[0]);
-        this.y?.silent(v[1]);
+        this.positionInput?.silent(this.attr.position);
     }
 }

@@ -26,7 +26,8 @@ var DomElement = class _DomElement {
     }), properties);
     this.domElement = document.createElement(type);
     this.domElement.setAttribute("draggable", "false");
-    this.domElement.addEventListener("mousedown", this.click.bind(this));
+    if (this.props.onClick)
+      this.onClick = this.props.onClick.bind(this);
     if (this.props.style)
       Object.entries((_a = this.props) == null ? void 0 : _a.style).forEach(([k, v]) => {
         this.setStyle(
@@ -45,8 +46,6 @@ var DomElement = class _DomElement {
       this.domElement.className = this.props.className;
     if (this.props.id)
       this.domElement.id = this.props.id;
-    if (this.props.onClick)
-      this.onClick = this.props.onClick;
     if (this.props.visible !== void 0)
       this.visible = this.props.visible;
   }
@@ -57,7 +56,14 @@ var DomElement = class _DomElement {
     return this._onClick;
   }
   set onClick(func) {
-    this._onClick = func;
+    if (this._onClick) {
+      this.domElement.removeEventListener("mousedown", this._onClick.bind(this));
+      this._onClick = void 0;
+    }
+    if (func) {
+      this._onClick = func;
+      this.domElement.addEventListener("mousedown", this._onClick.bind(this));
+    }
   }
   set visible(b) {
     this.setStyle("display", b ? void 0 : "none", true);
@@ -1089,8 +1095,12 @@ var PropertiesPanel = class extends Panel {
   update(p) {
     if (this.active) {
       this.content.remove(this.active.element);
+      this.active = void 0;
     }
-    this.content.append(p.element);
+    if (p) {
+      this.content.append(p.element);
+      this.active = p;
+    }
   }
 };
 
@@ -1166,13 +1176,32 @@ var GraphicPanel = class extends CameraPanel {
   clear() {
     this.components.forEach((v) => {
       v.delete();
+      this.components.splice(this.components.indexOf(v), 1);
     });
   }
   update(d) {
-    this.clear();
+    const rem = [...this.components];
+    const add = [];
     d.forEach((v) => {
-      v.add(this.graphic);
+      if (this.components.includes(v)) {
+        v.update();
+        rem.splice(rem.indexOf(v), 1);
+      } else {
+        add.push(v);
+      }
     });
+    if (rem.length > 0) {
+      rem.forEach((v) => {
+        v.delete();
+        this.components.splice(this.components.indexOf(v), 1);
+      });
+    }
+    if (add.length > 0) {
+      add.forEach((v) => {
+        v.add(this.graphic);
+        this.components.push(v);
+      });
+    }
   }
 };
 
@@ -1554,10 +1583,10 @@ var ExportPanel = class extends WindowPanel {
 
 // ts/sceneobjects/components/sceneobjectComponent.ts
 var SceneObjectComponent = class {
-  constructor(type, { key }) {
+  constructor(type, {} = {}) {
     this._selected = false;
     this.type = type;
-    this.key = key;
+    this.key = $.unique;
   }
   get selected() {
     return this._selected;
@@ -1684,7 +1713,7 @@ var SceneObjectComponentProperties = class extends SceneObjectComponent {
   }
   remove(key) {
     if (this.data[key]) {
-      this.element.append(this.data[key].element);
+      this.element.remove(this.data[key].element);
       delete this.data[key];
     }
   }
@@ -1692,7 +1721,59 @@ var SceneObjectComponentProperties = class extends SceneObjectComponent {
     Object.assign(this.data[key], obj);
     this.updateValue(key);
   }
+  delete() {
+    super.delete();
+    Object.keys(this.data).forEach((d) => {
+      this.remove(d);
+    });
+  }
   updateValue(key) {
+  }
+};
+
+// ts/lib/dom/domInput.ts
+var DomInput = class extends DomElement {
+  constructor(type, properties = {}) {
+    super(type, properties);
+    this.type = type;
+    if (this.props.onChange)
+      this.onChange = this.props.onChange.bind(this);
+    if (this.props.onKeyUp)
+      this.onKeyUp = this.props.onKeyUp.bind(this);
+    if (this.props.value)
+      this.value = this.props.value;
+  }
+  get value() {
+    return this.domElement.value;
+  }
+  set value(value) {
+    this.domElement.value = value;
+  }
+  get onChange() {
+    return this._onChange;
+  }
+  set onChange(func) {
+    if (this._onChange) {
+      this.domElement.removeEventListener("change", this._onChange.bind(this));
+      this._onChange = void 0;
+    }
+    if (func) {
+      this._onChange = func;
+      this.domElement.addEventListener("change", this._onChange.bind(this));
+    }
+  }
+  get onKeyUp() {
+    return this._onKeyUp;
+  }
+  set onKeyUp(func) {
+    if (this._onKeyUp) {
+      this.domElement.removeEventListener("change", this._onKeyUp.bind(this));
+      this._onKeyUp = void 0;
+    }
+    if (func) {
+      this._onKeyUp = func;
+      this.domElement.addEventListener("change", this._onKeyUp.bind(this));
+    }
   }
 };
 
@@ -1714,43 +1795,59 @@ var PropsInput = class extends DomElement {
   }
 };
 
-// ts/panels/properties/propsNumberInput.ts
-var PropsNumberInput = class extends PropsInput {
-  constructor(onChange) {
-    super({
-      onChange,
-      classList: "number"
-    });
-    this.input = this.child("input", {
-      attr: { "type": "number" }
-    });
-    this.input.domElement.addEventListener("change", () => {
-      this.value = Number(this.input.domElement.value);
-    });
-  }
-  silent(v) {
-    super.silent(v);
-    this.input.domElement.value = String(v);
-  }
-};
-
-// ts/panels/properties/propsStringInput.ts
-var PropsStringInput = class extends PropsInput {
+// ts/panels/properties/propsInputString.ts
+var PropsInputString = class extends PropsInput {
   constructor(onChange, def) {
     super({
       onChange,
       classList: "string"
     });
-    this.input = this.child("input", {
+    this.input = this.append(new DomInput("input", {
       attr: {
-        "type": "text"
-      }
+        "type": "string"
+      },
+      onChange: () => this.value = this.input.domElement.value,
+      value: def ? def : ""
+    }));
+  }
+  silent(v) {
+    super.silent(v);
+    this.input.value = String(v);
+  }
+};
+
+// ts/panels/properties/propsInputVector.ts
+var PropsInputVector = class extends PropsInput {
+  constructor(onChange, def) {
+    super({
+      onChange,
+      classList: "vector"
     });
-    if (def)
-      this.input.domElement.value = def;
-    this.input.domElement.addEventListener("change", () => {
-      this.value = this.input.domElement.value;
-    });
+    this.input1 = this.append(new DomInput("input", {
+      attr: {
+        "type": "number"
+      },
+      onChange: () => this.value = v2(
+        Number(this.input1.domElement.value),
+        this.value[1]
+      ),
+      value: def ? String(def[0]) : ""
+    }));
+    this.input2 = this.append(new DomInput("input", {
+      attr: {
+        "type": "number"
+      },
+      onChange: () => this.value = v2(
+        this.value[0],
+        Number(this.input2.domElement.value)
+      ),
+      value: def ? String(def[1]) : ""
+    }));
+  }
+  silent(v) {
+    super.silent(v.c());
+    this.input1.value = String(this.value[0]);
+    this.input2.value = String(this.value[1]);
   }
 };
 
@@ -1776,30 +1873,16 @@ var VisualImage = class extends VisualAsset {
   }
   build(s) {
     super.build(s);
-    this.width = this.sceneObject.defineProperty($.unique, {
-      input: new PropsNumberInput((v) => {
+    this.sizeInput = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputVector((v) => {
         this.set({
-          size: v2(
-            v,
-            this.data.size.y
-          )
+          size: v.c()
         });
       }),
-      name: "width"
-    });
-    this.height = this.sceneObject.defineProperty($.unique, {
-      input: new PropsNumberInput((v) => {
-        this.set({
-          size: v2(
-            this.data.size.x,
-            v
-          )
-        });
-      }),
-      name: "height"
+      name: "position"
     });
     this.url = this.sceneObject.defineProperty($.unique, {
-      input: new PropsStringInput((v) => {
+      input: new PropsInputString((v) => {
         this.set({
           url: v
         });
@@ -1809,7 +1892,7 @@ var VisualImage = class extends VisualAsset {
     this.set({ url: "https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg" });
   }
   set(d) {
-    var _a, _b, _c;
+    var _a, _b;
     Object.assign(this.data, d);
     this.setStyle("width", "".concat(this.data.size.x, "px"));
     this.setStyle("height", "".concat(this.data.size.y, "px"));
@@ -1820,9 +1903,8 @@ var VisualImage = class extends VisualAsset {
       this.class(true, "empty");
       this.setStyle("background-image", void 0);
     }
-    (_a = this.width) == null ? void 0 : _a.silent(this.data.size.x);
-    (_b = this.height) == null ? void 0 : _b.silent(this.data.size.y);
-    (_c = this.url) == null ? void 0 : _c.silent(this.data.url);
+    (_a = this.sizeInput) == null ? void 0 : _a.silent(this.data.size);
+    (_b = this.url) == null ? void 0 : _b.silent(this.data.url);
   }
 };
 var SceneObjectComponentVisual = class extends SceneObjectComponent {
@@ -1834,7 +1916,7 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
     this.element = new DomElement("div", {
       className: "SceneObjectVisual"
     });
-    this.attr = attr;
+    this.attr = __spreadValues({}, attr);
     this.visualType = attr.asset.visualType;
   }
   updateState() {
@@ -1844,23 +1926,11 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
   build() {
     super.build();
     this.panel = $.panels.getPanel("graphic");
-    this.x = this.sceneObject.defineProperty($.unique, {
-      input: new PropsNumberInput((v) => {
-        this.setPosition(v2(
-          v,
-          this.attr.position.y
-        ));
+    this.positionInput = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputVector((v) => {
+        this.setPosition(v.c());
       }),
-      name: "x"
-    });
-    this.y = this.sceneObject.defineProperty($.unique, {
-      input: new PropsNumberInput((v) => {
-        this.setPosition(v2(
-          this.attr.position.x,
-          v
-        ));
-      }),
-      name: "y"
+      name: "position"
     });
     this.visual = new this.dict[this.visualType](this.attr.asset);
     this.visual.build(this.sceneObject);
@@ -1921,21 +1991,26 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
   }
   add(parent) {
     this.delete();
-    parent.append(this.element);
+    this.parent = parent;
+    this.parent.append(this.element);
   }
   delete() {
     super.delete();
-    if (this.element.domElement.parentElement) {
-      this.element.domElement.parentElement.removeChild(this.element.domElement);
+    if (this.parent) {
+      this.parent.remove(this.element);
     }
   }
+  update() {
+    this.setPosition();
+    this.visual.set();
+  }
   setPosition(v) {
-    var _a, _b;
-    this.attr.position = v;
+    var _a;
+    if (v)
+      this.attr.position = v;
     this.element.setStyle("left", "".concat(this.attr.position[0], "px"));
     this.element.setStyle("top", "".concat(this.attr.position[1], "px"));
-    (_a = this.x) == null ? void 0 : _a.silent(v[0]);
-    (_b = this.y) == null ? void 0 : _b.silent(v[1]);
+    (_a = this.positionInput) == null ? void 0 : _a.silent(this.attr.position);
   }
 };
 
@@ -1946,7 +2021,7 @@ var SceneObject = class {
     this.name = "";
     this._selected = false;
     this.properties = {};
-    this.key = key;
+    this.key = key || $.unique;
     this.name = name || "";
     this.createComponents(visual);
   }
@@ -1970,7 +2045,7 @@ var SceneObject = class {
   }
   createComponents(visual) {
     this.components = {
-      visual: new SceneObjectComponentVisual(visual),
+      visual: new SceneObjectComponentVisual(__spreadValues({}, visual)),
       node: new SceneObjectComponentNode({ key: $.unique }),
       properties: new SceneObjectComponentProperties({ key: $.unique }),
       outline: new SceneObjectComponentOutline({ key: $.unique })
@@ -2018,11 +2093,13 @@ var SceneObjectManager = class {
    * @return Returns the `SceneObject`
   */
   add(n) {
+    console.log("add");
     if (!n)
       return;
     const d = new SceneObject(n);
-    this.sceneObjects[n.key] = d;
+    this.sceneObjects[d.key] = d;
     d.build();
+    this.update("outline");
     return n;
   }
   /** 
@@ -2036,6 +2113,7 @@ var SceneObjectManager = class {
     if (n === this.selected)
       this.focus();
     delete this.sceneObjects[n.key];
+    this.update("all");
   }
   /** 
    * Handle a resizing window.
@@ -2075,6 +2153,7 @@ var SceneObjectManager = class {
         this.selected = n;
     });
     $.state[this.selected ? "set" : "unset"]("selected");
+    this.update("all");
   }
   getComponentsByType(type) {
     return Object.values(this.sceneObjects).map((so) => so.components[type]);
@@ -2082,11 +2161,13 @@ var SceneObjectManager = class {
   update(type = "all") {
     this.panels.outliner.update(Object.values(this.sceneObjects));
     if (type === "visual" || type === "all") {
-      this.panels.viewer.update(this.getComponentsByType("visual"));
       this.panels.graphic.update(this.getComponentsByType("visual"));
     }
     if (type === "properties" || type === "all") {
-      this.panels.properties.update(this.getComponentsByType("properties")[0]);
+      const d = Object.values(this.sceneObjects).find((o) => o.selected);
+      if (d) {
+        this.panels.properties.update(d.components.properties);
+      }
     }
   }
   keyExists(n) {
@@ -2100,15 +2181,7 @@ var LibraryItem = class extends DomElement {
     super("div", {
       className: "library_item",
       onClick: () => {
-        attr.content.forEach((s, i) => {
-          const bttr = __spreadValues({}, s);
-          if ($.scene.keyExists(s.key)) {
-            Object.assign(bttr, {
-              key: $.unique
-            });
-          }
-          $.scene.add(bttr);
-        });
+        attr.content.forEach((s, i) => $.scene.add(__spreadValues({}, s)));
       }
     });
     if (typeof attr.image === "string") {
@@ -2205,10 +2278,8 @@ var Main = class {
             key: "image",
             content: [
               {
-                key: $.unique,
                 name: "Image",
                 visual: {
-                  key: $.unique,
                   position: v2(0, 0),
                   asset: {
                     visualType: "image",
@@ -2224,10 +2295,8 @@ var Main = class {
             key: "fullscreen",
             content: [
               {
-                key: $.unique,
                 name: "Fullscreen image",
                 visual: {
-                  key: $.unique,
                   position: v2(0, 0),
                   asset: {
                     visualType: "image",
@@ -2244,10 +2313,8 @@ var Main = class {
           key: "template1",
           content: [
             {
-              key: $.unique,
               name: "top left",
               visual: {
-                key: $.unique,
                 position: v2(10, 35),
                 asset: {
                   visualType: "image",
@@ -2256,10 +2323,8 @@ var Main = class {
               }
             },
             {
-              key: $.unique,
               name: "top right",
               visual: {
-                key: $.unique,
                 position: v2(255, 35),
                 asset: {
                   visualType: "image",
@@ -2268,10 +2333,8 @@ var Main = class {
               }
             },
             {
-              key: $.unique,
               name: "bottom left",
               visual: {
-                key: $.unique,
                 position: v2(10, 280),
                 asset: {
                   visualType: "image",
@@ -2280,10 +2343,8 @@ var Main = class {
               }
             },
             {
-              key: $.unique,
               name: "bottom right",
               visual: {
-                key: $.unique,
                 position: v2(255, 280),
                 asset: {
                   visualType: "image",

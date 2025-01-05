@@ -6,7 +6,7 @@ import { SceneObjectComponentTimeline } from './components/sceneobjectComponentT
 import { SceneObjectComponentVisual, SceneObjectComponentVisualAttr } from './components/sceneobjectComponentVisual';
 
 export interface SceneObjectAttr {
-    key: string,
+    key?: string,
     name?: string,
     visual: SceneObjectComponentVisualAttr;
 }
@@ -52,15 +52,15 @@ export class SceneObject {
     public visualPanel: GraphicPanel;
 
     constructor({ key, visual, name }: SceneObjectAttr) {
-        this.key = key;
+        this.key = key || $.unique;
         this.name = name || '';
         this.createComponents(visual);
     }
 
     createComponents(visual?: SceneObjectComponentVisualAttr) {
-
+        
         this.components = {
-            visual: new SceneObjectComponentVisual(visual),
+            visual: new SceneObjectComponentVisual({...visual}),
             node: new SceneObjectComponentNode({ key: $.unique }),
             properties: new SceneObjectComponentProperties({ key: $.unique }),
             outline: new SceneObjectComponentOutline({ key: $.unique })

@@ -13,16 +13,7 @@ export class LibraryItem extends DomElement<'div'>{
         super('div', {
             className: 'library_item',
             onClick: ()=> {
-                
-                attr.content.forEach((s,i)=>{
-                    const bttr:SceneObjectAttr = {...s}
-                    if ($.scene.keyExists(s.key)){
-                        Object.assign(bttr, {
-                            key: $.unique
-                        })
-                    }
-                    $.scene.add(bttr);
-                })
+                attr.content.forEach((s,i)=>$.scene.add({...s}))
             }
         })
         if (typeof attr.image === 'string'){
