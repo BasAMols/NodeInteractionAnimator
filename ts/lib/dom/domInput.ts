@@ -5,7 +5,7 @@ export interface DomInputProperties extends DomElementProperties {
     onChange?: (e: Event)=>void;
     value?: string;
 }
-export class DomInput<T extends 'textarea'|'input' = 'textarea'|'input'> extends DomElement {
+export class DomInput<T extends 'textarea'|'input'|'select' = 'textarea'|'input'|'select'> extends DomElement {
     protected props: DomInputProperties;
     public domElement: HTMLElementTagNameMap[T];
 

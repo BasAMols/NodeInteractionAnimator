@@ -11,7 +11,7 @@ export class PropertiesPanel extends Panel {
         super('properties', 'Properties');
     }
 
-    update(p: SceneObjectComponentProperties) {
+    update(p?: SceneObjectComponentProperties) {
         if (this.active) {
             this.content.remove(this.active.element)
             this.active = undefined;

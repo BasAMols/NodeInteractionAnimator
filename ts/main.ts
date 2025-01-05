@@ -16,7 +16,6 @@ import { SceneObjectManager } from './sceneobjects/sceneobjectManager';
 import { v2 } from './lib/utilities/vector2';
 import { LibraryPanel } from './panels/library/libraryPanel';
 import { Icon } from './lib/dom/icon';
-import { ViewerPanel } from './panels/graphic/viewerPanel';
 
 
 
@@ -34,7 +33,6 @@ export class Main {
         $.mouse = new DragManager();
         $.panels = new PanelManager([
             new GraphicPanel(),
-            new ViewerPanel(),
             new NodeEditorPanel(),
             new OutlinerPanel(),
             new PropertiesPanel(),
@@ -136,7 +134,7 @@ export class Main {
             default: {
                 name: 'Builder',
                 icon: Icon.make('space_dashboard'),
-                data: [1, 'h', 15, [2, 'library'], [1, 'h', 80, [2, 'graphic'], [1, 'v', 50, [2, 'outliner'], [2, 'properties']]]]
+                data: [1, 'h', 15, [2, 'library'], [1, 'h', 70, [2, 'graphic'], [1, 'v', 50, [2, 'outliner'], [2, 'properties']]]]
             },
             grid: {
                 name: 'Grid',
@@ -146,7 +144,6 @@ export class Main {
         });
         $.scene = new SceneObjectManager({
             graphic: $.panels.getPanel('graphic') as GraphicPanel,
-            viewer: $.panels.getPanel('viewer') as ViewerPanel,
             properties: $.panels.getPanel('properties') as PropertiesPanel,
             node: $.panels.getPanel('node') as NodeEditorPanel,
             timeline: $.panels.getPanel('timeline') as TimelinePanel,

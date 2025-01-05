@@ -5,16 +5,33 @@ import { SceneObjectComponentVisual } from '../../sceneobjects/components/sceneo
 import { CameraPanel } from '../cameraPanel';
 
 export class GraphicPanel extends CameraPanel {
-    private _light: boolean = false;
     public icon: IconProperties = Icon.make('animation');
-    graphic: DomElement<"div">;
+    public graphic: DomElement<"div">;
+
+
+    private _light: boolean = false;
     public get light(): boolean {
         return this._light;
     }
     public set light(value: boolean) {
         this._light = value;
         this.class(value, 'light');
+        this.menu.getButton('graphic_light').button.active = value;
+
     }
+
+
+    private _preview: boolean = false;
+    public get preview(): boolean {
+        return this._preview;
+    }
+    public set preview(value: boolean) {
+        this._preview = value;
+        this.class(value, 'preview');
+        this.menu.getButton('graphic_preview').button.active = value;
+    }
+
+
     private components: SceneObjectComponentVisual[] = [];
     constructor() {
         super('graphic', 'Graphic', {
@@ -26,6 +43,15 @@ export class GraphicPanel extends CameraPanel {
                 icon: Icon.make('light_mode'),
                 onClick: () => {
                     this.light = !this.light;
+                },
+            },
+            {
+                key: 'graphic_preview',
+                type: 'Action',
+                design: 'icon',
+                icon: Icon.make('view_in_ar'),
+                onClick: () => {
+                    this.preview = !this.preview;
                 },
             }]
         });

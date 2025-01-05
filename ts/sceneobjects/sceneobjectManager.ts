@@ -1,5 +1,4 @@
 import { GraphicPanel } from '../panels/graphic/graphicPanel';
-import { ViewerPanel } from '../panels/graphic/viewerPanel';
 import { NodeEditorPanel } from '../panels/node/nodePanel';
 import { OutlinerPanel } from '../panels/outliner';
 import { PropertiesPanel } from '../panels/properties/propertiesPanel';
@@ -9,7 +8,6 @@ import { SceneObject, SceneObjectAttr } from './sceneobject';
 
 
 export interface SceneObjectManagerPanels {
-    viewer: ViewerPanel,
     graphic: GraphicPanel,
     properties: PropertiesPanel,
     node: NodeEditorPanel,
@@ -32,8 +30,6 @@ export class SceneObjectManager {
      * @return Returns the `SceneObject`
     */
     public add(n: SceneObjectAttr) {
-        console.log('add');
-        
         if (!n) return;
         const d = new SceneObject(n);
         this.sceneObjects[d.key] = d;
@@ -110,6 +106,8 @@ export class SceneObjectManager {
             const d = Object.values(this.sceneObjects).find((o)=>o.selected)
             if (d) {
                 this.panels.properties.update(d.components.properties);
+            } else {
+                this.panels.properties.update()
             }
         }
     }

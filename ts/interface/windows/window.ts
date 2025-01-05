@@ -73,7 +73,7 @@ export class WindowPanel extends DomElement<'div'> {
 
         this.resizerKey = $.mouse.registerDrag($.unique, {
             element: this.resizer = this.child('span', {
-                className: `window_resizer`
+                className: `resizer`
             }),
             reference: this,
             cursor: 'nw-resize',

@@ -1,7 +1,7 @@
 import { DomElement } from '../../lib/dom/domElement';
-import { Icon } from '../../lib/dom/icon';
-import { Vector2 } from '../../lib/utilities/vector2';
+import { v2, Vector2 } from '../../lib/utilities/vector2';
 import { GraphicPanel } from '../../panels/graphic/graphicPanel';
+import { PropsInputSelect } from '../../panels/properties/propsInputSelect';
 import { PropsInputString } from '../../panels/properties/propsInputString';
 import { PropsInputVector } from '../../panels/properties/propsInputVector';
 import { SceneObject } from '../sceneobject';
@@ -30,9 +30,17 @@ export class VisualImage extends VisualAsset<'image'> {
         visualType: 'image';
         size: Vector2;
         url?: string;
-    };
+        backgroundSize?: 'auto' | 'contain' | 'cover',
+    } = {
+            visualType: 'image',
+            size: v2(),
+            // url: 'https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg',
+            url: '',
+            backgroundSize: 'cover',
+        };
     url: PropsInputString;
     sizeInput: PropsInputVector;
+    backgroundSize: PropsInputSelect;
     constructor(data: VisualImage['data']) {
         super(data);
         Object.assign(this.data, data);
@@ -49,18 +57,27 @@ export class VisualImage extends VisualAsset<'image'> {
                     size: v.c()
                 });
             }),
-            name: 'position'
-        }) as PropsInputVector
-        
+            name: 'Size'
+        }) as PropsInputVector;
+
         this.url = this.sceneObject.defineProperty($.unique, {
             input: new PropsInputString((v) => {
                 this.set({
                     url: v
                 });
-            }, 'https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg'),
-            name: 'image'
+            }),
+            name: 'URL'
         }) as PropsInputString;
-        this.set({url: 'https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg'});
+
+        this.backgroundSize = this.sceneObject.defineProperty($.unique, {
+            input: new PropsInputSelect((v) => {
+                this.set({ 
+                    backgroundSize: v 
+                });
+            }, [['auto', 'Auto'], ['contain', 'Contain'], ['cover', 'Cover']], 'auto'),
+            name: 'Background-size',
+        }) as PropsInputSelect;
+        this.set();
     }
 
     set(d?: VisualImage['data'] | {}) {
@@ -74,8 +91,9 @@ export class VisualImage extends VisualAsset<'image'> {
             this.class(true, 'empty');
             this.setStyle('background-image', undefined);
         }
-        this.sizeInput?.silent(this.data.size)
-        this.url?.silent(this.data.url)
+        this.setStyle('background-size', this.data.backgroundSize);
+        this.sizeInput?.silent(this.data.size);
+        this.url?.silent(this.data.url);
 
     }
 
@@ -115,7 +133,7 @@ export class SceneObjectComponentVisual extends SceneObjectComponent<'visual'> {
             className: 'SceneObjectVisual',
         });
 
-        this.attr = {...attr};
+        this.attr = { ...attr };
         this.visualType = attr.asset.visualType;
     }
 
@@ -127,8 +145,8 @@ export class SceneObjectComponentVisual extends SceneObjectComponent<'visual'> {
             input: new PropsInputVector((v) => {
                 this.setPosition(v.c());
             }),
-            name: 'position'
-        }) as PropsInputVector
+            name: 'Position'
+        }) as PropsInputVector;
 
         this.visual = new (this.dict[this.visualType])(this.attr.asset);
         this.visual.build(this.sceneObject);
@@ -160,7 +178,7 @@ export class SceneObjectComponentVisual extends SceneObjectComponent<'visual'> {
 
         this.resizerKey = $.mouse.registerDrag($.unique, {
             element: this.resizer = this.element.child('span', {
-                className: `window_resizer`
+                className: `resizer`
             }),
             reference: this.element,
             initialTolerance: 400,
@@ -188,19 +206,18 @@ export class SceneObjectComponentVisual extends SceneObjectComponent<'visual'> {
                 }
             },
         });
-        this.resizer.append(new Icon({ name: 'aspect_ratio', weight: 200 }));
 
 
     }
     add(parent: DomElement) {
         this.delete();
-        this.parent = parent
+        this.parent = parent;
         this.parent.append(this.element);
     }
     delete(): void {
         super.delete();
-        if (this.parent){
-            this.parent.remove(this.element)
+        if (this.parent) {
+            this.parent.remove(this.element);
         }
     }
     update() {

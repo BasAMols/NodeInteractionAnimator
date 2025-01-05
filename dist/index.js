@@ -1149,18 +1149,30 @@ var GraphicPanel = class extends CameraPanel {
   constructor() {
     super("graphic", "Graphic", {
       camera: { contentSize: v2(505, 545), minZoom: 0.1, maxZoom: 5, scrollSpeed: 2 },
-      buttons: [{
-        key: "graphic_light",
-        type: "Action",
-        design: "icon",
-        icon: Icon.make("light_mode"),
-        onClick: () => {
-          this.light = !this.light;
+      buttons: [
+        {
+          key: "graphic_light",
+          type: "Action",
+          design: "icon",
+          icon: Icon.make("light_mode"),
+          onClick: () => {
+            this.light = !this.light;
+          }
+        },
+        {
+          key: "graphic_preview",
+          type: "Action",
+          design: "icon",
+          icon: Icon.make("view_in_ar"),
+          onClick: () => {
+            this.preview = !this.preview;
+          }
         }
-      }]
+      ]
     });
-    this._light = false;
     this.icon = Icon.make("animation");
+    this._light = false;
+    this._preview = false;
     this.components = [];
     this.graphic = this.childCamera("div", {
       className: "_graphic"
@@ -1172,6 +1184,15 @@ var GraphicPanel = class extends CameraPanel {
   set light(value) {
     this._light = value;
     this.class(value, "light");
+    this.menu.getButton("graphic_light").button.active = value;
+  }
+  get preview() {
+    return this._preview;
+  }
+  set preview(value) {
+    this._preview = value;
+    this.class(value, "preview");
+    this.menu.getButton("graphic_preview").button.active = value;
   }
   clear() {
     this.components.forEach((v) => {
@@ -1275,7 +1296,7 @@ var WindowPanel = class extends DomElement {
     });
     this.resizerKey = $.mouse.registerDrag($.unique, {
       element: this.resizer = this.child("span", {
-        className: "window_resizer"
+        className: "resizer"
       }),
       reference: this,
       cursor: "nw-resize",
@@ -1777,6 +1798,29 @@ var DomInput = class extends DomElement {
   }
 };
 
+// ts/lib/dom/domSelect.ts
+var DomSelect = class extends DomInput {
+  get value() {
+    return super.value;
+    ;
+  }
+  set value(value) {
+    super.value = value;
+  }
+  constructor(properties = {}) {
+    super("select", properties);
+    if (properties.options)
+      properties.options.forEach(([value, text]) => {
+        this.child("option", {
+          text,
+          attr: {
+            "value": value
+          }
+        });
+      });
+  }
+};
+
 // ts/panels/properties/propsInput.ts
 var PropsInput = class extends DomElement {
   get value() {
@@ -1792,6 +1836,27 @@ var PropsInput = class extends DomElement {
   }
   silent(v) {
     this._value = v;
+  }
+};
+
+// ts/panels/properties/propsInputSelect.ts
+var PropsInputSelect = class extends PropsInput {
+  constructor(onChange, options, def) {
+    super({
+      onChange,
+      classList: "vector"
+    });
+    this.input = this.append(new DomSelect({
+      attr: {
+        "type": "number"
+      },
+      onChange: () => this.value = this.input.domElement.value,
+      value: def ? String(def[0]) : "",
+      options
+    }));
+  }
+  silent(v) {
+    this.input.value = this.value;
   }
 };
 
@@ -1868,6 +1933,13 @@ var VisualAsset = class extends DomElement {
 var VisualImage = class extends VisualAsset {
   constructor(data) {
     super(data);
+    this.data = {
+      visualType: "image",
+      size: v2(),
+      // url: 'https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg',
+      url: "",
+      backgroundSize: "cover"
+    };
     Object.assign(this.data, data);
     this.set(data);
   }
@@ -1879,17 +1951,25 @@ var VisualImage = class extends VisualAsset {
           size: v.c()
         });
       }),
-      name: "position"
+      name: "Size"
     });
     this.url = this.sceneObject.defineProperty($.unique, {
       input: new PropsInputString((v) => {
         this.set({
           url: v
         });
-      }, "https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg"),
-      name: "image"
+      }),
+      name: "URL"
     });
-    this.set({ url: "https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg" });
+    this.backgroundSize = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputSelect((v) => {
+        this.set({
+          backgroundSize: v
+        });
+      }, [["auto", "Auto"], ["contain", "Contain"], ["cover", "Cover"]], "auto"),
+      name: "Background-size"
+    });
+    this.set();
   }
   set(d) {
     var _a, _b;
@@ -1903,6 +1983,7 @@ var VisualImage = class extends VisualAsset {
       this.class(true, "empty");
       this.setStyle("background-image", void 0);
     }
+    this.setStyle("background-size", this.data.backgroundSize);
     (_a = this.sizeInput) == null ? void 0 : _a.silent(this.data.size);
     (_b = this.url) == null ? void 0 : _b.silent(this.data.url);
   }
@@ -1930,7 +2011,7 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
       input: new PropsInputVector((v) => {
         this.setPosition(v.c());
       }),
-      name: "position"
+      name: "Position"
     });
     this.visual = new this.dict[this.visualType](this.attr.asset);
     this.visual.build(this.sceneObject);
@@ -1959,7 +2040,7 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
     });
     this.resizerKey = $.mouse.registerDrag($.unique, {
       element: this.resizer = this.element.child("span", {
-        className: "window_resizer"
+        className: "resizer"
       }),
       reference: this.element,
       initialTolerance: 400,
@@ -1987,7 +2068,6 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
         }
       }
     });
-    this.resizer.append(new Icon({ name: "aspect_ratio", weight: 200 }));
   }
   add(parent) {
     this.delete();
@@ -2093,7 +2173,6 @@ var SceneObjectManager = class {
    * @return Returns the `SceneObject`
   */
   add(n) {
-    console.log("add");
     if (!n)
       return;
     const d = new SceneObject(n);
@@ -2167,6 +2246,8 @@ var SceneObjectManager = class {
       const d = Object.values(this.sceneObjects).find((o) => o.selected);
       if (d) {
         this.panels.properties.update(d.components.properties);
+      } else {
+        this.panels.properties.update();
       }
     }
   }
@@ -2216,48 +2297,6 @@ var LibraryPanel = class extends Panel {
   }
 };
 
-// ts/panels/graphic/viewerPanel.ts
-var ViewerPanel = class extends CameraPanel {
-  constructor() {
-    super("viewer", "Viewer", {
-      camera: { contentSize: v2(505, 545), minZoom: 0.1, maxZoom: 5, scrollSpeed: 2 },
-      buttons: [{
-        key: "graphic_light",
-        type: "Action",
-        design: "icon",
-        icon: Icon.make("light_mode"),
-        onClick: () => {
-          this.light = !this.light;
-        }
-      }]
-    });
-    this._light = false;
-    this.icon = Icon.make("view_in_ar");
-    this.components = [];
-    this.graphic = this.childCamera("div", {
-      className: "_graphic"
-    });
-  }
-  get light() {
-    return this._light;
-  }
-  set light(value) {
-    this._light = value;
-    this.class(value, "light");
-  }
-  clear() {
-    this.components.forEach((v) => {
-      v.delete();
-    });
-  }
-  update(d) {
-    this.clear();
-    d.forEach((v) => {
-      v.add(this.graphic);
-    });
-  }
-};
-
 // ts/main.ts
 var Main = class {
   constructor() {
@@ -2265,7 +2304,6 @@ var Main = class {
     $.mouse = new DragManager();
     $.panels = new PanelManager([
       new GraphicPanel(),
-      new ViewerPanel(),
       new NodeEditorPanel(),
       new OutlinerPanel(),
       new PropertiesPanel(),
@@ -2366,7 +2404,7 @@ var Main = class {
       default: {
         name: "Builder",
         icon: Icon.make("space_dashboard"),
-        data: [1, "h", 15, [2, "library"], [1, "h", 80, [2, "graphic"], [1, "v", 50, [2, "outliner"], [2, "properties"]]]]
+        data: [1, "h", 15, [2, "library"], [1, "h", 70, [2, "graphic"], [1, "v", 50, [2, "outliner"], [2, "properties"]]]]
       },
       grid: {
         name: "Grid",
@@ -2376,7 +2414,6 @@ var Main = class {
     });
     $.scene = new SceneObjectManager({
       graphic: $.panels.getPanel("graphic"),
-      viewer: $.panels.getPanel("viewer"),
       properties: $.panels.getPanel("properties"),
       node: $.panels.getPanel("node"),
       timeline: $.panels.getPanel("timeline"),
