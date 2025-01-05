@@ -1,21 +1,8 @@
-:root {
-    --radius: 4px;
-    --color-text: #f9f8fcf2;
-    --color-link: #9f9df5;
-    --color-dark: #222226;
-    --color-verydark: #1e1e22;
-    --color-grey: #54545c;
-    --color-blue1: #2d2f33;
-    --color-blue2: #444362;
-    --color-blue3: #5c5aa9;
-}
 
-button.button,
-textarea {
+/* Reset CSS */
+body * {
     all: unset;
-}
-
-* {
+    display: block;
     box-sizing: border-box;
     position: relative;
     font-family: "Noto Sans", sans-serif;
@@ -43,6 +30,29 @@ textarea {
         padding: 10px;
     }
 
+}
+
+/* Rehide default hidden elements */
+script, style, title, head {
+    display: none;
+}
+
+/* Variables */
+:root {
+    --radius: 4px;
+    --color-text: #f9f8fcf2;
+    --color-link: #9f9df5;
+    --color-dark: #222226;
+    --color-verydark: #1e1e22;
+    --color-grey: #54545c;
+    --color-blue1: #2d2f33;
+    --color-blue2: #444362;
+    --color-blue3: #5c5aa9;
+}
+
+
+input {
+    box-shadow: inset 0px 0px 3px black;
 }
 
 html {

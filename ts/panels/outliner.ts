@@ -12,7 +12,7 @@ export class OutlinerPanel extends Panel {
         this.content.domElement.innerHTML = '';
     }
     addLine(o: SceneObject) {
-        this.content.append(o.getComponentsByType('outline')[0].element);
+        this.content.append(o.components.outline.element);
     }
     update(data: SceneObject[]) {
         this.empty();

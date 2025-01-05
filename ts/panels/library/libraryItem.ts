@@ -1,6 +1,6 @@
 import { DomElement } from '../../lib/dom/domElement';
 import { Icon } from '../../lib/dom/icon';
-import { SceneObject, SceneObjectAttr } from '../../sceneobjects/sceneobject';
+import { SceneObjectAttr } from '../../sceneobjects/sceneobject';
 
 export interface LibraryItemAttr {
     key: string,
@@ -21,7 +21,7 @@ export class LibraryItem extends DomElement<'div'>{
                             key: $.unique
                         })
                     }
-                    $.scene.add(new SceneObject(bttr));
+                    $.scene.add(bttr);
                 })
             }
         })

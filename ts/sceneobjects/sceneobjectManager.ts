@@ -2,9 +2,10 @@ import { GraphicPanel } from '../panels/graphic/graphicPanel';
 import { ViewerPanel } from '../panels/graphic/viewerPanel';
 import { NodeEditorPanel } from '../panels/node/nodePanel';
 import { OutlinerPanel } from '../panels/outliner';
-import { PropertiesPanel } from '../panels/properties';
+import { PropertiesPanel } from '../panels/properties/propertiesPanel';
 import { TimelinePanel } from '../panels/timeline';
 import { SceneObjectComponentDict } from './components/sceneobjectComponent';
+import { SceneObjectComponentProperties } from './components/sceneobjectComponentProperties';
 import { SceneObject, SceneObjectAttr } from './sceneobject';
 
 
@@ -33,10 +34,10 @@ export class SceneObjectManager {
     */
     public add(n: SceneObjectAttr) {
         if (!n) return;
-        const d = new SceneObject(n)
+        const d = new SceneObject(n);
         this.sceneObjects[n.key] = d;
         d.build();
-        
+
         return n;
     }
 
@@ -92,8 +93,8 @@ export class SceneObjectManager {
         $.state[this.selected ? 'set' : 'unset']('selected');
     }
 
-    public getComponentsByType<T extends keyof SceneObjectComponentDict>(type: T): SceneObjectComponentDict[T][] {
-        return Object.values(this.sceneObjects).map((so) => so.getComponentsByType(type)).flat(1);
+    public getComponentsByType<T extends keyof SceneObject['components']>(type: T): SceneObject['components'][T][] {
+        return Object.values(this.sceneObjects).map((so) => so.components[type]);
     }
 
     public update<T extends keyof SceneObjectComponentDict>(type: T | 'all' = 'all') {
@@ -101,6 +102,9 @@ export class SceneObjectManager {
         if (type === 'visual' || type === 'all') {
             this.panels.viewer.update(this.getComponentsByType('visual'));
             this.panels.graphic.update(this.getComponentsByType('visual'));
+        }
+        if (type === 'properties' || type === 'all') {
+            this.panels.properties.update(this.getComponentsByType('properties')[0] as SceneObjectComponentProperties);
         }
     }
     public keyExists(n: string) {

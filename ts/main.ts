@@ -2,7 +2,7 @@ import { WorkSpace } from './interface/interface';
 import { PanelManager } from './interface/panelManager';
 import { NodeEditorPanel } from './panels/node/nodePanel';
 import { OutlinerPanel } from './panels/outliner';
-import { PropertiesPanel } from './panels/properties';
+import { PropertiesPanel } from './panels/properties/propertiesPanel';
 import { TimelinePanel } from './panels/timeline';
 import { Ticker } from './lib/utilities/ticker';
 import { GraphicPanel } from './panels/graphic/graphicPanel';
@@ -14,7 +14,6 @@ import { ImportPanel } from './interface/windows/import';
 import { ExportPanel } from './interface/windows/export';
 import { SceneObjectManager } from './sceneobjects/sceneobjectManager';
 import { v2 } from './lib/utilities/vector2';
-import { SceneObjectComponentVisual } from './sceneobjects/components/sceneobjectComponentVisual';
 import { LibraryPanel } from './panels/library/libraryPanel';
 import { Icon } from './lib/dom/icon';
 import { ViewerPanel } from './panels/graphic/viewerPanel';
@@ -49,17 +48,15 @@ export class Main {
                         {
                             key: $.unique,
                             name: 'Image',
-                            components: [
-                                new SceneObjectComponentVisual({
-                                    key: $.unique,
-                                    position: v2(0, 0),
-                                    asset: {
-                                        visualType: 'image',
-                                        size: v2(50, 50),
+                            visual: {
+                                key: $.unique,
+                                position: v2(0, 0),
+                                asset: {
+                                    visualType: 'image',
+                                    size: v2(50, 50),
 
-                                    }
-                                })
-                            ]
+                                }
+                            }
                         },
                     ]
                 },
@@ -71,17 +68,15 @@ export class Main {
                         {
                             key: $.unique,
                             name: 'Fullscreen image',
-                            components: [
-                                new SceneObjectComponentVisual({
-                                    key: $.unique,
-                                    position: v2(0, 0),
-                                    asset: {
-                                        visualType: 'image',
-                                        size: v2(505, 545),
+                            visual: {
+                                key: $.unique,
+                                position: v2(0, 0),
+                                asset: {
+                                    visualType: 'image',
+                                    size: v2(505, 545),
 
-                                    }
-                                })
-                            ]
+                                }
+                            }
                         },
                     ]
                 }]],
@@ -93,61 +88,52 @@ export class Main {
                         {
                             key: $.unique,
                             name: 'top left',
-                            components: [
-                                new SceneObjectComponentVisual({
-                                    key: $.unique,
-                                    position: v2(10, 35),
-                                    asset: {
-                                        visualType: 'image',
-                                        size: v2(240, 240),
+                            visual: {
+                                key: $.unique,
+                                position: v2(10, 35),
+                                asset: {
+                                    visualType: 'image',
+                                    size: v2(240, 240),
 
-                                    }
-                                })
-                            ]
+                                }
+                            }
                         },
                         {
                             key: $.unique,
                             name: 'top right',
-                            components: [
-                                new SceneObjectComponentVisual({
-                                    key: $.unique,
-                                    position: v2(255, 35),
-                                    asset: {
-                                        visualType: 'image',
-                                        size: v2(240, 240),
-
-                                    }
-                                })
-                            ]
+                            visual: {
+                                key: $.unique,
+                                position: v2(255, 35),
+                                asset: {
+                                    visualType: 'image',
+                                    size: v2(240, 240),
+                                }
+                            }
                         },
                         {
                             key: $.unique,
                             name: 'bottom left',
-                            components: [
-                                new SceneObjectComponentVisual({
-                                    key: $.unique,
-                                    position: v2(10, 280),
-                                    asset: {
-                                        visualType: 'image',
-                                        size: v2(240, 240),
+                            visual: {
+                                key: $.unique,
+                                position: v2(10, 280),
+                                asset: {
+                                    visualType: 'image',
+                                    size: v2(240, 240),
 
-                                    }
-                                })
-                            ]
+                                }
+                            }
                         },
                         {
                             key: $.unique,
                             name: 'bottom right',
-                            components: [
-                                new SceneObjectComponentVisual({
-                                    key: $.unique,
-                                    position: v2(255, 280),
-                                    asset: {
-                                        visualType: 'image',
-                                        size: v2(240, 240),
-                                    }
-                                })
-                            ]
+                            visual: {
+                                key: $.unique,
+                                position: v2(255, 280),
+                                asset: {
+                                    visualType: 'image',
+                                    size: v2(240, 240),
+                                }
+                            }
                         }
                     ]
                 }]]
