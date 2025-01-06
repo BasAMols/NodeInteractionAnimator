@@ -1,6 +1,7 @@
 import { Button } from '../../lib/dom/button';
 import { DomElement } from '../../lib/dom/domElement';
 import { Icon } from '../../lib/dom/icon';
+import { PropsInputString } from '../../panels/properties/propsInputString';
 import { SceneObjectComponentAttr, SceneObjectComponent } from './sceneobjectComponent';
 
 export interface SceneObjectComponentOutlineAttr extends SceneObjectComponentAttr {
@@ -9,12 +10,16 @@ export interface SceneObjectComponentOutlineAttr extends SceneObjectComponentAtt
 export class SceneObjectComponentOutline extends SceneObjectComponent<'outline'> {
     public element: DomElement<'div'>;
     private _toggle: boolean = false;
+    private nameElement: DomElement<"div">;
     public get toggle(): boolean {
         return this._toggle;
     }
     public set toggle(value: boolean) {
         this._toggle = value;
         this.element.class(value, 'open');
+    }
+    public set name(v:string) {
+        this.nameElement.setText(v)
     }
     constructor(attr: SceneObjectComponentOutlineAttr) {
         super('outline', attr);
@@ -33,7 +38,7 @@ export class SceneObjectComponentOutline extends SceneObjectComponent<'outline'>
                 this.toggle = !this.toggle;
             }
         }));
-        head.child('div', { className: 'sceneline_head_content', text: this.sceneObject.name || this.sceneObject.key });
+        this.nameElement = head.child('div', { className: 'sceneline_head_content', text: this.sceneObject.name || this.sceneObject.key });
         const meta = head.child('div', { className: 'sceneline_head_meta' });
         meta.append(new Button({
             className: 'sceneline_select', icon: Icon.make('arrow_selector_tool'), design: 'icon', onClick: () => {
@@ -53,6 +58,13 @@ export class SceneObjectComponentOutline extends SceneObjectComponent<'outline'>
             }
         });
         content.setStyle('max-height', `${count * 30}px`);
+
+        this.sceneObject.defineProperty('name', {
+            input: new PropsInputString((v) => {
+                this.sceneObject.name = v;
+            }, this.sceneObject.name),
+            name: 'Name',
+        }) as PropsInputString;
     }
 
     addLineChild(parent: DomElement, o: SceneObjectComponent) {

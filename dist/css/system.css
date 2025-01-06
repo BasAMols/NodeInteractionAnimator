@@ -139,7 +139,6 @@ body {
             padding: 6px 8px 9px;
             display: none;
             border-radius: var(--radius);
-            box-shadow: var(--shadow);
 
             &.open {
                 display: flex;
@@ -260,7 +259,7 @@ header>.menu>.menu_wrap .menu_panel {
     right: 0;
     bottom: 0;
     top: 0;
-    box-shadow: inset 0px 8px 14px #00000021 !important;
+    /* box-shadow: inset 0px 8px 14px #00000021 !important; */
     pointer-events: none;
 }
 

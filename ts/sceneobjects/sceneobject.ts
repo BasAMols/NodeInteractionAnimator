@@ -12,7 +12,14 @@ export interface SceneObjectAttr {
 }
 export class SceneObject {
     active: boolean = true;
-    name: string = '';
+    private _name: string = '';
+    public get name(): string {
+        return this._name;
+    }
+    public set name(value: string) {
+        this._name = value;
+        if (this.components?.outline) this.components.outline.name = value;
+    }
     private _selected: boolean = false;
     public get selected(): boolean {
         return this._selected;
@@ -95,5 +102,7 @@ export class SceneObject {
         this.components['node'].build();
         this.components['outline'].build();
         this.components['timeline']?.build();
+
+        $.scene.update('all')
     }
 }

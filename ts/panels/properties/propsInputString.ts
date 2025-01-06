@@ -12,6 +12,7 @@ export class PropsInputString extends PropsInput<string> {
             attr: {
                 'type': 'string',
             },
+            onKeyUp: () => this.value = (this.input.domElement.value),
             onChange: () => this.value = (this.input.domElement.value),
             value: def?def:''
         })) as DomInput<'input'>;

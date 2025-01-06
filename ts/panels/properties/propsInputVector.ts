@@ -5,6 +5,7 @@ import { PropsInput } from './propsInput';
 export class PropsInputVector extends PropsInput<Vector2> {
     input1: DomInput<"input">;
     input2: DomInput<"input">;
+    _value: Vector2 = v2(0, 0);
     constructor(onChange: (v: Vector2) => void, def?: Vector2) {
         super({
             onChange,
@@ -14,11 +15,19 @@ export class PropsInputVector extends PropsInput<Vector2> {
             attr: {
                 'type': 'number',
             },
-            onChange: () => this.value = v2(
-                Number(this.input1.domElement.value),
-                this.value[1]
-            ),
-            value: def ? String(def[0]) : ''
+            onKeyUp: () => {
+                this.value = v2(
+                    Number(this.input1.domElement.value),
+                    this.value[1]
+                );
+            },
+            onChange: () => {
+                this.value = v2(
+                    Number(this.input1.domElement.value),
+                    this.value[1]
+                );
+            },
+            value: def ? String(def[0]) : '0'
         })) as DomInput<'input'>;
         this.input2 = this.append(new DomInput('input', {
             attr: {
@@ -28,7 +37,11 @@ export class PropsInputVector extends PropsInput<Vector2> {
                 this.value[0],
                 Number(this.input2.domElement.value),
             ),
-            value: def ? String(def[1]) : ''
+            onKeyUp: () => this.value = v2(
+                this.value[0],
+                Number(this.input2.domElement.value),
+            ),
+            value: def ? String(def[1]) : '0'
         })) as DomInput<'input'>;
     }
     silent(v: Vector2) {

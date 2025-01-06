@@ -13,6 +13,9 @@ export class PropsInputNumber extends PropsInput<number> {
             attr: {
                 'type': 'number',
             },
+            onKeyUp: () => {
+                this.value = Number(this.input.domElement.value);
+            },
             onChange: () => {
                 this.value = Number(this.input.domElement.value);
             },

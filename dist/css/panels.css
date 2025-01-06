@@ -114,10 +114,11 @@
     }
 
     ._graphic {
-        background: var(--color-blue1);
+        background: #4f5157;
         width: 505px;
         height: 545px;
-        transition: background 0.2s;
+        transition: background 0.2s, filter 0.2s;
+        filter: brightness(0.6);
 
         &:after {
             content: '';
@@ -127,8 +128,9 @@
             top: -2px;
             bottom: -2px;
             border: 2px dashed black;
-            box-shadow: 0px 0px 200px black;
+            /* box-shadow: 0px 0px 200px black; */
             pointer-events: none;
+
         }
 
         &>.SceneObjectVisual {
@@ -136,11 +138,6 @@
             height: max-content;
             cursor: pointer;
             position: absolute;
-
-            &>.visual {
-                transition: filter 0.2s;
-                filter: brightness(0.4);
-            }
 
             &.selected::after {
                 content: '';
@@ -161,12 +158,9 @@
 
     &.light ._graphic {
         background: white;
+        filter: none;
 
         &>.SceneObjectVisual {
-            &>.visual {
-                filter: none;
-            }
-
             &.selected::after {
                 border: 4px dashed var(--color-blue2);
             }

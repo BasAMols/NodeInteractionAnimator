@@ -35,12 +35,12 @@ export class DomInput<T extends 'textarea'|'input'|'select' = 'textarea'|'input'
     }
     public set onKeyUp(func: (e: Event) => void | undefined) {
         if (this._onKeyUp) {
-            this.domElement.removeEventListener('change', this._onKeyUp.bind(this));
+            this.domElement.removeEventListener('keyup', this._onKeyUp.bind(this));
             this._onKeyUp = undefined;
         }
         if (func) {
             this._onKeyUp = func;
-            this.domElement.addEventListener('change', this._onKeyUp.bind(this));
+            this.domElement.addEventListener('keyup', this._onKeyUp.bind(this));
         }
     }
     public constructor(protected type: T, properties: DomInputProperties = {}) {

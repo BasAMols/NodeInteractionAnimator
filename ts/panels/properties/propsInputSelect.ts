@@ -12,6 +12,7 @@ export class PropsInputSelect<T extends string = string> extends PropsInput<stri
             attr: {
                 'type': 'number',
             },
+            onKeyUp: () => this.value =this.input.domElement.value, 
             onChange: () => this.value =this.input.domElement.value, 
             value: def ? String(def[0]) : '',
             options

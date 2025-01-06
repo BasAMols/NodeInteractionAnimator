@@ -42,7 +42,7 @@ export class SceneObjectComponent<T extends keyof SceneObjectComponentDict = key
     }
 
     build() {
-        $.scene.update(this.type);
+
     }
     resize() {
         //void

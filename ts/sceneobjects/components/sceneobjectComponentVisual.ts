@@ -30,17 +30,26 @@ export class VisualImage extends VisualAsset<'image'> {
         visualType: 'image';
         size: Vector2;
         url?: string;
-        backgroundSize?: 'auto' | 'contain' | 'cover',
+        backgroundSize?: 'auto' | 'contain' | 'cover' | 'stretch' | 'custom',
+        backgroundSizeCustom?: Vector2,
+        backgroundPosition?: 'bottom' | 'center' | 'left' | 'right' | 'top' | 'custom',
+        backgroundPositionCustom?: Vector2,
     } = {
             visualType: 'image',
             size: v2(),
-            // url: 'https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg',
-            url: '',
-            backgroundSize: 'cover',
+            url: 'https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg',
+            // url: '',
+            backgroundSize: 'auto' ,
+            backgroundSizeCustom: v2(),
+            backgroundPosition: 'left' ,
+            backgroundPositionCustom: v2(),
         };
     url: PropsInputString;
     sizeInput: PropsInputVector;
     backgroundSize: PropsInputSelect;
+    backgroundSizeCustom: PropsInputVector;
+    backgroundPosition: PropsInputSelect<string>;
+    backgroundPositionCustom: PropsInputVector;
     constructor(data: VisualImage['data']) {
         super(data);
         Object.assign(this.data, data);
@@ -49,7 +58,6 @@ export class VisualImage extends VisualAsset<'image'> {
 
     build(s: SceneObject): void {
         super.build(s);
-
 
         this.sizeInput = this.sceneObject.defineProperty($.unique, {
             input: new PropsInputVector((v) => {
@@ -71,12 +79,39 @@ export class VisualImage extends VisualAsset<'image'> {
 
         this.backgroundSize = this.sceneObject.defineProperty($.unique, {
             input: new PropsInputSelect((v) => {
-                this.set({ 
-                    backgroundSize: v 
+                this.set({
+                    backgroundSize: v
                 });
-            }, [['auto', 'Auto'], ['contain', 'Contain'], ['cover', 'Cover']], 'auto'),
+            }, [['auto', 'Auto'], ['contain', 'Contain'], ['cover', 'Cover'], ['stretch', 'Stretch'], ['custom', 'Custom']], 'auto'),
             name: 'Background-size',
         }) as PropsInputSelect;
+
+        this.backgroundSizeCustom = this.sceneObject.defineProperty($.unique, {
+            input: new PropsInputVector((v) => {
+                console.log(v);
+                
+                this.set({
+                    backgroundSizeCustom: v.c()
+                });
+            }),
+        }) as PropsInputVector;
+
+        this.backgroundPosition = this.sceneObject.defineProperty($.unique, {
+            input: new PropsInputSelect((v) => {
+                this.set({
+                    backgroundPosition: v
+                });
+            }, [['left', 'Left'], ['top', 'Top'], ['right', 'Right'], ['bottom', 'Bottom'], ['center', 'Center'], ['custom', 'Custom']], 'auto'),
+            name: 'Background-position',
+        }) as PropsInputSelect;
+
+        this.backgroundPositionCustom = this.sceneObject.defineProperty($.unique, {
+            input: new PropsInputVector((v) => {
+                this.set({
+                    backgroundPositionCustom: v.c()
+                });
+            }),
+        }) as PropsInputVector;
         this.set();
     }
 
@@ -87,11 +122,33 @@ export class VisualImage extends VisualAsset<'image'> {
         if (this.data.url) {
             this.class(false, 'empty');
             this.setStyle('background-image', `url(${this.data.url})`);
+
+            switch (this.data.backgroundSize) {
+                case 'stretch':
+                    this.setStyle('background-size', '100% 100%');
+                    break;
+                case 'custom':
+                    this.setStyle('background-size', this.data.backgroundSizeCustom.join('px ')+'px');
+                    break;
+                default:
+                    this.setStyle('background-size', this.data.backgroundSize);
+                    break;
+            }
+            
+            switch (this.data.backgroundPosition) {
+                case 'custom':
+                    this.setStyle('background-position', this.data.backgroundPositionCustom.join('px ')+'px');
+                    break;
+                default:
+                    this.setStyle('background-position', this.data.backgroundPosition);
+                    break;
+            }
         } else {
             this.class(true, 'empty');
             this.setStyle('background-image', undefined);
+            this.setStyle('background-size', undefined);
+            this.setStyle('background-position', undefined);
         }
-        this.setStyle('background-size', this.data.backgroundSize);
         this.sizeInput?.silent(this.data.size);
         this.url?.silent(this.data.url);
 

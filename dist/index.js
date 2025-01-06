@@ -1621,7 +1621,6 @@ var SceneObjectComponent = class {
   updateState() {
   }
   build() {
-    $.scene.update(this.type);
   }
   resize() {
   }
@@ -1633,122 +1632,6 @@ var SceneObjectComponent = class {
 var SceneObjectComponentNode = class extends SceneObjectComponent {
   constructor(attr) {
     super("node", attr);
-  }
-};
-
-// ts/sceneobjects/components/sceneobjectComponentOutline.ts
-var SceneObjectComponentOutline = class extends SceneObjectComponent {
-  constructor(attr) {
-    super("outline", attr);
-    this._toggle = false;
-  }
-  get toggle() {
-    return this._toggle;
-  }
-  set toggle(value) {
-    this._toggle = value;
-    this.element.class(value, "open");
-  }
-  updateState() {
-    super.updateState();
-    this.element.class(this.selected, "selected");
-  }
-  build() {
-    this.element = new DomElement("div", { className: "sceneline" });
-    const head = this.element.child("div", { className: "sceneline_head" });
-    head.append(new Button({
-      className: "sceneline_head_collapse",
-      icon: Icon.make("keyboard_arrow_down"),
-      design: "icon",
-      onClick: () => {
-        this.toggle = !this.toggle;
-      }
-    }));
-    head.child("div", { className: "sceneline_head_content", text: this.sceneObject.name || this.sceneObject.key });
-    const meta = head.child("div", { className: "sceneline_head_meta" });
-    meta.append(new Button({
-      className: "sceneline_select",
-      icon: Icon.make("arrow_selector_tool"),
-      design: "icon",
-      onClick: () => {
-        this.sceneObject.focus();
-      }
-    }));
-    meta.append(new Button({ icon: Icon.make("delete_forever"), design: "icon", onClick: () => {
-      $.scene.remove(this.sceneObject);
-    } }));
-    const content = this.element.child("div", { className: "sceneline_content" });
-    let count = 0;
-    Object.values(this.sceneObject.components).forEach((c) => {
-      if (c.type !== "outline") {
-        count++;
-        this.addLineChild(content, c);
-      }
-    });
-    content.setStyle("max-height", "".concat(count * 30, "px"));
-  }
-  addLineChild(parent, o) {
-    const line = parent.child("div", { className: "sceneline" });
-    const head = line.child("div", { className: "sceneline_head" });
-    head.child("div", { className: "sceneline_head_content", text: o.type });
-    const meta = head.child("div", { className: "sceneline_head_meta" });
-    meta.append(new Button({
-      className: "sceneline_select",
-      icon: Icon.make("arrow_selector_tool"),
-      design: "icon",
-      onClick: () => {
-        this.sceneObject.focus();
-      }
-    }));
-  }
-  delete() {
-    super.delete();
-    if (this.element.domElement.parentElement)
-      this.element.domElement.parentElement.removeChild(this.element.domElement);
-  }
-};
-
-// ts/sceneobjects/components/sceneobjectComponentProperties.ts
-var SceneObjectComponentProperties = class extends SceneObjectComponent {
-  constructor(attr) {
-    super("properties", attr);
-    this.data = {};
-    this.element = new DomElement("div", {
-      className: "props"
-    });
-  }
-  add(key, data) {
-    if (this.data[key])
-      this.remove(key);
-    const el = new DomElement("div", { className: "prop" });
-    this.element.append(el);
-    el.child("label", {
-      text: data.name,
-      className: "props_label"
-    });
-    el.append(data.input);
-    this.data[key] = __spreadValues(__spreadValues({}, data), {
-      element: el
-    });
-    return data.input;
-  }
-  remove(key) {
-    if (this.data[key]) {
-      this.element.remove(this.data[key].element);
-      delete this.data[key];
-    }
-  }
-  update(key, obj) {
-    Object.assign(this.data[key], obj);
-    this.updateValue(key);
-  }
-  delete() {
-    super.delete();
-    Object.keys(this.data).forEach((d) => {
-      this.remove(d);
-    });
-  }
-  updateValue(key) {
   }
 };
 
@@ -1788,13 +1671,179 @@ var DomInput = class extends DomElement {
   }
   set onKeyUp(func) {
     if (this._onKeyUp) {
-      this.domElement.removeEventListener("change", this._onKeyUp.bind(this));
+      this.domElement.removeEventListener("keyup", this._onKeyUp.bind(this));
       this._onKeyUp = void 0;
     }
     if (func) {
       this._onKeyUp = func;
-      this.domElement.addEventListener("change", this._onKeyUp.bind(this));
+      this.domElement.addEventListener("keyup", this._onKeyUp.bind(this));
     }
+  }
+};
+
+// ts/panels/properties/propsInput.ts
+var PropsInput = class extends DomElement {
+  get value() {
+    return this._value;
+  }
+  set value(value) {
+    this._value = value;
+    this.onChange(this._value);
+  }
+  constructor({ onChange, classList = "" }) {
+    super("div", { className: "props_input ".concat(classList) });
+    this.onChange = onChange;
+  }
+  silent(v) {
+    this._value = v;
+  }
+};
+
+// ts/panels/properties/propsInputString.ts
+var PropsInputString = class extends PropsInput {
+  constructor(onChange, def) {
+    super({
+      onChange,
+      classList: "string"
+    });
+    this.input = this.append(new DomInput("input", {
+      attr: {
+        "type": "string"
+      },
+      onKeyUp: () => this.value = this.input.domElement.value,
+      onChange: () => this.value = this.input.domElement.value,
+      value: def ? def : ""
+    }));
+  }
+  silent(v) {
+    super.silent(v);
+    this.input.value = String(v);
+  }
+};
+
+// ts/sceneobjects/components/sceneobjectComponentOutline.ts
+var SceneObjectComponentOutline = class extends SceneObjectComponent {
+  constructor(attr) {
+    super("outline", attr);
+    this._toggle = false;
+  }
+  get toggle() {
+    return this._toggle;
+  }
+  set toggle(value) {
+    this._toggle = value;
+    this.element.class(value, "open");
+  }
+  set name(v) {
+    this.nameElement.setText(v);
+  }
+  updateState() {
+    super.updateState();
+    this.element.class(this.selected, "selected");
+  }
+  build() {
+    this.element = new DomElement("div", { className: "sceneline" });
+    const head = this.element.child("div", { className: "sceneline_head" });
+    head.append(new Button({
+      className: "sceneline_head_collapse",
+      icon: Icon.make("keyboard_arrow_down"),
+      design: "icon",
+      onClick: () => {
+        this.toggle = !this.toggle;
+      }
+    }));
+    this.nameElement = head.child("div", { className: "sceneline_head_content", text: this.sceneObject.name || this.sceneObject.key });
+    const meta = head.child("div", { className: "sceneline_head_meta" });
+    meta.append(new Button({
+      className: "sceneline_select",
+      icon: Icon.make("arrow_selector_tool"),
+      design: "icon",
+      onClick: () => {
+        this.sceneObject.focus();
+      }
+    }));
+    meta.append(new Button({ icon: Icon.make("delete_forever"), design: "icon", onClick: () => {
+      $.scene.remove(this.sceneObject);
+    } }));
+    const content = this.element.child("div", { className: "sceneline_content" });
+    let count = 0;
+    Object.values(this.sceneObject.components).forEach((c) => {
+      if (c.type !== "outline") {
+        count++;
+        this.addLineChild(content, c);
+      }
+    });
+    content.setStyle("max-height", "".concat(count * 30, "px"));
+    this.sceneObject.defineProperty("name", {
+      input: new PropsInputString((v) => {
+        this.sceneObject.name = v;
+      }, this.sceneObject.name),
+      name: "Name"
+    });
+  }
+  addLineChild(parent, o) {
+    const line = parent.child("div", { className: "sceneline" });
+    const head = line.child("div", { className: "sceneline_head" });
+    head.child("div", { className: "sceneline_head_content", text: o.type });
+    const meta = head.child("div", { className: "sceneline_head_meta" });
+    meta.append(new Button({
+      className: "sceneline_select",
+      icon: Icon.make("arrow_selector_tool"),
+      design: "icon",
+      onClick: () => {
+        this.sceneObject.focus();
+      }
+    }));
+  }
+  delete() {
+    super.delete();
+    if (this.element.domElement.parentElement)
+      this.element.domElement.parentElement.removeChild(this.element.domElement);
+  }
+};
+
+// ts/sceneobjects/components/sceneobjectComponentProperties.ts
+var SceneObjectComponentProperties = class extends SceneObjectComponent {
+  constructor(attr) {
+    super("properties", attr);
+    this.data = {};
+    this.element = new DomElement("div", {
+      className: "props"
+    });
+  }
+  add(key, data) {
+    if (this.data[key])
+      return;
+    const el = new DomElement("div", { className: "prop" });
+    this.element.append(el);
+    if (data.name)
+      el.child("label", {
+        text: data.name,
+        className: "props_label"
+      });
+    el.append(data.input);
+    this.data[key] = __spreadValues(__spreadValues({}, data), {
+      element: el
+    });
+    return data.input;
+  }
+  remove(key) {
+    if (this.data[key]) {
+      this.element.remove(this.data[key].element);
+      delete this.data[key];
+    }
+  }
+  update(key, obj) {
+    Object.assign(this.data[key], obj);
+    this.updateValue(key);
+  }
+  delete() {
+    super.delete();
+    Object.keys(this.data).forEach((d) => {
+      this.remove(d);
+    });
+  }
+  updateValue(key) {
   }
 };
 
@@ -1821,24 +1870,6 @@ var DomSelect = class extends DomInput {
   }
 };
 
-// ts/panels/properties/propsInput.ts
-var PropsInput = class extends DomElement {
-  get value() {
-    return this._value;
-  }
-  set value(value) {
-    this._value = value;
-    this.onChange(this._value);
-  }
-  constructor({ onChange, classList = "" }) {
-    super("div", { className: "props_input ".concat(classList) });
-    this.onChange = onChange;
-  }
-  silent(v) {
-    this._value = v;
-  }
-};
-
 // ts/panels/properties/propsInputSelect.ts
 var PropsInputSelect = class extends PropsInput {
   constructor(onChange, options, def) {
@@ -1850,6 +1881,7 @@ var PropsInputSelect = class extends PropsInput {
       attr: {
         "type": "number"
       },
+      onKeyUp: () => this.value = this.input.domElement.value,
       onChange: () => this.value = this.input.domElement.value,
       value: def ? String(def[0]) : "",
       options
@@ -1860,27 +1892,6 @@ var PropsInputSelect = class extends PropsInput {
   }
 };
 
-// ts/panels/properties/propsInputString.ts
-var PropsInputString = class extends PropsInput {
-  constructor(onChange, def) {
-    super({
-      onChange,
-      classList: "string"
-    });
-    this.input = this.append(new DomInput("input", {
-      attr: {
-        "type": "string"
-      },
-      onChange: () => this.value = this.input.domElement.value,
-      value: def ? def : ""
-    }));
-  }
-  silent(v) {
-    super.silent(v);
-    this.input.value = String(v);
-  }
-};
-
 // ts/panels/properties/propsInputVector.ts
 var PropsInputVector = class extends PropsInput {
   constructor(onChange, def) {
@@ -1888,15 +1899,24 @@ var PropsInputVector = class extends PropsInput {
       onChange,
       classList: "vector"
     });
+    this._value = v2(0, 0);
     this.input1 = this.append(new DomInput("input", {
       attr: {
         "type": "number"
       },
-      onChange: () => this.value = v2(
-        Number(this.input1.domElement.value),
-        this.value[1]
-      ),
-      value: def ? String(def[0]) : ""
+      onKeyUp: () => {
+        this.value = v2(
+          Number(this.input1.domElement.value),
+          this.value[1]
+        );
+      },
+      onChange: () => {
+        this.value = v2(
+          Number(this.input1.domElement.value),
+          this.value[1]
+        );
+      },
+      value: def ? String(def[0]) : "0"
     }));
     this.input2 = this.append(new DomInput("input", {
       attr: {
@@ -1906,7 +1926,11 @@ var PropsInputVector = class extends PropsInput {
         this.value[0],
         Number(this.input2.domElement.value)
       ),
-      value: def ? String(def[1]) : ""
+      onKeyUp: () => this.value = v2(
+        this.value[0],
+        Number(this.input2.domElement.value)
+      ),
+      value: def ? String(def[1]) : "0"
     }));
   }
   silent(v) {
@@ -1936,9 +1960,12 @@ var VisualImage = class extends VisualAsset {
     this.data = {
       visualType: "image",
       size: v2(),
-      // url: 'https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg',
-      url: "",
-      backgroundSize: "cover"
+      url: "https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg",
+      // url: '',
+      backgroundSize: "auto",
+      backgroundSizeCustom: v2(),
+      backgroundPosition: "left",
+      backgroundPositionCustom: v2()
     };
     Object.assign(this.data, data);
     this.set(data);
@@ -1966,8 +1993,31 @@ var VisualImage = class extends VisualAsset {
         this.set({
           backgroundSize: v
         });
-      }, [["auto", "Auto"], ["contain", "Contain"], ["cover", "Cover"]], "auto"),
+      }, [["auto", "Auto"], ["contain", "Contain"], ["cover", "Cover"], ["stretch", "Stretch"], ["custom", "Custom"]], "auto"),
       name: "Background-size"
+    });
+    this.backgroundSizeCustom = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputVector((v) => {
+        console.log(v);
+        this.set({
+          backgroundSizeCustom: v.c()
+        });
+      })
+    });
+    this.backgroundPosition = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputSelect((v) => {
+        this.set({
+          backgroundPosition: v
+        });
+      }, [["left", "Left"], ["top", "Top"], ["right", "Right"], ["bottom", "Bottom"], ["center", "Center"], ["custom", "Custom"]], "auto"),
+      name: "Background-position"
+    });
+    this.backgroundPositionCustom = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputVector((v) => {
+        this.set({
+          backgroundPositionCustom: v.c()
+        });
+      })
     });
     this.set();
   }
@@ -1979,11 +2029,31 @@ var VisualImage = class extends VisualAsset {
     if (this.data.url) {
       this.class(false, "empty");
       this.setStyle("background-image", "url(".concat(this.data.url, ")"));
+      switch (this.data.backgroundSize) {
+        case "stretch":
+          this.setStyle("background-size", "100% 100%");
+          break;
+        case "custom":
+          this.setStyle("background-size", this.data.backgroundSizeCustom.join("px ") + "px");
+          break;
+        default:
+          this.setStyle("background-size", this.data.backgroundSize);
+          break;
+      }
+      switch (this.data.backgroundPosition) {
+        case "custom":
+          this.setStyle("background-position", this.data.backgroundPositionCustom.join("px ") + "px");
+          break;
+        default:
+          this.setStyle("background-position", this.data.backgroundPosition);
+          break;
+      }
     } else {
       this.class(true, "empty");
       this.setStyle("background-image", void 0);
+      this.setStyle("background-size", void 0);
+      this.setStyle("background-position", void 0);
     }
-    this.setStyle("background-size", this.data.backgroundSize);
     (_a = this.sizeInput) == null ? void 0 : _a.silent(this.data.size);
     (_b = this.url) == null ? void 0 : _b.silent(this.data.url);
   }
@@ -2098,12 +2168,21 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
 var SceneObject = class {
   constructor({ key, visual, name }) {
     this.active = true;
-    this.name = "";
+    this._name = "";
     this._selected = false;
     this.properties = {};
     this.key = key || $.unique;
     this.name = name || "";
     this.createComponents(visual);
+  }
+  get name() {
+    return this._name;
+  }
+  set name(value) {
+    var _a;
+    this._name = value;
+    if ((_a = this.components) == null ? void 0 : _a.outline)
+      this.components.outline.name = value;
   }
   get selected() {
     return this._selected;
@@ -2159,6 +2238,7 @@ var SceneObject = class {
     this.components["node"].build();
     this.components["outline"].build();
     (_a = this.components["timeline"]) == null ? void 0 : _a.build();
+    $.scene.update("all");
   }
 };
 

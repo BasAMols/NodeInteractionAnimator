@@ -8,7 +8,7 @@ export interface SceneObjectComponentPropertiesAttr extends SceneObjectComponent
 export class SceneObjectComponentProperties extends SceneObjectComponent<'properties'> {
     public element: DomElement<'div'>;
     public data: Record<string, {
-        name: string,
+        name?: string,
         input: PropsInput,
         element: DomElement<'div'>;
     }> = {};
@@ -22,13 +22,13 @@ export class SceneObjectComponentProperties extends SceneObjectComponent<'proper
     }
 
     add(key: string, data: {
-        name: string,
+        name?: string,
         input: PropsInput,
     }): typeof data['input'] {
-        if (this.data[key]) this.remove(key); 
+        if (this.data[key]) return; 
         const el = new DomElement('div', {className: 'prop'});
         this.element.append(el);
-        el.child('label', {
+        if (data.name) el.child('label', {
             text: data.name,
             className: 'props_label'
         })
