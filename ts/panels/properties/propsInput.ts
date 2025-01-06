@@ -1,7 +1,7 @@
 import { DomElement } from '../../lib/dom/domElement';
 import { Vector2 } from '../../lib/utilities/vector2';
 
-export class PropsInput<R = string | Vector2 | number> extends DomElement<'div'> {
+export class PropsInput<R = string | Vector2 | number | boolean> extends DomElement<'div'> {
     protected _value: R;
     public get value(): R {
         return this._value;

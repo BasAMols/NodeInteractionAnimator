@@ -1,6 +1,7 @@
 import { DomElement } from '../../lib/dom/domElement';
 import { v2, Vector2 } from '../../lib/utilities/vector2';
 import { GraphicPanel } from '../../panels/graphic/graphicPanel';
+import { PropsInputBoolean } from '../../panels/properties/propsInputBoolean';
 import { PropsInputSelect } from '../../panels/properties/propsInputSelect';
 import { PropsInputString } from '../../panels/properties/propsInputString';
 import { PropsInputVector } from '../../panels/properties/propsInputVector';
@@ -30,6 +31,7 @@ export class VisualImage extends VisualAsset<'image'> {
         visualType: 'image';
         size: Vector2;
         url?: string;
+        repeat?: boolean,
         backgroundSize?: 'auto' | 'contain' | 'cover' | 'stretch' | 'custom',
         backgroundSizeCustom?: Vector2,
         backgroundPosition?: 'bottom' | 'center' | 'left' | 'right' | 'top' | 'custom',
@@ -38,15 +40,16 @@ export class VisualImage extends VisualAsset<'image'> {
             visualType: 'image',
             size: v2(),
             url: 'https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg',
-            // url: '',
-            backgroundSize: 'auto' ,
+            repeat: false,
+            backgroundSize: 'contain' ,
             backgroundSizeCustom: v2(),
-            backgroundPosition: 'left' ,
+            backgroundPosition: 'center' ,
             backgroundPositionCustom: v2(),
         };
     url: PropsInputString;
     sizeInput: PropsInputVector;
     backgroundSize: PropsInputSelect;
+    repeat: PropsInputBoolean;
     backgroundSizeCustom: PropsInputVector;
     backgroundPosition: PropsInputSelect<string>;
     backgroundPositionCustom: PropsInputVector;
@@ -68,6 +71,14 @@ export class VisualImage extends VisualAsset<'image'> {
             name: 'Size'
         }) as PropsInputVector;
 
+        this.repeat = this.sceneObject.defineProperty($.unique, {
+            input: new PropsInputBoolean((v) => {
+                this.set({
+                    repeat: v
+                });
+            }),
+            name: 'Repeat'
+        }) as PropsInputBoolean;
         this.url = this.sceneObject.defineProperty($.unique, {
             input: new PropsInputString((v) => {
                 this.set({
@@ -119,6 +130,7 @@ export class VisualImage extends VisualAsset<'image'> {
         Object.assign(this.data, d);
         this.setStyle('width', `${this.data.size.x}px`);
         this.setStyle('height', `${this.data.size.y}px`);
+        this.setStyle('background-repeat', this.data.repeat?'repeat':'no-repeat');
         if (this.data.url) {
             this.class(false, 'empty');
             this.setStyle('background-image', `url(${this.data.url})`);
@@ -147,6 +159,7 @@ export class VisualImage extends VisualAsset<'image'> {
             this.class(true, 'empty');
             this.setStyle('background-image', undefined);
             this.setStyle('background-size', undefined);
+            this.setStyle('background-repeat', undefined);
             this.setStyle('background-position', undefined);
         }
         this.sizeInput?.silent(this.data.size);

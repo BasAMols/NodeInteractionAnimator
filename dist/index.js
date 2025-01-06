@@ -1847,6 +1847,39 @@ var SceneObjectComponentProperties = class extends SceneObjectComponent {
   }
 };
 
+// ts/panels/properties/propsInputBoolean.ts
+var PropsInputBoolean = class extends PropsInput {
+  constructor(onChange, def) {
+    super({
+      onChange,
+      classList: "vector"
+    });
+    this._value = false;
+    this.trueButton = this.child("div", {
+      onClick: () => {
+        this.value = true;
+        this.falseButton.visible = true;
+        this.trueButton.visible = false;
+      }
+    });
+    this.trueButton.append(new Icon({ name: "check_box_outline_blank" }));
+    this.falseButton = this.child("div", {
+      onClick: () => {
+        this.value = false;
+        this.falseButton.visible = false;
+        this.trueButton.visible = true;
+      }
+    });
+    this.falseButton.append(new Icon({ name: "check_box" }));
+    this.silent(def || false);
+  }
+  silent(v) {
+    super.silent(v);
+    this.falseButton.visible = v;
+    this.trueButton.visible = !v;
+  }
+};
+
 // ts/lib/dom/domSelect.ts
 var DomSelect = class extends DomInput {
   get value() {
@@ -1961,10 +1994,10 @@ var VisualImage = class extends VisualAsset {
       visualType: "image",
       size: v2(),
       url: "https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg",
-      // url: '',
-      backgroundSize: "auto",
+      repeat: false,
+      backgroundSize: "contain",
       backgroundSizeCustom: v2(),
-      backgroundPosition: "left",
+      backgroundPosition: "center",
       backgroundPositionCustom: v2()
     };
     Object.assign(this.data, data);
@@ -1979,6 +2012,14 @@ var VisualImage = class extends VisualAsset {
         });
       }),
       name: "Size"
+    });
+    this.repeat = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputBoolean((v) => {
+        this.set({
+          repeat: v
+        });
+      }),
+      name: "Repeat"
     });
     this.url = this.sceneObject.defineProperty($.unique, {
       input: new PropsInputString((v) => {
@@ -2026,6 +2067,7 @@ var VisualImage = class extends VisualAsset {
     Object.assign(this.data, d);
     this.setStyle("width", "".concat(this.data.size.x, "px"));
     this.setStyle("height", "".concat(this.data.size.y, "px"));
+    this.setStyle("background-repeat", this.data.repeat ? "repeat" : "no-repeat");
     if (this.data.url) {
       this.class(false, "empty");
       this.setStyle("background-image", "url(".concat(this.data.url, ")"));
@@ -2052,6 +2094,7 @@ var VisualImage = class extends VisualAsset {
       this.class(true, "empty");
       this.setStyle("background-image", void 0);
       this.setStyle("background-size", void 0);
+      this.setStyle("background-repeat", void 0);
       this.setStyle("background-position", void 0);
     }
     (_a = this.sizeInput) == null ? void 0 : _a.silent(this.data.size);
