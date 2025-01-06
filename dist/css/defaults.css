@@ -54,8 +54,8 @@ html{
     }
 }
 
-input {
+input, select {
     border-radius: 2px;
-    background: #ffffff0f;
-    padding: 5px 9px;
+    background: #4c4a53;
+    padding: 5px 10px;
 }
