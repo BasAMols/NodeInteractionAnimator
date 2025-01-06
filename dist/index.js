@@ -2444,7 +2444,7 @@ var Main = class {
                   position: v2(0, 0),
                   asset: {
                     visualType: "image",
-                    size: v2(50, 50)
+                    size: v2(100, 100)
                   }
                 }
               }
@@ -2460,6 +2460,7 @@ var Main = class {
                 visual: {
                   position: v2(0, 0),
                   asset: {
+                    backgroundSize: "cover",
                     visualType: "image",
                     size: v2(505, 545)
                   }
@@ -2474,7 +2475,7 @@ var Main = class {
           key: "template1",
           content: [
             {
-              name: "top left",
+              name: "Top left",
               visual: {
                 position: v2(10, 35),
                 asset: {
@@ -2484,7 +2485,7 @@ var Main = class {
               }
             },
             {
-              name: "top right",
+              name: "Top right",
               visual: {
                 position: v2(255, 35),
                 asset: {
@@ -2494,7 +2495,7 @@ var Main = class {
               }
             },
             {
-              name: "bottom left",
+              name: "Bottom left",
               visual: {
                 position: v2(10, 280),
                 asset: {
@@ -2504,7 +2505,7 @@ var Main = class {
               }
             },
             {
-              name: "bottom right",
+              name: "Bottom right",
               visual: {
                 position: v2(255, 280),
                 asset: {

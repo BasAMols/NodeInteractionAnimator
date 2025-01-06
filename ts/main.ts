@@ -49,7 +49,7 @@ export class Main {
                                 position: v2(0, 0),
                                 asset: {
                                     visualType: 'image',
-                                    size: v2(50, 50),
+                                    size: v2(100, 100),
 
                                 }
                             }
@@ -66,6 +66,7 @@ export class Main {
                             visual: {
                                 position: v2(0, 0),
                                 asset: {
+                                    backgroundSize: 'cover',
                                     visualType: 'image',
                                     size: v2(505, 545),
 
@@ -80,7 +81,7 @@ export class Main {
                     key: 'template1',
                     content: [
                         {
-                            name: 'top left',
+                            name: 'Top left',
                             visual: {
                                 position: v2(10, 35),
                                 asset: {
@@ -90,7 +91,7 @@ export class Main {
                             }
                         },
                         {
-                            name: 'top right',
+                            name: 'Top right',
                             visual: {
                                 position: v2(255, 35),
                                 asset: {
@@ -100,7 +101,7 @@ export class Main {
                             }
                         },
                         {
-                            name: 'bottom left',
+                            name: 'Bottom left',
                             visual: {
                                 position: v2(10, 280),
                                 asset: {
@@ -111,7 +112,7 @@ export class Main {
                             }
                         },
                         {
-                            name: 'bottom right',
+                            name: 'Bottom right',
                             visual: {
                                 position: v2(255, 280),
                                 asset: {
