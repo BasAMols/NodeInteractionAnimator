@@ -12,9 +12,6 @@ export interface SceneObjectComponentDict {
     visual: SceneObjectComponentVisual;
     outline: SceneObjectComponentOutline;
 }
-export interface SceneObjectComponentAttr {
-}
-
 export class SceneObjectComponent<T extends keyof SceneObjectComponentDict = keyof SceneObjectComponentDict> {
     sceneObject: SceneObject;
 
@@ -36,7 +33,7 @@ export class SceneObjectComponent<T extends keyof SceneObjectComponentDict = key
     key: string;
     type: T;
 
-    constructor(type: T, { }: SceneObjectComponentAttr = {}) {
+    constructor(type: T) {
         this.type = type;
         this.key = $.unique;
     }

@@ -3,12 +3,13 @@ import { SceneObjectComponentNode } from './components/sceneobjectComponentNode'
 import { SceneObjectComponentOutline } from './components/sceneobjectComponentOutline';
 import { SceneObjectComponentProperties } from './components/sceneobjectComponentProperties';
 import { SceneObjectComponentTimeline } from './components/sceneobjectComponentTimeline';
-import { SceneObjectComponentVisual, SceneObjectComponentVisualAttr } from './components/sceneobjectComponentVisual';
+import { SceneObjectComponentVisual, VisualTypeData, VisualTypeKeys } from './components/sceneobjectComponentVisual';
 
-export interface SceneObjectAttr {
+export interface SceneObjectAttr<T extends VisualTypeKeys = VisualTypeKeys> {
     key?: string,
     name?: string,
-    visual: SceneObjectComponentVisualAttr;
+    type: T;
+    data: VisualTypeData[T];
 }
 export class SceneObject {
     active: boolean = true;
@@ -58,19 +59,18 @@ export class SceneObject {
 
     public visualPanel: GraphicPanel;
 
-    constructor({ key, visual, name }: SceneObjectAttr) {
+    constructor({ key, type, data: visual, name }: SceneObjectAttr) {
         this.key = key || $.unique;
         this.name = name || '';
-        this.createComponents(visual);
+        this.createComponents(type, visual);
     }
 
-    createComponents(visual?: SceneObjectComponentVisualAttr) {
-        
+    createComponents(type:SceneObjectAttr['type'], visual?: SceneObjectAttr['data']) {
         this.components = {
-            visual: new SceneObjectComponentVisual({...visual}),
-            node: new SceneObjectComponentNode({ key: $.unique }),
-            properties: new SceneObjectComponentProperties({ key: $.unique }),
-            outline: new SceneObjectComponentOutline({ key: $.unique })
+            visual: new SceneObjectComponentVisual(type, visual),
+            node: new SceneObjectComponentNode(),
+            properties: new SceneObjectComponentProperties(),
+            outline: new SceneObjectComponentOutline()
         };
 
         Object.values(this.components).forEach((c) => {

@@ -2,11 +2,8 @@ import { Button } from '../../lib/dom/button';
 import { DomElement } from '../../lib/dom/domElement';
 import { Icon } from '../../lib/dom/icon';
 import { PropsInputString } from '../../panels/properties/propsInputString';
-import { SceneObjectComponentAttr, SceneObjectComponent } from './sceneobjectComponent';
+import { SceneObjectComponent } from './sceneobjectComponent';
 
-export interface SceneObjectComponentOutlineAttr extends SceneObjectComponentAttr {
-
-}
 export class SceneObjectComponentOutline extends SceneObjectComponent<'outline'> {
     public element: DomElement<'div'>;
     private _toggle: boolean = false;
@@ -21,8 +18,8 @@ export class SceneObjectComponentOutline extends SceneObjectComponent<'outline'>
     public set name(v:string) {
         this.nameElement.setText(v)
     }
-    constructor(attr: SceneObjectComponentOutlineAttr) {
-        super('outline', attr);
+    constructor() {
+        super('outline');
     }
 
     protected updateState() {

@@ -1,10 +1,7 @@
 import { DomElement } from '../../lib/dom/domElement';
 import { PropsInput } from '../../panels/properties/propsInput';
-import { SceneObjectComponentAttr, SceneObjectComponent } from './sceneobjectComponent';
+import { SceneObjectComponent } from './sceneobjectComponent';
 
-export interface SceneObjectComponentPropertiesAttr extends SceneObjectComponentAttr {
-
-}
 export class SceneObjectComponentProperties extends SceneObjectComponent<'properties'> {
     public element: DomElement<'div'>;
     public data: Record<string, {
@@ -13,8 +10,8 @@ export class SceneObjectComponentProperties extends SceneObjectComponent<'proper
         element: DomElement<'div'>;
     }> = {};
 
-    constructor(attr: SceneObjectComponentPropertiesAttr) {
-        super('properties', attr);
+    constructor() {
+        super('properties',);
 
         this.element = new DomElement('div', {
             className: 'props'

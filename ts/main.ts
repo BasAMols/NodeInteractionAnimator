@@ -45,13 +45,10 @@ export class Main {
                     content: [
                         {
                             name: 'Image',
-                            visual: {
+                            type: 'image',
+                            data: {
                                 position: v2(0, 0),
-                                asset: {
-                                    visualType: 'image',
-                                    size: v2(100, 100),
-
-                                }
+                                size: v2(100, 100),
                             }
                         },
                     ]
@@ -63,14 +60,11 @@ export class Main {
                     content: [
                         {
                             name: 'Fullscreen image',
-                            visual: {
+                            type: 'image',
+                            data: {
                                 position: v2(0, 0),
-                                asset: {
-                                    backgroundSize: 'cover',
-                                    visualType: 'image',
-                                    size: v2(505, 545),
-
-                                }
+                                backgroundSize: 'cover',
+                                size: v2(505, 545),
                             }
                         },
                     ]
@@ -82,43 +76,34 @@ export class Main {
                     content: [
                         {
                             name: 'Top left',
-                            visual: {
+                            type: 'image',
+                            data: {
                                 position: v2(10, 35),
-                                asset: {
-                                    visualType: 'image',
-                                    size: v2(240, 240),
-                                }
+                                size: v2(240, 240),
                             }
                         },
                         {
                             name: 'Top right',
-                            visual: {
+                            type: 'image',
+                            data: {
                                 position: v2(255, 35),
-                                asset: {
-                                    visualType: 'image',
-                                    size: v2(240, 240),
-                                }
+                                size: v2(240, 240),
                             }
                         },
                         {
                             name: 'Bottom left',
-                            visual: {
+                            type: 'image',
+                            data: {
                                 position: v2(10, 280),
-                                asset: {
-                                    visualType: 'image',
-                                    size: v2(240, 240),
-
-                                }
+                                size: v2(240, 240),
                             }
                         },
                         {
                             name: 'Bottom right',
-                            visual: {
+                            type: 'image',
+                            data: {
                                 position: v2(255, 280),
-                                asset: {
-                                    visualType: 'image',
-                                    size: v2(240, 240),
-                                }
+                                size: v2(240, 240),
                             }
                         }
                     ]
@@ -155,37 +140,6 @@ export class Main {
 
         $.panels.forEach(([k, p]) => p.build());
 
-        // $.scene.bulk([
-        //     {
-        //         key: $.unique,
-        //         components: [
-        //             new SceneObjectComponentVisual({
-        //                 key: $.unique,
-        //                 position: v2(10, 10),
-        //                 asset: {
-        //                     visualType: 'image',
-        //                     size: v2(100, 100),
-
-        //                 }
-        //             })
-        //         ]
-        //     },
-        //     {
-        //         key: $.unique,
-        //         components: [
-        //             new SceneObjectComponentVisual({
-        //                 key: $.unique,
-        //                 position: v2(0, 405),
-        //                 asset: {
-        //                     visualType: 'image',
-        //                     size: v2(505, 100),
-
-        //                 }
-        //             })
-        //         ]
-        //     }
-        // ]
-        // );
 
         setTimeout(() => {
             $.workspace.resize();

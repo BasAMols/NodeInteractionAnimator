@@ -1604,7 +1604,7 @@ var ExportPanel = class extends WindowPanel {
 
 // ts/sceneobjects/components/sceneobjectComponent.ts
 var SceneObjectComponent = class {
-  constructor(type, {} = {}) {
+  constructor(type) {
     this._selected = false;
     this.type = type;
     this.key = $.unique;
@@ -1630,8 +1630,8 @@ var SceneObjectComponent = class {
 
 // ts/sceneobjects/components/sceneobjectComponentNode.ts
 var SceneObjectComponentNode = class extends SceneObjectComponent {
-  constructor(attr) {
-    super("node", attr);
+  constructor() {
+    super("node");
   }
 };
 
@@ -1723,8 +1723,8 @@ var PropsInputString = class extends PropsInput {
 
 // ts/sceneobjects/components/sceneobjectComponentOutline.ts
 var SceneObjectComponentOutline = class extends SceneObjectComponent {
-  constructor(attr) {
-    super("outline", attr);
+  constructor() {
+    super("outline");
     this._toggle = false;
   }
   get toggle() {
@@ -1804,8 +1804,8 @@ var SceneObjectComponentOutline = class extends SceneObjectComponent {
 
 // ts/sceneobjects/components/sceneobjectComponentProperties.ts
 var SceneObjectComponentProperties = class extends SceneObjectComponent {
-  constructor(attr) {
-    super("properties", attr);
+  constructor() {
+    super("properties");
     this.data = {};
     this.element = new DomElement("div", {
       className: "props"
@@ -1974,144 +1974,162 @@ var PropsInputVector = class extends PropsInput {
 };
 
 // ts/sceneobjects/components/sceneobjectComponentVisual.ts
-var VisualAsset = class extends DomElement {
-  constructor(data) {
+var Visual = class extends DomElement {
+  constructor(type, sceneObject) {
     super("div", {
-      className: "visual visual_".concat(data.visualType)
+      className: "visual visual_".concat(type)
     });
-    this.data = data;
+    this.sceneObject = sceneObject;
   }
-  build(s) {
-    this.sceneObject = s;
-  }
-  set() {
+  set(data) {
+    Object.assign(this.data, data);
   }
 };
-var VisualImage = class extends VisualAsset {
-  constructor(data) {
-    super(data);
-    this.data = {
-      visualType: "image",
-      size: v2(),
-      url: "https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg",
-      repeat: false,
-      backgroundSize: "contain",
-      backgroundSizeCustom: v2(),
-      backgroundPosition: "center",
-      backgroundPositionCustom: v2()
-    };
-    Object.assign(this.data, data);
-    this.set(data);
-  }
-  build(s) {
-    super.build(s);
-    this.sizeInput = this.sceneObject.defineProperty($.unique, {
-      input: new PropsInputVector((v) => {
-        this.set({
-          size: v.c()
-        });
-      }),
-      name: "Size"
-    });
-    this.repeat = this.sceneObject.defineProperty($.unique, {
-      input: new PropsInputBoolean((v) => {
-        this.set({
-          repeat: v
-        });
-      }),
-      name: "Repeat"
-    });
-    this.url = this.sceneObject.defineProperty($.unique, {
-      input: new PropsInputString((v) => {
-        this.set({
-          url: v
-        });
-      }),
-      name: "URL"
-    });
-    this.backgroundSize = this.sceneObject.defineProperty($.unique, {
-      input: new PropsInputSelect((v) => {
-        this.set({
-          backgroundSize: v
-        });
-      }, [["auto", "Auto"], ["contain", "Contain"], ["cover", "Cover"], ["stretch", "Stretch"], ["custom", "Custom"]], "auto"),
-      name: "Background-size"
-    });
-    this.backgroundSizeCustom = this.sceneObject.defineProperty($.unique, {
-      input: new PropsInputVector((v) => {
-        console.log(v);
-        this.set({
-          backgroundSizeCustom: v.c()
-        });
-      })
-    });
-    this.backgroundPosition = this.sceneObject.defineProperty($.unique, {
-      input: new PropsInputSelect((v) => {
-        this.set({
-          backgroundPosition: v
-        });
-      }, [["left", "Left"], ["top", "Top"], ["right", "Right"], ["bottom", "Bottom"], ["center", "Center"], ["custom", "Custom"]], "auto"),
-      name: "Background-position"
-    });
-    this.backgroundPositionCustom = this.sceneObject.defineProperty($.unique, {
-      input: new PropsInputVector((v) => {
-        this.set({
-          backgroundPositionCustom: v.c()
-        });
-      })
-    });
-    this.set();
-  }
-  set(d) {
-    var _a, _b;
-    Object.assign(this.data, d);
-    this.setStyle("width", "".concat(this.data.size.x, "px"));
-    this.setStyle("height", "".concat(this.data.size.y, "px"));
-    this.setStyle("background-repeat", this.data.repeat ? "repeat" : "no-repeat");
-    if (this.data.url) {
-      this.class(false, "empty");
-      this.setStyle("background-image", "url(".concat(this.data.url, ")"));
-      switch (this.data.backgroundSize) {
-        case "stretch":
-          this.setStyle("background-size", "100% 100%");
-          break;
-        case "custom":
-          this.setStyle("background-size", this.data.backgroundSizeCustom.join("px ") + "px");
-          break;
-        default:
-          this.setStyle("background-size", this.data.backgroundSize);
-          break;
-      }
-      switch (this.data.backgroundPosition) {
-        case "custom":
-          this.setStyle("background-position", this.data.backgroundPositionCustom.join("px ") + "px");
-          break;
-        default:
-          this.setStyle("background-position", this.data.backgroundPosition);
-          break;
-      }
-    } else {
-      this.class(true, "empty");
-      this.setStyle("background-image", void 0);
-      this.setStyle("background-size", void 0);
-      this.setStyle("background-repeat", void 0);
-      this.setStyle("background-position", void 0);
+var VisualTypeDictionary = {
+  image: class VImage extends Visual {
+    constructor(data = {}, sceneObject) {
+      super("image", sceneObject);
+      this.data = {
+        position: v2(),
+        size: v2(),
+        url: "https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg",
+        repeat: false,
+        backgroundSize: "contain",
+        backgroundSizeCustom: v2(),
+        backgroundPosition: "center",
+        backgroundPositionCustom: v2()
+      };
+      this.sizeInput = this.sceneObject.defineProperty($.unique, {
+        input: new PropsInputVector((v) => {
+          this.set({
+            size: v.c()
+          });
+        }),
+        name: "Size"
+      });
+      this.repeat = this.sceneObject.defineProperty($.unique, {
+        input: new PropsInputBoolean((v) => {
+          this.set({
+            repeat: v
+          });
+        }),
+        name: "Repeat"
+      });
+      this.url = this.sceneObject.defineProperty($.unique, {
+        input: new PropsInputString((v) => {
+          this.set({
+            url: v
+          });
+        }),
+        name: "URL"
+      });
+      this.backgroundSize = this.sceneObject.defineProperty($.unique, {
+        input: new PropsInputSelect((v) => {
+          this.set({
+            backgroundSize: v
+          });
+        }, [["auto", "Auto"], ["contain", "Contain"], ["cover", "Cover"], ["stretch", "Stretch"], ["custom", "Custom"]], "auto"),
+        name: "Background-size"
+      });
+      this.backgroundSizeCustom = this.sceneObject.defineProperty($.unique, {
+        input: new PropsInputVector((v) => {
+          console.log(v);
+          this.set({
+            backgroundSizeCustom: v.c()
+          });
+        })
+      });
+      this.backgroundPosition = this.sceneObject.defineProperty($.unique, {
+        input: new PropsInputSelect((v) => {
+          this.set({
+            backgroundPosition: v
+          });
+        }, [["left", "Left"], ["top", "Top"], ["right", "Right"], ["bottom", "Bottom"], ["center", "Center"], ["custom", "Custom"]], "auto"),
+        name: "Background-position"
+      });
+      this.backgroundPositionCustom = this.sceneObject.defineProperty($.unique, {
+        input: new PropsInputVector((v) => {
+          this.set({
+            backgroundPositionCustom: v.c()
+          });
+        })
+      });
+      this.set(data);
     }
-    (_a = this.sizeInput) == null ? void 0 : _a.silent(this.data.size);
-    (_b = this.url) == null ? void 0 : _b.silent(this.data.url);
+    set(data) {
+      var _a, _b;
+      super.set(data);
+      this.setStyle("width", "".concat(this.data.size.x, "px"));
+      this.setStyle("height", "".concat(this.data.size.y, "px"));
+      this.setStyle("background-repeat", this.data.repeat ? "repeat" : "no-repeat");
+      if (this.data.url) {
+        this.class(false, "empty");
+        this.setStyle("background-image", "url(".concat(this.data.url, ")"));
+        switch (this.data.backgroundSize) {
+          case "stretch":
+            this.setStyle("background-size", "100% 100%");
+            break;
+          case "custom":
+            this.setStyle("background-size", this.data.backgroundSizeCustom.join("px ") + "px");
+            break;
+          default:
+            this.setStyle("background-size", this.data.backgroundSize);
+            break;
+        }
+        switch (this.data.backgroundPosition) {
+          case "custom":
+            this.setStyle("background-position", this.data.backgroundPositionCustom.join("px ") + "px");
+            break;
+          default:
+            this.setStyle("background-position", this.data.backgroundPosition);
+            break;
+        }
+      } else {
+        this.class(true, "empty");
+        this.setStyle("background-image", void 0);
+        this.setStyle("background-size", void 0);
+        this.setStyle("background-repeat", void 0);
+        this.setStyle("background-position", void 0);
+      }
+      (_a = this.sizeInput) == null ? void 0 : _a.silent(this.data.size);
+      (_b = this.url) == null ? void 0 : _b.silent(this.data.url);
+    }
+  },
+  text: class VText extends Visual {
+    constructor(data = {}, sceneObject) {
+      super("text", sceneObject);
+      this.data = {
+        text: "",
+        bold: false,
+        italic: false,
+        alignment: "left",
+        width: 0
+      };
+      this.set(data);
+    }
+    set(data) {
+      super.set(data);
+    }
   }
 };
 var SceneObjectComponentVisual = class extends SceneObjectComponent {
-  constructor(attr) {
-    super("visual", attr);
-    this.dict = {
-      image: VisualImage
-    };
+  constructor(type, data) {
+    super("visual");
+    this._position = v2();
     this.element = new DomElement("div", {
       className: "SceneObjectVisual"
     });
-    this.attr = __spreadValues({}, attr);
-    this.visualType = attr.asset.visualType;
+    this.toBuild = [data, VisualTypeDictionary[type]];
+  }
+  get position() {
+    return this._position;
+  }
+  set position(value) {
+    var _a;
+    this._position = value;
+    this.element.setStyle("left", "".concat(this._position[0], "px"));
+    this.element.setStyle("top", "".concat(this._position[1], "px"));
+    (_a = this.positionInput) == null ? void 0 : _a.silent(this._position);
   }
   updateState() {
     super.updateState();
@@ -2122,14 +2140,12 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
     this.panel = $.panels.getPanel("graphic");
     this.positionInput = this.sceneObject.defineProperty($.unique, {
       input: new PropsInputVector((v) => {
-        this.setPosition(v.c());
+        this.position = v.c();
       }),
       name: "Position"
     });
-    this.visual = new this.dict[this.visualType](this.attr.asset);
-    this.visual.build(this.sceneObject);
+    this.visual = new this.toBuild[1](this.toBuild[0], this.sceneObject);
     this.element.append(this.visual);
-    this.setPosition(this.attr.position.floor());
     $.mouse.registerDrag($.unique, {
       element: this.element,
       cursor: "move",
@@ -2140,19 +2156,18 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
       },
       move: (e) => {
         if (e.e.ctrlKey && e.e.shiftKey) {
-          this.attr.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).scale(0.04).floor().scale(25);
+          this.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).scale(0.04).floor().scale(25);
         } else if (e.e.ctrlKey) {
-          this.attr.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).scale(0.1).floor().scale(10);
+          this.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).scale(0.1).floor().scale(10);
         } else if (e.e.shiftKey) {
-          this.attr.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).scale(0.2).floor().scale(5);
+          this.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).scale(0.2).floor().scale(5);
         } else {
-          this.attr.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).floor();
+          this.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).floor();
         }
-        this.setPosition(this.attr.position);
       }
     });
     this.resizerKey = $.mouse.registerDrag($.unique, {
-      element: this.resizer = this.element.child("span", {
+      element: this.element.child("span", {
         className: "resizer"
       }),
       reference: this.element,
@@ -2194,29 +2209,21 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
     }
   }
   update() {
-    this.setPosition();
+    this.position = this.position;
     this.visual.set();
-  }
-  setPosition(v) {
-    var _a;
-    if (v)
-      this.attr.position = v;
-    this.element.setStyle("left", "".concat(this.attr.position[0], "px"));
-    this.element.setStyle("top", "".concat(this.attr.position[1], "px"));
-    (_a = this.positionInput) == null ? void 0 : _a.silent(this.attr.position);
   }
 };
 
 // ts/sceneobjects/sceneobject.ts
 var SceneObject = class {
-  constructor({ key, visual, name }) {
+  constructor({ key, type, data: visual, name }) {
     this.active = true;
     this._name = "";
     this._selected = false;
     this.properties = {};
     this.key = key || $.unique;
     this.name = name || "";
-    this.createComponents(visual);
+    this.createComponents(type, visual);
   }
   get name() {
     return this._name;
@@ -2245,12 +2252,12 @@ var SceneObject = class {
   get updateProperty() {
     return this.components.properties.update.bind(this.components.properties);
   }
-  createComponents(visual) {
+  createComponents(type, visual) {
     this.components = {
-      visual: new SceneObjectComponentVisual(__spreadValues({}, visual)),
-      node: new SceneObjectComponentNode({ key: $.unique }),
-      properties: new SceneObjectComponentProperties({ key: $.unique }),
-      outline: new SceneObjectComponentOutline({ key: $.unique })
+      visual: new SceneObjectComponentVisual(type, visual),
+      node: new SceneObjectComponentNode(),
+      properties: new SceneObjectComponentProperties(),
+      outline: new SceneObjectComponentOutline()
     };
     Object.values(this.components).forEach((c) => {
       c.sceneObject = this;
@@ -2440,12 +2447,10 @@ var Main = class {
             content: [
               {
                 name: "Image",
-                visual: {
+                type: "image",
+                data: {
                   position: v2(0, 0),
-                  asset: {
-                    visualType: "image",
-                    size: v2(100, 100)
-                  }
+                  size: v2(100, 100)
                 }
               }
             ]
@@ -2457,13 +2462,11 @@ var Main = class {
             content: [
               {
                 name: "Fullscreen image",
-                visual: {
+                type: "image",
+                data: {
                   position: v2(0, 0),
-                  asset: {
-                    backgroundSize: "cover",
-                    visualType: "image",
-                    size: v2(505, 545)
-                  }
+                  backgroundSize: "cover",
+                  size: v2(505, 545)
                 }
               }
             ]
@@ -2476,42 +2479,34 @@ var Main = class {
           content: [
             {
               name: "Top left",
-              visual: {
+              type: "image",
+              data: {
                 position: v2(10, 35),
-                asset: {
-                  visualType: "image",
-                  size: v2(240, 240)
-                }
+                size: v2(240, 240)
               }
             },
             {
               name: "Top right",
-              visual: {
+              type: "image",
+              data: {
                 position: v2(255, 35),
-                asset: {
-                  visualType: "image",
-                  size: v2(240, 240)
-                }
+                size: v2(240, 240)
               }
             },
             {
               name: "Bottom left",
-              visual: {
+              type: "image",
+              data: {
                 position: v2(10, 280),
-                asset: {
-                  visualType: "image",
-                  size: v2(240, 240)
-                }
+                size: v2(240, 240)
               }
             },
             {
               name: "Bottom right",
-              visual: {
+              type: "image",
+              data: {
                 position: v2(255, 280),
-                asset: {
-                  visualType: "image",
-                  size: v2(240, 240)
-                }
+                size: v2(240, 240)
               }
             }
           ]
