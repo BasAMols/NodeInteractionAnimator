@@ -57,9 +57,12 @@ export class SceneObjectComponentOutline extends SceneObjectComponent<'outline'>
         content.setStyle('max-height', `${count * 30}px`);
 
         this.sceneObject.defineProperty('name', {
-            input: new PropsInputString((v) => {
-                this.sceneObject.name = v;
-            }, this.sceneObject.name),
+            input: new PropsInputString({
+                onChange: (v) => {
+                    this.sceneObject.name = v;
+                }, 
+                initialValue: this.sceneObject.name
+            }),
             name: 'Name',
         }) as PropsInputString;
     }

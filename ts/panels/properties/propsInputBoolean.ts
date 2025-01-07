@@ -1,7 +1,12 @@
 import { DomElement } from '../../lib/dom/domElement';
 import { DomInput } from '../../lib/dom/domInput';
 import { Icon } from '../../lib/dom/icon';
-import { PropsInput } from './propsInput';
+import { PropsAttr, PropsInput } from './propsInput';
+
+
+export interface PropsBooleanAttr extends PropsAttr<boolean> {
+
+}
 
 export class PropsInputBoolean extends PropsInput<boolean> {
     input1: DomInput<"input">;
@@ -9,28 +14,28 @@ export class PropsInputBoolean extends PropsInput<boolean> {
     _value: boolean = false;
     trueButton: DomElement<"div">;
     falseButton: DomElement<"div">;
-    constructor(onChange: (v: boolean) => void, def?: boolean) {
+    constructor({ onChange, initialValue, classList = '' }: PropsBooleanAttr) {
         super({
             onChange,
-            classList: 'vector',
+            classList: classList + ' vector',
         });
         this.trueButton = this.child('div', {
-            onClick: ()=>{
+            onClick: () => {
                 this.value = true;
                 this.falseButton.visible = true;
                 this.trueButton.visible = false;
             }
-        })
-        this.trueButton.append(new Icon({name: 'check_box_outline_blank'}))
+        });
+        this.trueButton.append(new Icon({ name: 'check_box_outline_blank' }));
         this.falseButton = this.child('div', {
-            onClick: ()=>{
+            onClick: () => {
                 this.value = false;
                 this.falseButton.visible = false;
                 this.trueButton.visible = true;
             }
-        })
-        this.falseButton.append(new Icon({name: 'check_box'}));
-        this.silent(def||false)
+        });
+        this.falseButton.append(new Icon({ name: 'check_box' }));
+        this.silent(initialValue || false);
     }
     silent(v: boolean) {
         super.silent(v);

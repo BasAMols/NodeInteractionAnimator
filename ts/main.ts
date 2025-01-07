@@ -38,7 +38,22 @@ export class Main {
             new PropertiesPanel(),
             new TimelinePanel(),
             new LibraryPanel([
-                ['Images', [{
+                ['Elements', [{
+                    image: new Icon({ name: 'text_fields' }),
+                    name: 'Text',
+                    key: 'text',
+                    content: [
+                        {
+                            name: 'Text',
+                            type: 'text',
+                            data: {
+                                text: 'text',
+                                width: 50,
+                                position: v2(10, 10),
+                            }
+                        },
+                    ]
+                }, {
                     image: new Icon({ name: 'image' }),
                     name: 'Image',
                     key: 'image',
@@ -65,6 +80,23 @@ export class Main {
                                 position: v2(0, 0),
                                 backgroundSize: 'cover',
                                 size: v2(505, 545),
+                            }
+                        },
+                    ]
+                },
+                {
+                    image: new Icon({ name: 'fullscreen' }),
+                    name: 'Callout',
+                    key: 'callout',
+                    content: [
+                        {
+                            name: 'Callout',
+                            type: 'callout',
+                            data: {
+                                position: v2(30, 30),
+                                position2: v2(450, 400),
+                                size: 300,
+                                size2: 30,
                             }
                         },
                     ]

@@ -8,7 +8,6 @@ export class GraphicPanel extends CameraPanel {
     public icon: IconProperties = Icon.make('animation');
     public graphic: DomElement<"div">;
 
-
     private _light: boolean = false;
     public get light(): boolean {
         return this._light;

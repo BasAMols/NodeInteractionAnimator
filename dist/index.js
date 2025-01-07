@@ -225,11 +225,29 @@ var Vector2 = class _Vector2 extends Array {
       Math.floor(this.y)
     );
   }
+  min(v) {
+    return new _Vector2(
+      Math.min(this.x, v.x),
+      Math.min(this.y, v.y)
+    );
+  }
+  max(v) {
+    return new _Vector2(
+      Math.max(this.x, v.x),
+      Math.max(this.y, v.y)
+    );
+  }
+  angleDegrees() {
+    return 180 * this.angle() / Math.PI;
+  }
+  angle() {
+    return Math.atan2(this.y, this.x);
+  }
   c() {
     return new _Vector2(this[0], this[1]);
   }
   magnitude() {
-    return this.x * this.x + this.y * this.y;
+    return Math.sqrt(this.x * this.x + this.y * this.y);
   }
 };
 
@@ -983,6 +1001,7 @@ var Camera = class extends DomElement {
     this.draggerKey = $.mouse.registerDrag($.unique, {
       element: this,
       cursor: "grab",
+      initialTolerance: 100,
       move: (e) => {
         this.move(e.delta);
       }
@@ -1701,10 +1720,10 @@ var PropsInput = class extends DomElement {
 
 // ts/panels/properties/propsInputString.ts
 var PropsInputString = class extends PropsInput {
-  constructor(onChange, def) {
+  constructor({ onChange, initialValue, classList = "" }) {
     super({
       onChange,
-      classList: "string"
+      classList: classList + " string"
     });
     this.input = this.append(new DomInput("input", {
       attr: {
@@ -1712,7 +1731,7 @@ var PropsInputString = class extends PropsInput {
       },
       onKeyUp: () => this.value = this.input.domElement.value,
       onChange: () => this.value = this.input.domElement.value,
-      value: def ? def : ""
+      value: initialValue ? initialValue : ""
     }));
   }
   silent(v) {
@@ -1775,9 +1794,12 @@ var SceneObjectComponentOutline = class extends SceneObjectComponent {
     });
     content.setStyle("max-height", "".concat(count * 30, "px"));
     this.sceneObject.defineProperty("name", {
-      input: new PropsInputString((v) => {
-        this.sceneObject.name = v;
-      }, this.sceneObject.name),
+      input: new PropsInputString({
+        onChange: (v) => {
+          this.sceneObject.name = v;
+        },
+        initialValue: this.sceneObject.name
+      }),
       name: "Name"
     });
   }
@@ -1847,12 +1869,297 @@ var SceneObjectComponentProperties = class extends SceneObjectComponent {
   }
 };
 
-// ts/panels/properties/propsInputBoolean.ts
-var PropsInputBoolean = class extends PropsInput {
-  constructor(onChange, def) {
+// ts/panels/properties/propsInputNumber.ts
+var PropsInputNumber = class extends PropsInput {
+  constructor({ onChange, initialValue, classList = "" }) {
     super({
       onChange,
-      classList: "vector"
+      classList: classList + " number"
+    });
+    this.input = this.append(new DomInput("input", {
+      attr: {
+        "type": "number"
+      },
+      onKeyUp: () => {
+        this.value = Number(this.input.domElement.value);
+      },
+      onChange: () => {
+        this.value = Number(this.input.domElement.value);
+      },
+      value: initialValue ? String(initialValue) : "0"
+    }));
+  }
+  silent(v) {
+    super.silent(v);
+    this.input.value = String(v);
+  }
+};
+
+// ts/panels/properties/propsInputVector.ts
+var PropsInputVector = class extends PropsInput {
+  constructor({ onChange, initialValue, classList = "" }) {
+    super({
+      onChange,
+      classList: classList + " vector"
+    });
+    this._value = v2(0, 0);
+    this.input1 = this.append(new DomInput("input", {
+      attr: {
+        "type": "number"
+      },
+      onKeyUp: () => {
+        this.value = v2(
+          Number(this.input1.domElement.value),
+          this.value[1]
+        );
+      },
+      onChange: () => {
+        this.value = v2(
+          Number(this.input1.domElement.value),
+          this.value[1]
+        );
+      },
+      value: initialValue ? String(initialValue[0]) : "0"
+    }));
+    this.input2 = this.append(new DomInput("input", {
+      attr: {
+        "type": "number"
+      },
+      onChange: () => this.value = v2(
+        this.value[0],
+        Number(this.input2.domElement.value)
+      ),
+      onKeyUp: () => this.value = v2(
+        this.value[0],
+        Number(this.input2.domElement.value)
+      ),
+      value: initialValue ? String(initialValue[1]) : "0"
+    }));
+  }
+  silent(v) {
+    super.silent(v.c());
+    this.input1.value = String(this.value[0]);
+    this.input2.value = String(this.value[1]);
+  }
+};
+
+// ts/sceneobjects/components/visual/mover.ts
+var Mover = class extends DomElement {
+  constructor(graphic, onChange) {
+    super("div", {
+      className: "mover ui"
+    });
+    $.mouse.registerDrag($.unique, {
+      element: this,
+      cursor: "move",
+      reference: graphic.graphic,
+      initialTolerance: 20,
+      move: (e) => {
+        if (e.e.ctrlKey && e.e.shiftKey) {
+          onChange(e.relative.add(e.offset).scale(1 / graphic.camera.scale).scale(0.04).floor().scale(25).subtract(v2(-10)));
+        } else if (e.e.ctrlKey) {
+          onChange(e.relative.add(e.offset).scale(1 / graphic.camera.scale).scale(0.1).floor().scale(10).subtract(v2(-10)));
+        } else if (e.e.shiftKey) {
+          onChange(e.relative.add(e.offset).scale(1 / graphic.camera.scale).scale(0.2).floor().scale(5).subtract(v2(-10)));
+        } else {
+          onChange(e.relative.add(e.offset).scale(1 / graphic.camera.scale).floor().subtract(v2(-10)));
+        }
+      }
+    });
+    this.append(new Icon({ name: "drag_pan" }));
+  }
+};
+
+// ts/sceneobjects/components/visual/sizer.ts
+var Sizer = class extends DomElement {
+  constructor({ graphic, reference, onChange, direction = "d" }) {
+    super("div", {
+      className: "sizer ui"
+    });
+    $.mouse.registerDrag($.unique, {
+      element: this,
+      cursor: { x: "w-resize", y: "n-resize", d: "nw-resize" }[direction],
+      reference,
+      initialTolerance: 20,
+      move: (e) => {
+        if (e.e.ctrlKey && e.e.shiftKey) {
+          onChange(e.relative.scale(1 / graphic.camera.scale).scale(0.04).floor().scale(25));
+        } else if (e.e.ctrlKey) {
+          onChange(e.relative.scale(1 / graphic.camera.scale).scale(0.1).floor().scale(10));
+        } else if (e.e.shiftKey) {
+          onChange(e.relative.scale(1 / graphic.camera.scale).scale(0.2).floor().scale(5));
+        } else {
+          onChange(e.relative.scale(1 / graphic.camera.scale).floor());
+        }
+      }
+    });
+    this.append(new Icon({ name: { y: "fit_page_height", x: "fit_page_width", d: "aspect_ratio" }[direction] }));
+  }
+};
+
+// ts/sceneobjects/components/visual/visualBase.ts
+var Visual = class extends DomElement {
+  constructor(type, sceneObject, component) {
+    super("div", {
+      className: "SceneObjectVisual",
+      onClick: () => {
+        this.sceneObject.focus();
+      }
+    });
+    this.visual = this.child("div", {
+      className: "visual visual_".concat(type)
+    });
+    this.component = component;
+    this.sceneObject = sceneObject;
+  }
+  set(data) {
+    Object.assign(this.data, data);
+  }
+};
+
+// ts/sceneobjects/components/visual/visualCallout.ts
+var VisualCallout = class extends Visual {
+  constructor(data = {}, sceneObject, component) {
+    super("callout", sceneObject, component);
+    this.data = {
+      position: v2(),
+      position2: v2(),
+      size: 10,
+      size2: 10,
+      url: "https://upload.wikimedia.org/wikipedia/commons/d/de/TestScreen_square.svg"
+    };
+    this.line = this.visual.child("div", { className: "line" });
+    this.circle = this.visual.child("div", { className: "circleBig" });
+    this.circle2 = this.visual.child("div", { className: "circleSmall" });
+    this.positionInput = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputVector({
+        onChange: (v) => {
+          this.set({
+            position: v.c()
+          });
+        },
+        initialValue: data.position
+      }),
+      name: "Position"
+    });
+    this.position2Input = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputVector({
+        onChange: (v) => {
+          this.set({
+            position2: v.c()
+          });
+        },
+        initialValue: data.position2
+      }),
+      name: "Position 2"
+    });
+    this.sizeInput = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputNumber({
+        onChange: (v) => {
+          this.set({
+            size: v
+          });
+        },
+        initialValue: data.size2
+      }),
+      name: "Size"
+    });
+    this.size2Input = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputNumber({
+        onChange: (v) => {
+          this.set({
+            size2: v
+          });
+        },
+        initialValue: data.size2
+      }),
+      name: "Size 2"
+    });
+    this.url = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputString({
+        onChange: (v) => {
+          this.set({
+            url: v
+          });
+        },
+        initialValue: data.url
+      }),
+      name: "URL"
+    });
+    this.mover = this.circle.append(new Mover(this.component.panel, (v) => {
+      this.set({
+        position: v
+      });
+    }));
+    this.sizer = this.circle.append(new Sizer({
+      graphic: this.component.panel,
+      reference: this.circle,
+      onChange: (v) => {
+        this.set({
+          size: v.x
+        });
+      }
+    }));
+    this.mover2 = this.circle2.append(new Mover(this.component.panel, (v) => {
+      this.set({
+        position2: v
+      });
+    }));
+    this.sizer2 = this.circle2.append(new Sizer({
+      graphic: this.component.panel,
+      reference: this.circle2,
+      onChange: (v) => {
+        this.set({
+          size2: v.x
+        });
+      }
+    }));
+    this.set(data);
+  }
+  set(data) {
+    var _a, _b, _c;
+    super.set(data);
+    this.data.size = Math.max(this.data.size, 20);
+    this.data.size2 = Math.max(this.data.size2, 20);
+    const min = this.data.position.min(this.data.position2);
+    const max = this.data.position.add(v2(this.data.size)).max(this.data.position2.add(v2(this.data.size2)));
+    const size = max.subtract(min);
+    this.setStyle("left", "".concat(min.x, "px"));
+    this.setStyle("top", "".concat(min.y, "px"));
+    this.setStyle("width", "".concat(size.x, "px"));
+    this.setStyle("height", "".concat(size.y, "px"));
+    const c1 = this.data.position.add(v2(this.data.size).scale(0.5));
+    const c2 = this.data.position2.add(v2(this.data.size2).scale(0.5));
+    const angle = c2.subtract(c1).angleDegrees();
+    const length = c1.subtract(c2).magnitude() - this.data.size2 / 2;
+    this.line.setStyle("left", "".concat(c1.x - min.x, "px"));
+    this.line.setStyle("top", "".concat(c1.y - min.y, "px"));
+    this.line.setStyle("width", "".concat(length, "px"));
+    this.line.setStyle("transform", "rotate(".concat(angle, "deg)"));
+    this.circle.setStyle("left", "".concat(this.data.position[0] - min.x, "px"));
+    this.circle.setStyle("top", "".concat(this.data.position[1] - min.y, "px"));
+    this.circle.setStyle("width", "".concat(this.data.size, "px"));
+    this.circle.setStyle("height", "".concat(this.data.size, "px"));
+    this.class(!this.data.url, "empty");
+    this.circle.setStyle("background-image", this.data.url ? "url(".concat(this.data.url, ")") : void 0);
+    this.circle2.setStyle("left", "".concat(this.data.position2[0] - min.x, "px"));
+    this.circle2.setStyle("top", "".concat(this.data.position2[1] - min.y, "px"));
+    this.circle2.setStyle("width", "".concat(this.data.size2, "px"));
+    this.circle2.setStyle("height", "".concat(this.data.size2, "px"));
+    this.positionInput.silent(this.data.position);
+    this.position2Input.silent(this.data.position2);
+    (_a = this.sizeInput) == null ? void 0 : _a.silent(this.data.size);
+    (_b = this.size2Input) == null ? void 0 : _b.silent(this.data.size2);
+    (_c = this.url) == null ? void 0 : _c.silent(this.data.url);
+  }
+};
+
+// ts/panels/properties/propsInputBoolean.ts
+var PropsInputBoolean = class extends PropsInput {
+  constructor({ onChange, initialValue, classList = "" }) {
+    super({
+      onChange,
+      classList: classList + " vector"
     });
     this._value = false;
     this.trueButton = this.child("div", {
@@ -1871,7 +2178,7 @@ var PropsInputBoolean = class extends PropsInput {
       }
     });
     this.falseButton.append(new Icon({ name: "check_box" }));
-    this.silent(def || false);
+    this.silent(initialValue || false);
   }
   silent(v) {
     super.silent(v);
@@ -1905,10 +2212,10 @@ var DomSelect = class extends DomInput {
 
 // ts/panels/properties/propsInputSelect.ts
 var PropsInputSelect = class extends PropsInput {
-  constructor(onChange, options, def) {
+  constructor({ onChange, options, initialValue, classList = "" }) {
     super({
       onChange,
-      classList: "vector"
+      classList: classList + " vector"
     });
     this.input = this.append(new DomSelect({
       attr: {
@@ -1916,286 +2223,300 @@ var PropsInputSelect = class extends PropsInput {
       },
       onKeyUp: () => this.value = this.input.domElement.value,
       onChange: () => this.value = this.input.domElement.value,
-      value: def ? String(def[0]) : "",
       options
     }));
+    this.silent(initialValue || "");
   }
   silent(v) {
-    this.input.value = this.value;
+    this.input.value = v;
   }
 };
 
-// ts/panels/properties/propsInputVector.ts
-var PropsInputVector = class extends PropsInput {
-  constructor(onChange, def) {
-    super({
-      onChange,
-      classList: "vector"
+// ts/sceneobjects/components/visual/visualImage.ts
+var VisualImage = class extends Visual {
+  constructor(data = {}, sceneObject, component) {
+    super("image", sceneObject, component);
+    this.data = {
+      position: v2(),
+      size: v2(),
+      url: "https://upload.wikimedia.org/wikipedia/commons/d/de/TestScreen_square.svg",
+      repeat: false,
+      backgroundSize: "contain",
+      backgroundSizeCustom: v2(),
+      backgroundPosition: "center",
+      backgroundPositionCustom: v2()
+    };
+    this.positionInput = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputVector({
+        onChange: (v) => {
+          this.set({
+            position: v.c()
+          });
+        }
+      }),
+      name: "Position"
     });
-    this._value = v2(0, 0);
-    this.input1 = this.append(new DomInput("input", {
-      attr: {
-        "type": "number"
-      },
-      onKeyUp: () => {
-        this.value = v2(
-          Number(this.input1.domElement.value),
-          this.value[1]
-        );
-      },
-      onChange: () => {
-        this.value = v2(
-          Number(this.input1.domElement.value),
-          this.value[1]
-        );
-      },
-      value: def ? String(def[0]) : "0"
+    this.sizeInput = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputVector({
+        onChange: (v) => {
+          this.set({
+            size: v.c()
+          });
+        }
+      }),
+      name: "Size"
+    });
+    this.repeat = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputBoolean({
+        onChange: (v) => {
+          this.set({
+            repeat: v
+          });
+        }
+      }),
+      name: "Repeat"
+    });
+    this.url = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputString({
+        onChange: (v) => {
+          this.set({
+            url: v
+          });
+        }
+      }),
+      name: "URL"
+    });
+    this.bgsizeInput = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputSelect({
+        onChange: (v) => {
+          this.set({
+            backgroundSize: v
+          });
+        },
+        options: [["auto", "Auto"], ["contain", "Contain"], ["cover", "Cover"], ["stretch", "Stretch"], ["custom", "Custom"]],
+        initialValue: "auto"
+      }),
+      name: "Background-size"
+    });
+    this.bgsizeInputCustom = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputVector({
+        onChange: (v) => {
+          this.set({
+            backgroundSizeCustom: v.c()
+          });
+        }
+      })
+    });
+    this.positionCustom = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputSelect({
+        onChange: (v) => {
+          this.set({
+            backgroundPosition: v
+          });
+        },
+        options: [["left", "Left"], ["top", "Top"], ["right", "Right"], ["bottom", "Bottom"], ["center", "Center"], ["custom", "Custom"]],
+        initialValue: "auto"
+      }),
+      name: "Background-position"
+    });
+    this.positionInputCustom = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputVector({
+        onChange: (v) => {
+          this.set({
+            backgroundPositionCustom: v.c()
+          });
+        }
+      })
+    });
+    this.mover = this.append(new Mover(this.component.panel, (v) => {
+      this.set({
+        position: v
+      });
     }));
-    this.input2 = this.append(new DomInput("input", {
-      attr: {
-        "type": "number"
-      },
-      onChange: () => this.value = v2(
-        this.value[0],
-        Number(this.input2.domElement.value)
-      ),
-      onKeyUp: () => this.value = v2(
-        this.value[0],
-        Number(this.input2.domElement.value)
-      ),
-      value: def ? String(def[1]) : "0"
+    this.sizer = this.append(new Sizer({
+      graphic: this.component.panel,
+      reference: this,
+      onChange: (v) => {
+        this.set({
+          size: v
+        });
+      }
     }));
+    this.set(data);
   }
-  silent(v) {
-    super.silent(v.c());
-    this.input1.value = String(this.value[0]);
-    this.input2.value = String(this.value[1]);
+  set(data) {
+    var _a, _b;
+    super.set(data);
+    this.setStyle("left", "".concat(this.data.position[0], "px"));
+    this.setStyle("top", "".concat(this.data.position[1], "px"));
+    this.visual.setStyle("width", "".concat(this.data.size.x, "px"));
+    this.visual.setStyle("height", "".concat(this.data.size.y, "px"));
+    this.visual.setStyle("background-repeat", this.data.repeat ? "repeat" : "no-repeat");
+    if (this.data.url) {
+      this.class(false, "empty");
+      this.visual.setStyle("background-image", "url(".concat(this.data.url, ")"));
+      switch (this.data.backgroundSize) {
+        case "stretch":
+          this.visual.setStyle("background-size", "100% 100%");
+          break;
+        case "custom":
+          this.visual.setStyle("background-size", this.data.backgroundSizeCustom.join("px ") + "px");
+          break;
+        default:
+          this.visual.setStyle("background-size", this.data.backgroundSize);
+          break;
+      }
+      switch (this.data.backgroundPosition) {
+        case "custom":
+          this.visual.setStyle("background-position", this.data.backgroundPositionCustom.join("px ") + "px");
+          break;
+        default:
+          this.visual.setStyle("background-position", this.data.backgroundPosition);
+          break;
+      }
+    } else {
+      this.class(true, "empty");
+      this.visual.setStyle("background-image", void 0);
+      this.visual.setStyle("background-size", void 0);
+      this.visual.setStyle("background-repeat", void 0);
+      this.visual.setStyle("background-position", void 0);
+    }
+    this.positionInput.silent(this.data.position);
+    (_a = this.sizeInput) == null ? void 0 : _a.silent(this.data.size);
+    (_b = this.url) == null ? void 0 : _b.silent(this.data.url);
+  }
+};
+
+// ts/sceneobjects/components/visual/visualText.ts
+var VisualText = class extends Visual {
+  constructor(data = {}, sceneObject, component) {
+    super("text", sceneObject, component);
+    this.data = {
+      text: "",
+      bold: false,
+      italic: false,
+      alignment: "left",
+      width: 0
+    };
+    this.positionInput = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputVector({
+        onChange: (v) => {
+          this.set({
+            position: v.c()
+          });
+        },
+        initialValue: data.position
+      }),
+      name: "Position"
+    });
+    this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputBoolean({
+        onChange: (v) => {
+          this.set({
+            bold: v
+          });
+        },
+        initialValue: data.bold
+      }),
+      name: "Bold"
+    });
+    this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputBoolean({
+        onChange: (v) => {
+          this.set({
+            italic: v
+          });
+        },
+        initialValue: data.italic
+      }),
+      name: "Italic"
+    });
+    this.sceneObject.defineProperty($.unique, {
+      input: this.text = new PropsInputString({
+        onChange: (v) => {
+          this.set({
+            text: v
+          });
+        },
+        initialValue: data.text
+      }),
+      name: "Text"
+    });
+    this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputSelect({
+        onChange: (v) => {
+          this.set({
+            alignment: v
+          });
+        },
+        options: [["center", "Center"], ["left", "Left"], ["right", "Right"]],
+        initialValue: data.alignment || "left"
+      }),
+      name: "Alignment"
+    });
+    this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputNumber({
+        onChange: (v) => {
+          this.set({
+            width: v
+          });
+        },
+        initialValue: data.width
+      }),
+      name: "Width"
+    });
+    this.mover = this.append(new Mover(this.component.panel, (v) => {
+      this.set({
+        position: v
+      });
+    }));
+    this.sizer = this.append(new Sizer({
+      graphic: this.component.panel,
+      reference: this,
+      direction: "x",
+      onChange: (v) => {
+        this.set({
+          width: v.x
+        });
+      }
+    }));
+    this.set(data);
+  }
+  set(data) {
+    super.set(data);
+    this.setStyle("left", "".concat(this.data.position[0], "px"));
+    this.setStyle("top", "".concat(this.data.position[1], "px"));
+    this.visual.setStyle("width", "".concat(this.data.width, "px"));
+    this.visual.setStyle("text-align", this.data.alignment);
+    this.visual.setStyle("font-weight", this.data.bold ? "bold" : void 0);
+    this.visual.setStyle("font-style", this.data.italic ? "italic" : void 0);
+    this.visual.setText(this.data.text);
+    this.positionInput.silent(this.data.position);
   }
 };
 
 // ts/sceneobjects/components/sceneobjectComponentVisual.ts
-var Visual = class extends DomElement {
-  constructor(type, sceneObject) {
-    super("div", {
-      className: "visual visual_".concat(type)
-    });
-    this.sceneObject = sceneObject;
-  }
-  set(data) {
-    Object.assign(this.data, data);
-  }
-};
 var VisualTypeDictionary = {
-  image: class VImage extends Visual {
-    constructor(data = {}, sceneObject) {
-      super("image", sceneObject);
-      this.data = {
-        position: v2(),
-        size: v2(),
-        url: "https://upload.wikimedia.org/wikipedia/commons/b/bd/Test.svg",
-        repeat: false,
-        backgroundSize: "contain",
-        backgroundSizeCustom: v2(),
-        backgroundPosition: "center",
-        backgroundPositionCustom: v2()
-      };
-      this.sizeInput = this.sceneObject.defineProperty($.unique, {
-        input: new PropsInputVector((v) => {
-          this.set({
-            size: v.c()
-          });
-        }),
-        name: "Size"
-      });
-      this.repeat = this.sceneObject.defineProperty($.unique, {
-        input: new PropsInputBoolean((v) => {
-          this.set({
-            repeat: v
-          });
-        }),
-        name: "Repeat"
-      });
-      this.url = this.sceneObject.defineProperty($.unique, {
-        input: new PropsInputString((v) => {
-          this.set({
-            url: v
-          });
-        }),
-        name: "URL"
-      });
-      this.backgroundSize = this.sceneObject.defineProperty($.unique, {
-        input: new PropsInputSelect((v) => {
-          this.set({
-            backgroundSize: v
-          });
-        }, [["auto", "Auto"], ["contain", "Contain"], ["cover", "Cover"], ["stretch", "Stretch"], ["custom", "Custom"]], "auto"),
-        name: "Background-size"
-      });
-      this.backgroundSizeCustom = this.sceneObject.defineProperty($.unique, {
-        input: new PropsInputVector((v) => {
-          console.log(v);
-          this.set({
-            backgroundSizeCustom: v.c()
-          });
-        })
-      });
-      this.backgroundPosition = this.sceneObject.defineProperty($.unique, {
-        input: new PropsInputSelect((v) => {
-          this.set({
-            backgroundPosition: v
-          });
-        }, [["left", "Left"], ["top", "Top"], ["right", "Right"], ["bottom", "Bottom"], ["center", "Center"], ["custom", "Custom"]], "auto"),
-        name: "Background-position"
-      });
-      this.backgroundPositionCustom = this.sceneObject.defineProperty($.unique, {
-        input: new PropsInputVector((v) => {
-          this.set({
-            backgroundPositionCustom: v.c()
-          });
-        })
-      });
-      this.set(data);
-    }
-    set(data) {
-      var _a, _b;
-      super.set(data);
-      this.setStyle("width", "".concat(this.data.size.x, "px"));
-      this.setStyle("height", "".concat(this.data.size.y, "px"));
-      this.setStyle("background-repeat", this.data.repeat ? "repeat" : "no-repeat");
-      if (this.data.url) {
-        this.class(false, "empty");
-        this.setStyle("background-image", "url(".concat(this.data.url, ")"));
-        switch (this.data.backgroundSize) {
-          case "stretch":
-            this.setStyle("background-size", "100% 100%");
-            break;
-          case "custom":
-            this.setStyle("background-size", this.data.backgroundSizeCustom.join("px ") + "px");
-            break;
-          default:
-            this.setStyle("background-size", this.data.backgroundSize);
-            break;
-        }
-        switch (this.data.backgroundPosition) {
-          case "custom":
-            this.setStyle("background-position", this.data.backgroundPositionCustom.join("px ") + "px");
-            break;
-          default:
-            this.setStyle("background-position", this.data.backgroundPosition);
-            break;
-        }
-      } else {
-        this.class(true, "empty");
-        this.setStyle("background-image", void 0);
-        this.setStyle("background-size", void 0);
-        this.setStyle("background-repeat", void 0);
-        this.setStyle("background-position", void 0);
-      }
-      (_a = this.sizeInput) == null ? void 0 : _a.silent(this.data.size);
-      (_b = this.url) == null ? void 0 : _b.silent(this.data.url);
-    }
-  },
-  text: class VText extends Visual {
-    constructor(data = {}, sceneObject) {
-      super("text", sceneObject);
-      this.data = {
-        text: "",
-        bold: false,
-        italic: false,
-        alignment: "left",
-        width: 0
-      };
-      this.set(data);
-    }
-    set(data) {
-      super.set(data);
-    }
-  }
+  image: VisualImage,
+  text: VisualText,
+  callout: VisualCallout
 };
 var SceneObjectComponentVisual = class extends SceneObjectComponent {
-  constructor(type, data) {
-    super("visual");
-    this._position = v2();
-    this.element = new DomElement("div", {
-      className: "SceneObjectVisual"
-    });
-    this.toBuild = [data, VisualTypeDictionary[type]];
-  }
-  get position() {
-    return this._position;
-  }
-  set position(value) {
-    var _a;
-    this._position = value;
-    this.element.setStyle("left", "".concat(this._position[0], "px"));
-    this.element.setStyle("top", "".concat(this._position[1], "px"));
-    (_a = this.positionInput) == null ? void 0 : _a.silent(this._position);
-  }
   updateState() {
     super.updateState();
     this.element.class(this.selected, "selected");
   }
+  constructor(type, data) {
+    super("visual");
+    this.toBuild = [data, VisualTypeDictionary[type]];
+  }
   build() {
     super.build();
+    if (!this.toBuild)
+      return;
     this.panel = $.panels.getPanel("graphic");
-    this.positionInput = this.sceneObject.defineProperty($.unique, {
-      input: new PropsInputVector((v) => {
-        this.position = v.c();
-      }),
-      name: "Position"
-    });
-    this.visual = new this.toBuild[1](this.toBuild[0], this.sceneObject);
-    this.element.append(this.visual);
-    $.mouse.registerDrag($.unique, {
-      element: this.element,
-      cursor: "move",
-      reference: this.panel.graphic,
-      initialTolerance: 400,
-      start: () => {
-        this.sceneObject.focus();
-      },
-      move: (e) => {
-        if (e.e.ctrlKey && e.e.shiftKey) {
-          this.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).scale(0.04).floor().scale(25);
-        } else if (e.e.ctrlKey) {
-          this.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).scale(0.1).floor().scale(10);
-        } else if (e.e.shiftKey) {
-          this.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).scale(0.2).floor().scale(5);
-        } else {
-          this.position = e.relative.add(e.offset).scale(1 / this.panel.camera.scale).floor();
-        }
-      }
-    });
-    this.resizerKey = $.mouse.registerDrag($.unique, {
-      element: this.element.child("span", {
-        className: "resizer"
-      }),
-      reference: this.element,
-      initialTolerance: 400,
-      cursor: "nw-resize",
-      start: () => {
-        this.sceneObject.focus();
-      },
-      move: (e) => {
-        if (e.e.ctrlKey && e.e.shiftKey) {
-          this.visual.set({
-            size: e.relative.scale(1 / this.panel.camera.scale).scale(0.04).floor().scale(25)
-          });
-        } else if (e.e.ctrlKey) {
-          this.visual.set({
-            size: e.relative.scale(1 / this.panel.camera.scale).scale(0.1).floor().scale(10)
-          });
-        } else if (e.e.shiftKey) {
-          this.visual.set({
-            size: e.relative.scale(1 / this.panel.camera.scale).scale(0.2).floor().scale(5)
-          });
-        } else {
-          this.visual.set({
-            size: e.relative.scale(1 / this.panel.camera.scale).floor()
-          });
-        }
-      }
-    });
+    this.element = new this.toBuild[1](this.toBuild[0], this.sceneObject, this);
+    this.toBuild = void 0;
   }
   add(parent) {
     this.delete();
@@ -2209,8 +2530,7 @@ var SceneObjectComponentVisual = class extends SceneObjectComponent {
     }
   }
   update() {
-    this.position = this.position;
-    this.visual.set();
+    this.element.set();
   }
 };
 
@@ -2308,6 +2628,7 @@ var SceneObjectManager = class {
     const d = new SceneObject(n);
     this.sceneObjects[d.key] = d;
     d.build();
+    this.focus(d);
     this.update("outline");
     return n;
   }
@@ -2439,7 +2760,23 @@ var Main = class {
       new PropertiesPanel(),
       new TimelinePanel(),
       new LibraryPanel([
-        ["Images", [
+        ["Elements", [
+          {
+            image: new Icon({ name: "text_fields" }),
+            name: "Text",
+            key: "text",
+            content: [
+              {
+                name: "Text",
+                type: "text",
+                data: {
+                  text: "text",
+                  width: 50,
+                  position: v2(10, 10)
+                }
+              }
+            ]
+          },
           {
             image: new Icon({ name: "image" }),
             name: "Image",
@@ -2467,6 +2804,23 @@ var Main = class {
                   position: v2(0, 0),
                   backgroundSize: "cover",
                   size: v2(505, 545)
+                }
+              }
+            ]
+          },
+          {
+            image: new Icon({ name: "fullscreen" }),
+            name: "Callout",
+            key: "callout",
+            content: [
+              {
+                name: "Callout",
+                type: "callout",
+                data: {
+                  position: v2(30, 30),
+                  position2: v2(450, 400),
+                  size: 300,
+                  size2: 30
                 }
               }
             ]

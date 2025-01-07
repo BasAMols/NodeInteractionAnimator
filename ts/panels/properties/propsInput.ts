@@ -1,6 +1,12 @@
 import { DomElement } from '../../lib/dom/domElement';
 import { Vector2 } from '../../lib/utilities/vector2';
 
+export interface PropsAttr<R = string | Vector2 | number | boolean> {
+    onChange: (v: R) => void;
+    classList?: string;
+    initialValue?: R
+}
+
 export class PropsInput<R = string | Vector2 | number | boolean> extends DomElement<'div'> {
     protected _value: R;
     public get value(): R {
@@ -11,8 +17,8 @@ export class PropsInput<R = string | Vector2 | number | boolean> extends DomElem
         this.onChange(this._value);
     }
     private onChange: (v: R) => void;
-    constructor({ onChange, classList = '' }: { onChange: (v: R) => void; classList?:string }) {
-        super('div', {className: `props_input ${classList}`});
+    constructor({ onChange, classList = '' }: PropsAttr<R>) {
+        super('div', { className: `props_input ${classList}` });
         this.onChange = onChange;
     }
     public silent(v: R) {

@@ -1,12 +1,17 @@
 import { DomInput } from '../../lib/dom/domInput';
-import { PropsInput } from './propsInput';
+import { PropsAttr, PropsInput } from './propsInput';
+
+export interface PropsStringAttr extends PropsAttr<string> {
+
+}
 
 export class PropsInputString extends PropsInput<string> {
     input: DomInput<"input">;
-    constructor(onChange: (v: string) => void, def?: string) {
+    constructor({ onChange, initialValue, classList  = ''}: PropsStringAttr) {
+        
         super({
             onChange,
-            classList: 'string',
+            classList: classList+' string',
         });
         this.input = this.append(new DomInput('input', {
             attr: {
@@ -14,7 +19,7 @@ export class PropsInputString extends PropsInput<string> {
             },
             onKeyUp: () => this.value = (this.input.domElement.value),
             onChange: () => this.value = (this.input.domElement.value),
-            value: def?def:''
+            value: initialValue?initialValue:''
         })) as DomInput<'input'>;
     }
     public silent(v: string) {

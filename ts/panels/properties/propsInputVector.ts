@@ -1,15 +1,19 @@
 import { DomInput } from '../../lib/dom/domInput';
 import { v2, Vector2 } from '../../lib/utilities/vector2';
-import { PropsInput } from './propsInput';
+import { PropsAttr, PropsInput } from './propsInput';
+
+export interface PropsVectorAttr extends PropsAttr<Vector2> {
+
+}
 
 export class PropsInputVector extends PropsInput<Vector2> {
     input1: DomInput<"input">;
     input2: DomInput<"input">;
     _value: Vector2 = v2(0, 0);
-    constructor(onChange: (v: Vector2) => void, def?: Vector2) {
+    constructor({ onChange, initialValue, classList = '' }: PropsVectorAttr) {
         super({
             onChange,
-            classList: 'vector',
+            classList: classList+' vector',
         });
         this.input1 = this.append(new DomInput('input', {
             attr: {
@@ -27,7 +31,7 @@ export class PropsInputVector extends PropsInput<Vector2> {
                     this.value[1]
                 );
             },
-            value: def ? String(def[0]) : '0'
+            value: initialValue ? String(initialValue[0]) : '0'
         })) as DomInput<'input'>;
         this.input2 = this.append(new DomInput('input', {
             attr: {
@@ -41,7 +45,7 @@ export class PropsInputVector extends PropsInput<Vector2> {
                 this.value[0],
                 Number(this.input2.domElement.value),
             ),
-            value: def ? String(def[1]) : '0'
+            value: initialValue ? String(initialValue[1]) : '0'
         })) as DomInput<'input'>;
     }
     silent(v: Vector2) {

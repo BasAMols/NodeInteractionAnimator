@@ -35,6 +35,7 @@ export class SceneObjectManager {
         this.sceneObjects[d.key] = d;
         
         d.build();
+        this.focus(d)
         this.update('outline')
         return n;
     }

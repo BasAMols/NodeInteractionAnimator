@@ -1,13 +1,19 @@
 import { DomInput } from '../../lib/dom/domInput';
-import { PropsInput } from './propsInput';
+import { PropsAttr, PropsInput } from './propsInput';
+
+export interface PropsNumberAttr extends PropsAttr<number> {
+
+}
 
 export class PropsInputNumber extends PropsInput<number> {
     input: DomInput<'input'>;
-    constructor(onChange: (v: number) => void, def?: number) {
+    constructor({ onChange, initialValue, classList  = ''}: PropsNumberAttr) {
         super({
             onChange,
-            classList: 'number'
+            classList: classList+' number'
         });
+
+        
 
         this.input = this.append(new DomInput('input', {
             attr: {
@@ -19,7 +25,7 @@ export class PropsInputNumber extends PropsInput<number> {
             onChange: () => {
                 this.value = Number(this.input.domElement.value);
             },
-            value: def ? String(def) : '0'
+            value: initialValue ? String(initialValue) : '0'
         })) as DomInput<'input'>;
     }
     public silent(v: number) {

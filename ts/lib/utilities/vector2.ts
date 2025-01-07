@@ -50,10 +50,28 @@ export class Vector2 extends Array<number> {
             Math.floor(this.y),
         )
     }
+    public min(v: Vector2) {
+        return new Vector2(
+            Math.min(this.x, v.x),
+            Math.min(this.y, v.y),
+        )
+    }
+    public max(v: Vector2) {
+        return new Vector2(
+            Math.max(this.x, v.x),
+            Math.max(this.y, v.y),
+        )
+    }
+    public angleDegrees(): number {
+        return 180*this.angle()/Math.PI
+    }
+    public angle(): number {
+        return Math.atan2(this.y, this.x)
+    }
     public c() {
         return new Vector2(this[0], this[1])
     }
     public magnitude(): number {
-        return (this.x * this.x) + (this.y * this.y)
+        return Math.sqrt(this.x * this.x + this.y * this.y)
     }
 }
