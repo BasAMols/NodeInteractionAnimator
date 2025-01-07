@@ -25,19 +25,16 @@ export class VisualCallout extends Visual<'callout'> {
         url: 'https://upload.wikimedia.org/wikipedia/commons/d/de/TestScreen_square.svg',
     } as VisualTypeData['callout'];
 
+    private url: PropsInputString;
+
     private positionInput: PropsInputVector;
     private sizeInput: PropsInputNumber;
-
-    private url: PropsInputString;
-    mover: Mover;
-    sizer: Sizer;
-    position2Input: PropsInputVector;
-    size2Input: PropsInputNumber;
-    mover2: Mover;
-    sizer2: Sizer;
-    circle: DomElement<"div">;
-    circle2: DomElement<"div">;
-    line: DomElement<"div">;
+    private position2Input: PropsInputVector;
+    private size2Input: PropsInputNumber;
+    
+    private circle: DomElement<"div">;
+    private circle2: DomElement<"div">;
+    private line: DomElement<"div">;
 
     public constructor(data: VisualTypeData['callout'] = {}, sceneObject: SceneObject, component: SceneObjectComponentVisual) {
         super('callout', sceneObject, component);
@@ -107,13 +104,13 @@ export class VisualCallout extends Visual<'callout'> {
             name: 'URL'
         }) as PropsInputString;
 
-        this.mover = this.circle.append(new Mover(this.component.panel, (v) => {
+        this.circle.append(new Mover(this.component.panel, (v) => {
             this.set({
                 position: v
             });
         }, 'circle') as Mover);
 
-        this.sizer = this.circle.append(new Sizer({
+        this.circle.append(new Sizer({
             graphic: this.component.panel, reference: this.circle, onChange: (v) => {
                 this.set({
                     size: v.x
@@ -122,13 +119,13 @@ export class VisualCallout extends Visual<'callout'> {
             shape: 'circle'
         }) as Sizer);
 
-        this.mover2 = this.circle2.append(new Mover(this.component.panel, (v) => {
+        this.circle2.append(new Mover(this.component.panel, (v) => {
             this.set({
                 position2: v
             });
         }, 'circle') as Mover);
 
-        this.sizer2 = this.circle2.append(new Sizer({
+        this.circle2.append(new Sizer({
             graphic: this.component.panel, reference: this.circle2, onChange: (v) => {
                 this.set({
                     size2: v.x

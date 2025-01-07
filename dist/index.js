@@ -1859,6 +1859,28 @@ var SceneObjectComponentProperties = class extends SceneObjectComponent {
     });
     return data.input;
   }
+  addMultiple(list) {
+    list.forEach((data) => {
+      data.key = data.key || $.unique;
+      if (this.data[data.key])
+        return;
+      const el = new DomElement("div", { className: "prop" });
+      this.element.append(el);
+      if (data.name)
+        el.child("label", {
+          text: data.name,
+          className: "props_label"
+        });
+      el.append(data.input);
+      this.data[data.key] = __spreadValues(__spreadValues({}, data), {
+        element: el
+      });
+    });
+  }
+  visible(key, b) {
+    if (this.data[key])
+      this.data[key].element.visible = b;
+  }
   remove(key) {
     if (this.data[key]) {
       this.element.remove(this.data[key].element);
@@ -2095,7 +2117,7 @@ var Mover = class extends DomElement {
 
 // ts/sceneobjects/components/visual/visualBase.ts
 var Visual = class extends DomElement {
-  constructor(type, sceneObject, component) {
+  constructor(type, sceneObject, component, settings) {
     super("div", {
       className: "SceneObjectVisual editorUi",
       onClick: () => {
@@ -2107,6 +2129,8 @@ var Visual = class extends DomElement {
     });
     this.component = component;
     this.sceneObject = sceneObject;
+    if (settings)
+      this.sceneObject.defineProperties(settings);
   }
   set(data) {
     Object.assign(this.data, data);
@@ -2132,9 +2156,9 @@ var VisualArrow = class extends Visual {
     this.svgArrow = this.svg.child("path", {
       className: "arrowPath"
     });
-    this.tailD = this.child("div");
-    this.headD = this.child("div");
-    this.midD = this.child("div");
+    this.tailControlPoint = this.child("div");
+    this.headControlPoint = this.child("div");
+    this.midControlPoint = this.child("div");
     this.positionInput = this.sceneObject.defineProperty($.unique, {
       input: new PropsInputVector({
         onChange: (v) => {
@@ -2157,7 +2181,7 @@ var VisualArrow = class extends Visual {
       }),
       name: "Head position"
     });
-    this.typeInput = this.sceneObject.defineProperty($.unique, {
+    this.sceneObject.defineProperty($.unique, {
       input: new PropsInputSelect({
         onChange: (v) => {
           this.set({
@@ -2169,7 +2193,7 @@ var VisualArrow = class extends Visual {
       }),
       name: "Type"
     });
-    this.position3Input = this.sceneObject.defineProperty($.unique, {
+    this.position3Input = this.sceneObject.defineProperty("controlPoint", {
       input: new PropsInputVector({
         onChange: (v) => {
           this.set({
@@ -2180,7 +2204,7 @@ var VisualArrow = class extends Visual {
       }),
       name: "Control position"
     });
-    this.styleInput = this.sceneObject.defineProperty($.unique, {
+    this.sceneObject.defineProperty($.unique, {
       input: new PropsInputSelect({
         onChange: (v) => {
           this.set({
@@ -2192,7 +2216,7 @@ var VisualArrow = class extends Visual {
       }),
       name: "Line style"
     });
-    this.colorInput = this.sceneObject.defineProperty($.unique, {
+    this.sceneObject.defineProperty($.unique, {
       input: new PropsInputSelect({
         onChange: (v) => {
           this.set({
@@ -2204,18 +2228,18 @@ var VisualArrow = class extends Visual {
       }),
       name: "Color"
     });
-    this.mover = this.tailD.append(new Mover(this.component.panel, (v) => {
+    this.tailControlPoint.append(new Mover(this.component.panel, (v) => {
       this.set({
         position: v
       });
     }, "circle"));
-    this.mover2 = this.headD.append(new Mover(this.component.panel, (v) => {
+    this.headControlPoint.append(new Mover(this.component.panel, (v) => {
       this.set({
         position2: v
       });
     }, "circle"));
     this.set(data);
-    this.mover3 = this.midD.append(new Mover(this.component.panel, (v) => {
+    this.midControlPoint.append(new Mover(this.component.panel, (v) => {
       this.set({
         position3: v
       });
@@ -2243,10 +2267,11 @@ var VisualArrow = class extends Visual {
       this.svgArrow.setAttribute("d", "M".concat(this.data.position.subtract(min).join(" "), " L").concat(this.data.position2.subtract(min).join(" ")));
       headAngle = this.data.position2.subtract(this.data.position).angleDegrees();
     }
-    this.tailD.setPositionStyle(this.data.position.subtract(min));
-    this.headD.setPositionStyle(this.data.position2.subtract(min));
-    this.midD.setPositionStyle(this.data.position3.subtract(min));
-    this.midD.visible = this.data.type !== "straight";
+    this.sceneObject.updatePropertyVisibility("controlPoint", this.data.type !== "straight");
+    this.tailControlPoint.setPositionStyle(this.data.position.subtract(min));
+    this.headControlPoint.setPositionStyle(this.data.position2.subtract(min));
+    this.midControlPoint.setPositionStyle(this.data.position3.subtract(min));
+    this.midControlPoint.visible = this.data.type !== "straight";
     this.positionInput.silent(this.data.position);
     this.position2Input.silent(this.data.position2);
     this.position3Input.silent(this.data.position3);
@@ -2377,12 +2402,12 @@ var VisualCallout = class extends Visual {
       }),
       name: "URL"
     });
-    this.mover = this.circle.append(new Mover(this.component.panel, (v) => {
+    this.circle.append(new Mover(this.component.panel, (v) => {
       this.set({
         position: v
       });
     }, "circle"));
-    this.sizer = this.circle.append(new Sizer({
+    this.circle.append(new Sizer({
       graphic: this.component.panel,
       reference: this.circle,
       onChange: (v) => {
@@ -2392,12 +2417,12 @@ var VisualCallout = class extends Visual {
       },
       shape: "circle"
     }));
-    this.mover2 = this.circle2.append(new Mover(this.component.panel, (v) => {
+    this.circle2.append(new Mover(this.component.panel, (v) => {
       this.set({
         position2: v
       });
     }, "circle"));
-    this.sizer2 = this.circle2.append(new Sizer({
+    this.circle2.append(new Sizer({
       graphic: this.component.panel,
       reference: this.circle2,
       onChange: (v) => {
@@ -2494,94 +2519,98 @@ var VisualImage = class extends Visual {
       backgroundPosition: "center",
       backgroundPositionCustom: v2()
     };
-    this.positionInput = this.sceneObject.defineProperty($.unique, {
-      input: new PropsInputVector({
-        onChange: (v) => {
-          this.set({
-            position: v.c()
-          });
-        }
-      }),
-      name: "Position"
-    });
-    this.sizeInput = this.sceneObject.defineProperty($.unique, {
-      input: new PropsInputVector({
-        onChange: (v) => {
-          this.set({
-            size: v.c()
-          });
-        }
-      }),
-      name: "Size"
-    });
-    this.repeat = this.sceneObject.defineProperty($.unique, {
-      input: new PropsInputBoolean({
-        onChange: (v) => {
-          this.set({
-            repeat: v
-          });
-        }
-      }),
-      name: "Repeat"
-    });
-    this.url = this.sceneObject.defineProperty($.unique, {
-      input: new PropsInputString({
-        onChange: (v) => {
-          this.set({
-            url: v
-          });
-        }
-      }),
-      name: "URL"
-    });
-    this.bgsizeInput = this.sceneObject.defineProperty($.unique, {
-      input: new PropsInputSelect({
-        onChange: (v) => {
-          this.set({
-            backgroundSize: v
-          });
-        },
-        options: [["auto", "Auto"], ["contain", "Contain"], ["cover", "Cover"], ["stretch", "Stretch"], ["custom", "Custom"]],
-        initialValue: "auto"
-      }),
-      name: "Background-size"
-    });
-    this.bgsizeInputCustom = this.sceneObject.defineProperty($.unique, {
-      input: new PropsInputVector({
-        onChange: (v) => {
-          this.set({
-            backgroundSizeCustom: v.c()
-          });
-        }
-      })
-    });
-    this.positionCustom = this.sceneObject.defineProperty($.unique, {
-      input: new PropsInputSelect({
-        onChange: (v) => {
-          this.set({
-            backgroundPosition: v
-          });
-        },
-        options: [["left", "Left"], ["top", "Top"], ["right", "Right"], ["bottom", "Bottom"], ["center", "Center"], ["custom", "Custom"]],
-        initialValue: "auto"
-      }),
-      name: "Background-position"
-    });
-    this.positionInputCustom = this.sceneObject.defineProperty($.unique, {
-      input: new PropsInputVector({
-        onChange: (v) => {
-          this.set({
-            backgroundPositionCustom: v.c()
-          });
-        }
-      })
-    });
-    this.mover = this.append(new Mover(this.component.panel, (v) => {
+    this.sceneObject.defineProperties([
+      {
+        input: this.positionInput = new PropsInputVector({
+          onChange: (v) => {
+            this.set({
+              position: v.c()
+            });
+          }
+        }),
+        name: "Position"
+      },
+      {
+        input: this.sizeInput = new PropsInputVector({
+          onChange: (v) => {
+            this.set({
+              size: v.c()
+            });
+          }
+        }),
+        name: "Size"
+      },
+      {
+        input: this.url = new PropsInputString({
+          onChange: (v) => {
+            this.set({
+              url: v
+            });
+          }
+        }),
+        name: "URL"
+      },
+      {
+        input: new PropsInputBoolean({
+          onChange: (v) => {
+            this.set({
+              repeat: v
+            });
+          }
+        }),
+        name: "Repeat"
+      },
+      {
+        input: new PropsInputSelect({
+          onChange: (v) => {
+            this.set({
+              backgroundSize: v
+            });
+          },
+          options: [["auto", "Auto"], ["contain", "Contain"], ["cover", "Cover"], ["stretch", "Stretch"], ["custom", "Custom"]],
+          initialValue: "auto"
+        }),
+        name: "Background-size"
+      },
+      {
+        key: "sizeInput",
+        input: new PropsInputVector({
+          onChange: (v) => {
+            this.set({
+              backgroundSizeCustom: v.c()
+            });
+          }
+        })
+      },
+      {
+        input: new PropsInputSelect({
+          onChange: (v) => {
+            this.set({
+              backgroundPosition: v
+            });
+          },
+          options: [["left", "Left"], ["top", "Top"], ["right", "Right"], ["bottom", "Bottom"], ["center", "Center"], ["custom", "Custom"]],
+          initialValue: "auto"
+        }),
+        name: "Background-position"
+      },
+      {
+        key: "positionInput",
+        input: new PropsInputVector({
+          onChange: (v) => {
+            this.set({
+              backgroundPositionCustom: v.c()
+            });
+          }
+        })
+      }
+    ]);
+    this.append(new Mover(this.component.panel, (v) => {
       this.set({
         position: v
       });
     }));
-    this.sizer = this.append(new Sizer({
+    this.append(new Sizer({
       graphic: this.component.panel,
       reference: this,
       onChange: (v) => {
@@ -2631,6 +2660,8 @@ var VisualImage = class extends Visual {
       this.visual.setStyle("background-repeat", void 0);
       this.visual.setStyle("background-position", void 0);
     }
+    this.sceneObject.updatePropertyVisibility("sizeInput", this.data.backgroundSize === "custom");
+    this.sceneObject.updatePropertyVisibility("positionInput", this.data.backgroundPosition === "custom");
     this.positionInput.silent(this.data.position);
     (_a = this.sizeInput) == null ? void 0 : _a.silent(this.data.size);
     (_b = this.url) == null ? void 0 : _b.silent(this.data.url);
@@ -2814,6 +2845,9 @@ var SceneObject = class {
       Object.values(this.components).forEach((c) => c.selected = value);
     }
   }
+  get defineProperties() {
+    return this.components.properties.addMultiple.bind(this.components.properties);
+  }
   get defineProperty() {
     return this.components.properties.add.bind(this.components.properties);
   }
@@ -2822,6 +2856,9 @@ var SceneObject = class {
   }
   get updateProperty() {
     return this.components.properties.update.bind(this.components.properties);
+  }
+  get updatePropertyVisibility() {
+    return this.components.properties.visible.bind(this.components.properties);
   }
   createComponents(type, visual) {
     this.components = {

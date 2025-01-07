@@ -24,5 +24,6 @@ export class PropsInput<R = string | Vector2 | number | boolean> extends DomElem
     public silent(v: R) {
         this._value = v;
     }
+
 }
 

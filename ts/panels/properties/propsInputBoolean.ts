@@ -14,6 +14,7 @@ export class PropsInputBoolean extends PropsInput<boolean> {
     _value: boolean = false;
     trueButton: DomElement<"div">;
     falseButton: DomElement<"div">;
+
     constructor({ onChange, initialValue, classList = '' }: PropsBooleanAttr) {
         super({
             onChange,

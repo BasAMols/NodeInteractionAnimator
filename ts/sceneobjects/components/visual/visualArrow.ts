@@ -29,19 +29,14 @@ export class VisualArrow extends Visual<'arrow'> {
     private positionInput: PropsInputVector;
     private position2Input: PropsInputVector;
     private position3Input: PropsInputVector;
-    private mover: Mover;
-    private mover2: Mover;
+    
+    private tailControlPoint: DomElement<"div">;
+    private headControlPoint: DomElement<"div">;
+    private midControlPoint: DomElement<"div">;
+    
     private head: DomElement<"div">;
-    private line: DomElement<"div">;
-    tailD: DomElement<"div">;
-    headD: DomElement<"div">;
-    styleInput: PropsInputSelect<string>;
-    colorInput: PropsInputSelect<string>;
-    midD: DomElement<"div">;
-    svg: DomSVGElement;
-    svgArrow: DomSVGElement<"path">;
-    mover3: DomElement<"div">;
-    typeInput: PropsInputSelect<string>;
+    private svg: DomSVGElement;
+    private svgArrow: DomSVGElement<"path">;
 
     public constructor(data: VisualTypeData['arrow'] = {}, sceneObject: SceneObject, component: SceneObjectComponentVisual) {
         super('arrow', sceneObject, component);
@@ -51,13 +46,14 @@ export class VisualArrow extends Visual<'arrow'> {
         this.svg = this.visual.appendSvg(new DomSVGElement('svg', {
             className: 'arrowSVG',
         })) as DomSVGElement;
+
         this.svgArrow = this.svg.child('path', {
             className: 'arrowPath',
         });
 
-        this.tailD = this.child('div');
-        this.headD = this.child('div');
-        this.midD = this.child('div');
+        this.tailControlPoint = this.child('div');
+        this.headControlPoint = this.child('div');
+        this.midControlPoint = this.child('div');
 
         this.positionInput = this.sceneObject.defineProperty($.unique, {
             input: new PropsInputVector({
@@ -83,7 +79,7 @@ export class VisualArrow extends Visual<'arrow'> {
             name: 'Head position'
         }) as PropsInputVector;
         
-        this.typeInput = this.sceneObject.defineProperty($.unique, {
+        this.sceneObject.defineProperty($.unique, {
             input: new PropsInputSelect<typeof this['data']['type']>({
                 onChange: (v) => {
                     this.set({
@@ -96,7 +92,7 @@ export class VisualArrow extends Visual<'arrow'> {
             name: 'Type',
         }) as PropsInputSelect;
 
-        this.position3Input = this.sceneObject.defineProperty($.unique, {
+        this.position3Input = this.sceneObject.defineProperty('controlPoint', {
             input: new PropsInputVector({
                 onChange: (v) => {
                     this.set({
@@ -108,7 +104,7 @@ export class VisualArrow extends Visual<'arrow'> {
             name: 'Control position'
         }) as PropsInputVector;
 
-        this.styleInput = this.sceneObject.defineProperty($.unique, {
+        this.sceneObject.defineProperty($.unique, {
             input: new PropsInputSelect<typeof this['data']['style']>({
                 onChange: (v) => {
                     this.set({
@@ -121,7 +117,7 @@ export class VisualArrow extends Visual<'arrow'> {
             name: 'Line style',
         }) as PropsInputSelect;
 
-        this.colorInput = this.sceneObject.defineProperty($.unique, {
+        this.sceneObject.defineProperty($.unique, {
             input: new PropsInputSelect<typeof this['data']['color']>({
                 onChange: (v) => {
                     this.set({
@@ -134,24 +130,25 @@ export class VisualArrow extends Visual<'arrow'> {
             name: 'Color',
         }) as PropsInputSelect;
 
-        this.mover = this.tailD.append(new Mover(this.component.panel, (v) => {
+        this.tailControlPoint.append(new Mover(this.component.panel, (v) => {
             this.set({
                 position: v
             });
         }, 'circle') as Mover);
 
-        this.mover2 = this.headD.append(new Mover(this.component.panel, (v) => {
+        this.headControlPoint.append(new Mover(this.component.panel, (v) => {
             this.set({
                 position2: v
             });
         }, 'circle') as Mover);
         this.set(data);
 
-        this.mover3 = this.midD.append(new Mover(this.component.panel, (v) => {
+        this.midControlPoint.append(new Mover(this.component.panel, (v) => {
             this.set({
                 position3: v
             });
         }, 'circle') as Mover);
+        
         this.set(data);
     }
     public set(data?: VisualTypeData['arrow']) {
@@ -180,10 +177,12 @@ export class VisualArrow extends Visual<'arrow'> {
             headAngle =  this.data.position2.subtract(this.data.position).angleDegrees()
         }
 
-        this.tailD.setPositionStyle(this.data.position.subtract(min));
-        this.headD.setPositionStyle(this.data.position2.subtract(min));
-        this.midD.setPositionStyle(this.data.position3.subtract(min));
-        this.midD.visible = this.data.type !== 'straight';
+        this.sceneObject.updatePropertyVisibility('controlPoint',this.data.type !== 'straight' )
+
+        this.tailControlPoint.setPositionStyle(this.data.position.subtract(min));
+        this.headControlPoint.setPositionStyle(this.data.position2.subtract(min));
+        this.midControlPoint.setPositionStyle(this.data.position3.subtract(min));
+        this.midControlPoint.visible = this.data.type !== 'straight';
 
         this.positionInput.silent(this.data.position);
         this.position2Input.silent(this.data.position2);

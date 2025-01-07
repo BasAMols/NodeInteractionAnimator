@@ -39,6 +39,35 @@ export class SceneObjectComponentProperties extends SceneObjectComponent<'proper
         return data.input
     }
 
+    addMultiple(list: {
+        key?: string
+        name?: string,
+        input: PropsInput,
+    }[]) {
+
+        list.forEach((data)=>{
+            data.key = data.key||$.unique
+            if (this.data[data.key]) return; 
+            const el = new DomElement('div', {className: 'prop'});
+            this.element.append(el);
+            if (data.name) el.child('label', {
+                text: data.name,
+                className: 'props_label'
+            })
+            el.append(data.input)
+            this.data[data.key] = {
+                ...data,
+                ...{
+                    element: el
+                }
+            };
+        })
+    }
+
+    visible(key: string,b:boolean) {
+        if(this.data[key]) this.data[key].element.visible = b;
+    }
+
     remove(key: string) {
         if (this.data[key]) {
             this.element.remove(this.data[key].element);

@@ -39,6 +39,9 @@ export class SceneObject {
         type: string,
     }> = {};
 
+    public get defineProperties(): SceneObjectComponentProperties['addMultiple'] {
+        return this.components.properties.addMultiple.bind(this.components.properties);
+    }
     public get defineProperty(): SceneObjectComponentProperties['add'] {
         return this.components.properties.add.bind(this.components.properties);
     }
@@ -47,6 +50,9 @@ export class SceneObject {
     }
     public get updateProperty(): SceneObjectComponentProperties['update'] {
         return this.components.properties.update.bind(this.components.properties);
+    }
+    public get updatePropertyVisibility(): SceneObjectComponentProperties['visible'] {
+        return this.components.properties.visible.bind(this.components.properties);
     }
 
     components: {

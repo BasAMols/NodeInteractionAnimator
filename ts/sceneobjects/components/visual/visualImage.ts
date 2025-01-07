@@ -31,124 +31,111 @@ export class VisualImage extends Visual<'image'> {
         backgroundPositionCustom: v2(),
     } as VisualTypeData['image'];
 
-    private positionInput: PropsInputVector;
-    private sizeInput: PropsInputVector;
 
     private url: PropsInputString;
-    private bgsizeInput: PropsInputSelect<string>;
-    private bgsizeInputCustom: PropsInputVector;
-    private positionCustom: PropsInputSelect<string>;
-    private positionInputCustom: PropsInputVector;
-    private repeat: PropsInputBoolean;
-    mover: Mover;
-    sizer: Sizer;
+    private sizeInput: PropsInputVector;
+    private positionInput: PropsInputVector;
 
     public constructor(data: VisualTypeData['image'] = {}, sceneObject: SceneObject, component: SceneObjectComponentVisual) {
         super('image', sceneObject, component);
 
-        this.positionInput = this.sceneObject.defineProperty($.unique, {
-            input: new PropsInputVector({
-                onChange: (v) => {
-                    this.set({
-                        position: v.c()
-                    });
-                }
-            }),
-            name: 'Position'
-        }) as PropsInputVector;
+        this.sceneObject.defineProperties([
+            {
+                input: this.positionInput = new PropsInputVector({
+                    onChange: (v) => {
+                        this.set({
+                            position: v.c()
+                        });
+                    }
+                }), name: 'Position'
+            },
+            {
+                input: this.sizeInput = new PropsInputVector({
+                    onChange: (v) => {
+                        this.set({
+                            size: v.c()
+                        });
+                    }
+                }), name: 'Size'
+            },
+            {
+                input: this.url = new PropsInputString({
+                    onChange: (v) => {
+                        this.set({
+                            url: v
+                        });
+                    }
+                }), name: 'URL'
+            },
+            {
+                input: new PropsInputBoolean({
+                    onChange: (v) => {
+                        this.set({
+                            repeat: v
+                        });
+                    }
+                }),
+                name: 'Repeat'
+            },
+            {
+                input: new PropsInputSelect<typeof this['data']['backgroundSize']>({
+                    onChange: (v) => {
+                        this.set({
+                            backgroundSize: v
+                        });
+                    },
+                    options: [['auto', 'Auto'], ['contain', 'Contain'], ['cover', 'Cover'], ['stretch', 'Stretch'], ['custom', 'Custom']],
+                    initialValue: 'auto'
+                }),
+                name: 'Background-size',
+            },
+            {
+                key: 'sizeInput',
+                input: new PropsInputVector({
+                    onChange: (v) => {
+                        this.set({
+                            backgroundSizeCustom: v.c()
+                        });
+                    }
+                }),
+            },
+            {
+                input: new PropsInputSelect<typeof this['data']['backgroundPosition']>({
+                    onChange: (v) => {
+                        this.set({
+                            backgroundPosition: v
+                        });
+                    },
+                    options: [['left', 'Left'], ['top', 'Top'], ['right', 'Right'], ['bottom', 'Bottom'], ['center', 'Center'], ['custom', 'Custom']],
+                    initialValue: 'auto'
+                }),
+                name: 'Background-position',
+            },
+            {
+                key: 'positionInput',
+                input: new PropsInputVector({
+                    onChange: (v) => {
+                        this.set({
+                            backgroundPositionCustom: v.c()
+                        });
+                    }
+                }),
+            }
+        ]);
 
-        this.sizeInput = this.sceneObject.defineProperty($.unique, {
-            input: new PropsInputVector({
-                onChange: (v) => {
-                    this.set({
-                        size: v.c()
-                    });
-                }
-            }),
-            name: 'Size'
-        }) as PropsInputVector;
-
-        this.repeat = this.sceneObject.defineProperty($.unique, {
-            input: new PropsInputBoolean({
-                onChange: (v) => {
-                    this.set({
-                        repeat: v
-                    });
-                }
-            }),
-            name: 'Repeat'
-        }) as PropsInputBoolean;
-        this.url = this.sceneObject.defineProperty($.unique, {
-            input: new PropsInputString({
-                onChange: (v) => {
-                    this.set({
-                        url: v
-                    });
-                }
-            }),
-            name: 'URL'
-        }) as PropsInputString;
-
-        this.bgsizeInput = this.sceneObject.defineProperty($.unique, {
-            input: new PropsInputSelect<typeof this['data']['backgroundSize']>({
-                onChange: (v) => {
-                    this.set({
-                        backgroundSize: v
-                    });
-                },
-                options: [['auto', 'Auto'], ['contain', 'Contain'], ['cover', 'Cover'], ['stretch', 'Stretch'], ['custom', 'Custom']],
-                initialValue: 'auto'
-            }),
-            name: 'Background-size',
-        }) as PropsInputSelect;
-
-        this.bgsizeInputCustom = this.sceneObject.defineProperty($.unique, {
-            input: new PropsInputVector({
-                onChange: (v) => {
-                    this.set({
-                        backgroundSizeCustom: v.c()
-                    });
-                }
-            }),
-        }) as PropsInputVector;
-
-        this.positionCustom = this.sceneObject.defineProperty($.unique, {
-            input: new PropsInputSelect<typeof this['data']['backgroundPosition']>({
-                onChange: (v) => {
-                    this.set({
-                        backgroundPosition: v
-                    });
-                },
-                options: [['left', 'Left'], ['top', 'Top'], ['right', 'Right'], ['bottom', 'Bottom'], ['center', 'Center'], ['custom', 'Custom']],
-                initialValue: 'auto'
-            }),
-            name: 'Background-position',
-        }) as PropsInputSelect;
-
-        this.positionInputCustom = this.sceneObject.defineProperty($.unique, {
-            input: new PropsInputVector({
-                onChange: (v) => {
-                    this.set({
-                        backgroundPositionCustom: v.c()
-                    });
-                }
-            }),
-        }) as PropsInputVector;
-
-
-        this.mover = this.append(new Mover(this.component.panel, (v) => {
+        this.append(new Mover(this.component.panel, (v) => {
             this.set({
                 position: v
             });
         }) as Mover);
 
-        this.sizer = this.append(new Sizer({
-                graphic: this.component.panel, reference: this, onChange: (v) => {
-                    this.set({
-                        size: v
-                    });
-                }
-            }) as Sizer);
+        this.append(new Sizer({
+            graphic: this.component.panel, reference: this, onChange: (v) => {
+                this.set({
+                    size: v
+                });
+            }
+        }) as Sizer);
 
         this.set(data);
     }
@@ -195,6 +182,8 @@ export class VisualImage extends Visual<'image'> {
             this.visual.setStyle('background-repeat', undefined);
             this.visual.setStyle('background-position', undefined);
         }
+        this.sceneObject.updatePropertyVisibility('sizeInput', this.data.backgroundSize === 'custom');
+        this.sceneObject.updatePropertyVisibility('positionInput', this.data.backgroundPosition === 'custom');
         this.positionInput.silent(this.data.position);
         this.sizeInput?.silent(this.data.size);
         this.url?.silent(this.data.url);
