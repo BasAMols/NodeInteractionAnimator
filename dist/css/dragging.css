@@ -72,18 +72,20 @@
     z-index: 9;
     left: -14px;
     top: -14px;
-    background: #7999ca85;
+    /* background: #ffffffb0; */
     width: 20px;
     height: 20px;
     border-radius: 2px;
     font-size: 10px;
     padding: 0px;
     line-height: 1em;
-
+    
     &>.icon {
         font-size: 20px;
         line-height: 20px;
-        color: black;
+        color: #eff2ff;
+        /* filter: drop-shadow(0px 0px 4px white); */
+        font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 30, "opsz" 10 !important;
     }
 
     
@@ -93,19 +95,27 @@
     z-index: 9;
     right: -14px;
     bottom: -14px;
-    background: #7999ca85;
+    /* background: #7999ca85; */
     width: 20px;
     height: 20px;
     border-radius: 2px;
     font-size: 10px;
     padding: 0px;
     line-height: 1em;
+    
 
     &>.icon {
         font-size: 20px;
         line-height: 20px;
-        color: black;
+        color: #eff2ff;
+        /* filter: drop-shadow(0px 0px 1px white); */
+        font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 30, "opsz" 10 !important;
     }
+}
 
+
+#graphic.light .mover>.icon,
+#graphic.light .sizer>.icon {
+    color: #6273c2;
 }
 

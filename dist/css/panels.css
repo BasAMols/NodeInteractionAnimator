@@ -137,11 +137,23 @@
         }
 
         &>.SceneObjectVisual {
-            filter: brightness(0.6);
+            filter: brightness(0.8);
             width: max-content;
             height: max-content;
             cursor: pointer;
             position: absolute;
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
 
             .ui {
                 display: none;
@@ -154,7 +166,7 @@
                 right: -5px;
                 top: -5px;
                 bottom: -5px;
-                border: 4px dashed var(--color-blue3);
+                border: 2px dashed #8c89ee;
                 transition: border 0.2s;
             }
 
@@ -194,7 +206,7 @@
         &>.SceneObjectVisual {
             filter: none;
             &.selected::after {
-                border: 4px dashed var(--color-blue2);
+                border: 2px dashed #bfbdf6;
             }
         }
     }
@@ -224,6 +236,11 @@
 
         .SceneObjectVisual>.visual.visual_image.empty {
             background: none !important;
+        }
+        .visual.visual_text {
+            font-family: Roboto, Arial, Sans-Serif;
+            font-size: 12px;
+            color: black;
         }
 
     }
