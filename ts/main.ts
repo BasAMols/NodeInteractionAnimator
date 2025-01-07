@@ -100,6 +100,21 @@ export class Main {
                             }
                         },
                     ]
+                },
+                {
+                    image: new Icon({ name: 'east' }),
+                    name: 'Arrow',
+                    key: 'arrow',
+                    content: [
+                        {
+                            name: 'Arrow',
+                            type: 'arrow',
+                            data: {
+                                position: v2(30, 30),
+                                position2: v2(450, 400),
+                            }
+                        },
+                    ]
                 }]],
                 ['Templates', [{
                     image: new Icon({ name: 'grid_view' }),

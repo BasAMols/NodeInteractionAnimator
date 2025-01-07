@@ -109,9 +109,10 @@
 }
 
 #graphic {
-    .empty > .visual.visual_callout .circleBig{
+    .empty>.visual.visual_callout .circleBig {
         background: repeating-linear-gradient(45deg, #00000040, #00000040 10px, transparent 10px, transparent 15px);
     }
+
     .visual.visual_image.empty {
         background: repeating-linear-gradient(45deg, #00000040, #00000040 10px, transparent 10px, transparent 15px);
     }
@@ -133,7 +134,10 @@
             border: 2px dashed black;
             /* box-shadow: 0px 0px 200px black; */
             pointer-events: none;
+        }
 
+        .ui {
+            display: none;
         }
 
         &>.SceneObjectVisual {
@@ -142,22 +146,6 @@
             height: max-content;
             cursor: pointer;
             position: absolute;
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-
-            .ui {
-                display: none;
-            }
 
             &.selected::after {
                 content: '';
@@ -174,41 +162,115 @@
                 display: block;
             }
 
-            .circleBig,
-            .circleSmall {
-                border-radius: 100%;
-                border: 3px dashed black;
-                background-size: contain;
-                position: absolute;
-            }
-            .circleBig{
-                background-color: white;
-            }
-            .line {
-                position: absolute;
-                height: 0;
-                border-bottom: 3px dashed black;
-                transform-origin: top left;
-                pointer-events: none;
-            }
-        
-            .visual.visual_text{
-                position: relative;
-                display: block;
+            /* Visual componentens */
+
+            .visual.visual_callout {
+
+                .circleBig,
+                .circleSmall {
+                    border-radius: 100%;
+                    border: 3px dashed black;
+                    background-size: contain;
+                    position: absolute;
+                }
+
+                .circleBig {
+                    background-color: white;
+                }
+
+                .line {
+                    position: absolute;
+                    height: 0;
+                    border-bottom: 3px dashed black;
+                    transform-origin: top left;
+                    pointer-events: none;
+                }
             }
 
+            .visual.visual_text {
+                position: relative;
+                display: block;
+                color: white;
+                font-family: Roboto, Arial, Sans-Serif;
+                font-size: 12px;
+            }
+
+            .visual.visual_arrow {
+                svg {
+                    overflow: visible;
+                    stroke-width: 4px;
+                    stroke: black;
+                    fill: transparent;
+
+                    &.red {
+                        stroke: #dd3636;
+                    }
+    
+                    &.blue {
+                        stroke: #363edd;
+                    }
+    
+                    &.dashed {
+                        stroke-dasharray: 7 3;
+                    }
+    
+                    &.solid {
+                        stroke-dasharray: unset;
+                    }
+                }
+
+                .head {
+                    height: 20px;
+                    width: 20px;
+                    border-right: 4px solid black;
+                    border-bottom: 4px solid black;
+                    transform-origin: bottom right;
+                    margin-top: -20px;
+                    margin-left: -20px;
+                }
+
+                /* &>.line {
+                    transform-origin: top left;
+                    border-bottom: 4px solid black;
+                    margin-top: -2px;
+
+                    &>.head {
+                        margin-top: -2px;
+                        border-right: 4px solid black;
+                        border-bottom: 4px solid black;
+                        width: 20px;
+                        height: 20px;
+                        right: 0px;
+                        rotate: -45deg;
+                        bottom: -12px;
+                        border-radius: 0px;
+                    }
+                } */
+
+
+
+               
+
+            }
         }
     }
 
     &.light ._graphic {
         background: white;
-        
+
         &>.SceneObjectVisual {
             filter: none;
+
             &.selected::after {
                 border: 2px dashed #bfbdf6;
             }
+
+            .visual.visual_text {
+                color: black;
+            }
         }
+
+
     }
 
 
@@ -237,6 +299,7 @@
         .SceneObjectVisual>.visual.visual_image.empty {
             background: none !important;
         }
+
         .visual.visual_text {
             font-family: Roboto, Arial, Sans-Serif;
             font-size: 12px;

@@ -1,17 +1,15 @@
 import { Vector2 } from '../utilities/vector2';
-import { DomSVGElement } from './domSVG';
 
-export interface DomElementProperties {
+export interface DomSvgProperties {
     style?: Record<string, string | [string, boolean]>;
-    text?: string;
     className?: string;
     id?: string;
     attr?: Record<string, string>;
     onClick?: (e: MouseEvent) => void;
     visible?: boolean,
 }
-export class DomElement<T extends keyof HTMLElementTagNameMap = keyof HTMLElementTagNameMap> {
-    public domElement: HTMLElementTagNameMap[T];
+export class DomSVGElement<T extends keyof SVGElementTagNameMap = keyof SVGElementTagNameMap> {
+    public domElement: SVGElementTagNameMap[T];
     public class(b: boolean = undefined, ...d: string[]): void {
         this.domElement.classList[b ? 'add' : 'remove'](...d);
     };
@@ -29,20 +27,20 @@ export class DomElement<T extends keyof HTMLElementTagNameMap = keyof HTMLElemen
             this.domElement.addEventListener('mousedown', this._onClick.bind(this));
         }
     }
-    protected props: DomElementProperties;
+    protected props: DomSvgProperties;
 
     public set visible(b: boolean) {
         this.setStyle('display', b ? undefined : 'none', true);
     }
 
-    public constructor(protected type: T, properties: DomElementProperties = {}) {
+    public constructor(protected type: T, properties: DomSvgProperties = {}) {
         this.props = {
             ...{
                 style: {},
                 attr: {},
             }, ...properties
         };
-        this.domElement = document.createElement(type);
+        this.domElement = document.createElementNS("http://www.w3.org/2000/svg", type);
         this.domElement.setAttribute('draggable', 'false');
 
         if (this.props.onClick) this.onClick = this.props.onClick.bind(this);
@@ -56,7 +54,7 @@ export class DomElement<T extends keyof HTMLElementTagNameMap = keyof HTMLElemen
         if (this.props.attr) Object.entries(this.props?.attr).forEach(([k, v]) => {
             this.domElement.setAttribute(k, v);
         });
-        if (this.props.text) this.setText(this.props.text);
+        
         if (this.props.className) this.domElement.classList.add(...this.props.className.split(' ').map((e) => e.trim()).filter(str => /\w+/.test(str)));
         if (this.props.id) this.domElement.id = this.props.id;
         if (this.props.visible !== undefined) this.visible = this.props.visible;
@@ -71,47 +69,38 @@ export class DomElement<T extends keyof HTMLElementTagNameMap = keyof HTMLElemen
             delete this.props.style[k];
         }
     }
-    public setPositionStyle(v: Vector2) {
-        this.setStyle('left', v ? `${v.x}px` : undefined);
-        this.setStyle('top', v ? `${v.y}px` : undefined);
+    public setPositionStyle(v:Vector2, unit: 'px'|'%' = 'px') {
+        this.setStyle('left', v?`${v.x}${unit}`:undefined);
+        this.setStyle('top', v?`${v.y}${unit}`:undefined);
     }
-    public setSizeStyle(v: Vector2) {
-        this.setStyle('width', v ? `${v.x}px` : undefined);
-        this.setStyle('height', v ? `${v.y}px` : undefined);
+    public setSizeStyle(v:Vector2, unit: 'px'|'%' = 'px') {
+        this.setStyle('width', v?`${v.x}${unit}`:undefined);
+        this.setStyle('height', v?`${v.y}${unit}`:undefined);
     }
     public setAttribute(k: string, v: string) {
         this.domElement.setAttribute(k, v);
         this.props.attr[k] = v;
     }
-    public setText(t: string) {
-        this.domElement.innerText = t;
-    }
-
-    public append<T2 extends keyof HTMLElementTagNameMap>(d: DomElement<T2>): typeof d {
-        this.domElement.appendChild(d.domElement);
-        return d;
-    }
-    public appendSvg<T2 extends keyof SVGElementTagNameMap>(d: DomSVGElement<T2>): typeof d {
+    public append<T2 extends keyof SVGElementTagNameMap>(d: DomSVGElement<T2>): typeof d {
         this.domElement.appendChild(d.domElement);
         return d;
     }
 
-
-    public child<T3 extends keyof HTMLElementTagNameMap>(type: T3, properties: DomElementProperties = {}): DomElement<T3> {
-        return this.append(new DomElement(type, properties)) as DomElement<T3>;
+    public child<T3 extends keyof SVGElementTagNameMap>(type: T3, properties: DomSvgProperties = {}): DomSVGElement<T3> {
+        return this.append(new DomSVGElement(type, properties)) as DomSVGElement<T3>;
     }
 
     private click(e: MouseEvent) {
         this.onClick?.(e);
     }
 
-    public remove(d: DomElement<any>) {
+    public remove(d: DomSVGElement<any>) {
         try {
             this.domElement.removeChild(d.domElement);
         } catch (error) { }
     }
 
     public clone() {
-        return new DomElement(this.type, { ...this.props });
+        return new DomSVGElement(this.type, { ...this.props });
     }
 }

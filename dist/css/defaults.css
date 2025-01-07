@@ -1,6 +1,11 @@
 /* Reset CSS */
-body * {
+
+button,
+input {
     all: unset;
+}
+
+body * {
     display: block;
     box-sizing: border-box;
     position: relative;

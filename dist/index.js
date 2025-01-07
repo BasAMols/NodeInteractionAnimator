@@ -43,7 +43,7 @@ var DomElement = class _DomElement {
     if (this.props.text)
       this.setText(this.props.text);
     if (this.props.className)
-      this.domElement.className = this.props.className;
+      this.domElement.classList.add(...this.props.className.split(" ").map((e) => e.trim()).filter((str) => /\w+/.test(str)));
     if (this.props.id)
       this.domElement.id = this.props.id;
     if (this.props.visible !== void 0)
@@ -77,6 +77,14 @@ var DomElement = class _DomElement {
       delete this.props.style[k];
     }
   }
+  setPositionStyle(v) {
+    this.setStyle("left", v ? "".concat(v.x, "px") : void 0);
+    this.setStyle("top", v ? "".concat(v.y, "px") : void 0);
+  }
+  setSizeStyle(v) {
+    this.setStyle("width", v ? "".concat(v.x, "px") : void 0);
+    this.setStyle("height", v ? "".concat(v.y, "px") : void 0);
+  }
   setAttribute(k, v) {
     this.domElement.setAttribute(k, v);
     this.props.attr[k] = v;
@@ -85,6 +93,10 @@ var DomElement = class _DomElement {
     this.domElement.innerText = t;
   }
   append(d) {
+    this.domElement.appendChild(d.domElement);
+    return d;
+  }
+  appendSvg(d) {
     this.domElement.appendChild(d.domElement);
     return d;
   }
@@ -1867,29 +1879,142 @@ var SceneObjectComponentProperties = class extends SceneObjectComponent {
   }
 };
 
-// ts/panels/properties/propsInputNumber.ts
-var PropsInputNumber = class extends PropsInput {
-  constructor({ onChange, initialValue, classList = "" }) {
+// ts/lib/dom/domSVG.ts
+var DomSVGElement = class _DomSVGElement {
+  constructor(type, properties = {}) {
+    this.type = type;
+    var _a, _b;
+    this.props = __spreadValues(__spreadValues({}, {
+      style: {},
+      attr: {}
+    }), properties);
+    this.domElement = document.createElementNS("http://www.w3.org/2000/svg", type);
+    this.domElement.setAttribute("draggable", "false");
+    if (this.props.onClick)
+      this.onClick = this.props.onClick.bind(this);
+    if (this.props.style)
+      Object.entries((_a = this.props) == null ? void 0 : _a.style).forEach(([k, v]) => {
+        this.setStyle(
+          k,
+          typeof v === "string" ? v : v[0],
+          typeof v === "string" ? false : v[1]
+        );
+      });
+    if (this.props.attr)
+      Object.entries((_b = this.props) == null ? void 0 : _b.attr).forEach(([k, v]) => {
+        this.domElement.setAttribute(k, v);
+      });
+    if (this.props.className)
+      this.domElement.classList.add(...this.props.className.split(" ").map((e) => e.trim()).filter((str) => /\w+/.test(str)));
+    if (this.props.id)
+      this.domElement.id = this.props.id;
+    if (this.props.visible !== void 0)
+      this.visible = this.props.visible;
+  }
+  class(b = void 0, ...d) {
+    this.domElement.classList[b ? "add" : "remove"](...d);
+  }
+  get onClick() {
+    return this._onClick;
+  }
+  set onClick(func) {
+    if (this._onClick) {
+      this.domElement.removeEventListener("mousedown", this._onClick.bind(this));
+      this._onClick = void 0;
+    }
+    if (func) {
+      this._onClick = func;
+      this.domElement.addEventListener("mousedown", this._onClick.bind(this));
+    }
+  }
+  set visible(b) {
+    this.setStyle("display", b ? void 0 : "none", true);
+  }
+  setStyle(k, v, i = false) {
+    if (v) {
+      this.domElement.style.setProperty(k, v, i ? "important" : "");
+      this.props.style[k] = [v, i];
+    } else {
+      this.domElement.style.removeProperty(k);
+      delete this.props.style[k];
+    }
+  }
+  setPositionStyle(v, unit = "px") {
+    this.setStyle("left", v ? "".concat(v.x).concat(unit) : void 0);
+    this.setStyle("top", v ? "".concat(v.y).concat(unit) : void 0);
+  }
+  setSizeStyle(v, unit = "px") {
+    this.setStyle("width", v ? "".concat(v.x).concat(unit) : void 0);
+    this.setStyle("height", v ? "".concat(v.y).concat(unit) : void 0);
+  }
+  setAttribute(k, v) {
+    this.domElement.setAttribute(k, v);
+    this.props.attr[k] = v;
+  }
+  append(d) {
+    this.domElement.appendChild(d.domElement);
+    return d;
+  }
+  child(type, properties = {}) {
+    return this.append(new _DomSVGElement(type, properties));
+  }
+  click(e) {
+    var _a;
+    (_a = this.onClick) == null ? void 0 : _a.call(this, e);
+  }
+  remove(d) {
+    try {
+      this.domElement.removeChild(d.domElement);
+    } catch (error) {
+    }
+  }
+  clone() {
+    return new _DomSVGElement(this.type, __spreadValues({}, this.props));
+  }
+};
+
+// ts/lib/dom/domSelect.ts
+var DomSelect = class extends DomInput {
+  get value() {
+    return super.value;
+    ;
+  }
+  set value(value) {
+    super.value = value;
+  }
+  constructor(properties = {}) {
+    super("select", properties);
+    if (properties.options)
+      properties.options.forEach(([value, text]) => {
+        this.child("option", {
+          text,
+          attr: {
+            "value": value
+          }
+        });
+      });
+  }
+};
+
+// ts/panels/properties/propsInputSelect.ts
+var PropsInputSelect = class extends PropsInput {
+  constructor({ onChange, options, initialValue, classList = "" }) {
     super({
       onChange,
-      classList: classList + " number"
+      classList: classList + " vector"
     });
-    this.input = this.append(new DomInput("input", {
+    this.input = this.append(new DomSelect({
       attr: {
         "type": "number"
       },
-      onKeyUp: () => {
-        this.value = Number(this.input.domElement.value);
-      },
-      onChange: () => {
-        this.value = Number(this.input.domElement.value);
-      },
-      value: initialValue ? String(initialValue) : "0"
+      onKeyUp: () => this.value = this.input.domElement.value,
+      onChange: () => this.value = this.input.domElement.value,
+      options
     }));
+    this.silent(initialValue || "");
   }
   silent(v) {
-    super.silent(v);
-    this.input.value = String(v);
+    this.input.value = v;
   }
 };
 
@@ -1968,6 +2093,194 @@ var Mover = class extends DomElement {
   }
 };
 
+// ts/sceneobjects/components/visual/visualBase.ts
+var Visual = class extends DomElement {
+  constructor(type, sceneObject, component) {
+    super("div", {
+      className: "SceneObjectVisual editorUi",
+      onClick: () => {
+        this.sceneObject.focus();
+      }
+    });
+    this.visual = this.child("div", {
+      className: "visual visual_".concat(type)
+    });
+    this.component = component;
+    this.sceneObject = sceneObject;
+  }
+  set(data) {
+    Object.assign(this.data, data);
+  }
+};
+
+// ts/sceneobjects/components/visual/visualArrow.ts
+var VisualArrow = class extends Visual {
+  constructor(data = {}, sceneObject, component) {
+    super("arrow", sceneObject, component);
+    this.data = {
+      type: "straight",
+      position: v2(),
+      position2: v2(),
+      position3: v2(),
+      color: "black",
+      style: "solid"
+    };
+    this.head = this.visual.child("div", { className: "head" });
+    this.svg = this.visual.appendSvg(new DomSVGElement("svg", {
+      className: "arrowSVG"
+    }));
+    this.svgArrow = this.svg.child("path", {
+      className: "arrowPath"
+    });
+    this.tailD = this.child("div");
+    this.headD = this.child("div");
+    this.midD = this.child("div");
+    this.positionInput = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputVector({
+        onChange: (v) => {
+          this.set({
+            position: v.c()
+          });
+        },
+        initialValue: data.position
+      }),
+      name: "Tail position"
+    });
+    this.position2Input = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputVector({
+        onChange: (v) => {
+          this.set({
+            position2: v.c()
+          });
+        },
+        initialValue: data.position2
+      }),
+      name: "Head position"
+    });
+    this.typeInput = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputSelect({
+        onChange: (v) => {
+          this.set({
+            type: v
+          });
+        },
+        options: [["straight", "Straight"], ["curved", "Curved"], ["corner", "Corner"]],
+        initialValue: "straight"
+      }),
+      name: "Type"
+    });
+    this.position3Input = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputVector({
+        onChange: (v) => {
+          this.set({
+            position3: v.c()
+          });
+        },
+        initialValue: data.position3
+      }),
+      name: "Control position"
+    });
+    this.styleInput = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputSelect({
+        onChange: (v) => {
+          this.set({
+            style: v
+          });
+        },
+        options: [["solid", "Solid"], ["dashed", "Dashed"]],
+        initialValue: "solid"
+      }),
+      name: "Line style"
+    });
+    this.colorInput = this.sceneObject.defineProperty($.unique, {
+      input: new PropsInputSelect({
+        onChange: (v) => {
+          this.set({
+            color: v
+          });
+        },
+        options: [["black", "Black"], ["blue", "Blue"], ["red", "Red"]],
+        initialValue: "black"
+      }),
+      name: "Color"
+    });
+    this.mover = this.tailD.append(new Mover(this.component.panel, (v) => {
+      this.set({
+        position: v
+      });
+    }, "circle"));
+    this.mover2 = this.headD.append(new Mover(this.component.panel, (v) => {
+      this.set({
+        position2: v
+      });
+    }, "circle"));
+    this.set(data);
+    this.mover3 = this.midD.append(new Mover(this.component.panel, (v) => {
+      this.set({
+        position3: v
+      });
+    }, "circle"));
+    this.set(data);
+  }
+  set(data) {
+    super.set(data);
+    const min = this.data.position.min(this.data.position2);
+    const max = this.data.position.max(this.data.position2);
+    const size = max.subtract(min);
+    this.setPositionStyle(min);
+    this.setSizeStyle(size);
+    this.svg.setSizeStyle(size);
+    this.svg.class(false, "dashed", "solid", "red", "black", "blue");
+    this.svg.class(true, this.data.color, this.data.style);
+    let headAngle;
+    if (this.data.type === "curved") {
+      this.svgArrow.setAttribute("d", "M".concat(this.data.position.subtract(min).join(" "), " Q ").concat(this.data.position3.subtract(min).join(" "), ", ").concat(this.data.position2.subtract(min).join(" ")));
+      headAngle = this.data.position2.subtract(this.data.position3).angleDegrees();
+    } else if (this.data.type === "corner") {
+      this.svgArrow.setAttribute("d", "M".concat(this.data.position.subtract(min).join(" "), " L ").concat(this.data.position3.subtract(min).join(" "), " L").concat(this.data.position2.subtract(min).join(" ")));
+      headAngle = this.data.position2.subtract(this.data.position3).angleDegrees();
+    } else {
+      this.svgArrow.setAttribute("d", "M".concat(this.data.position.subtract(min).join(" "), " L").concat(this.data.position2.subtract(min).join(" ")));
+      headAngle = this.data.position2.subtract(this.data.position).angleDegrees();
+    }
+    this.tailD.setPositionStyle(this.data.position.subtract(min));
+    this.headD.setPositionStyle(this.data.position2.subtract(min));
+    this.midD.setPositionStyle(this.data.position3.subtract(min));
+    this.midD.visible = this.data.type !== "straight";
+    this.positionInput.silent(this.data.position);
+    this.position2Input.silent(this.data.position2);
+    this.position3Input.silent(this.data.position3);
+    this.head.setPositionStyle(this.data.position2.subtract(min));
+    this.head.setStyle("transform", "rotate(".concat(headAngle - 45, "deg)"));
+  }
+};
+
+// ts/panels/properties/propsInputNumber.ts
+var PropsInputNumber = class extends PropsInput {
+  constructor({ onChange, initialValue, classList = "" }) {
+    super({
+      onChange,
+      classList: classList + " number"
+    });
+    this.input = this.append(new DomInput("input", {
+      attr: {
+        "type": "number"
+      },
+      onKeyUp: () => {
+        this.value = Number(this.input.domElement.value);
+      },
+      onChange: () => {
+        this.value = Number(this.input.domElement.value);
+      },
+      value: initialValue ? String(initialValue) : "0"
+    }));
+  }
+  silent(v) {
+    super.silent(v);
+    this.input.value = String(v);
+  }
+};
+
 // ts/sceneobjects/components/visual/sizer.ts
 var Sizer = class extends DomElement {
   constructor({ graphic, reference, onChange, direction = "d", shape = "square" }) {
@@ -1992,26 +2305,6 @@ var Sizer = class extends DomElement {
       }
     });
     this.append(new Icon({ name: { y: "fit_page_height", x: "fit_page_width", d: "aspect_ratio" }[direction] }));
-  }
-};
-
-// ts/sceneobjects/components/visual/visualBase.ts
-var Visual = class extends DomElement {
-  constructor(type, sceneObject, component) {
-    super("div", {
-      className: "SceneObjectVisual editorUi",
-      onClick: () => {
-        this.sceneObject.focus();
-      }
-    });
-    this.visual = this.child("div", {
-      className: "visual visual_".concat(type)
-    });
-    this.component = component;
-    this.sceneObject = sceneObject;
-  }
-  set(data) {
-    Object.assign(this.data, data);
   }
 };
 
@@ -2184,51 +2477,6 @@ var PropsInputBoolean = class extends PropsInput {
     super.silent(v);
     this.falseButton.visible = v;
     this.trueButton.visible = !v;
-  }
-};
-
-// ts/lib/dom/domSelect.ts
-var DomSelect = class extends DomInput {
-  get value() {
-    return super.value;
-    ;
-  }
-  set value(value) {
-    super.value = value;
-  }
-  constructor(properties = {}) {
-    super("select", properties);
-    if (properties.options)
-      properties.options.forEach(([value, text]) => {
-        this.child("option", {
-          text,
-          attr: {
-            "value": value
-          }
-        });
-      });
-  }
-};
-
-// ts/panels/properties/propsInputSelect.ts
-var PropsInputSelect = class extends PropsInput {
-  constructor({ onChange, options, initialValue, classList = "" }) {
-    super({
-      onChange,
-      classList: classList + " vector"
-    });
-    this.input = this.append(new DomSelect({
-      attr: {
-        "type": "number"
-      },
-      onKeyUp: () => this.value = this.input.domElement.value,
-      onChange: () => this.value = this.input.domElement.value,
-      options
-    }));
-    this.silent(initialValue || "");
-  }
-  silent(v) {
-    this.input.value = v;
   }
 };
 
@@ -2501,7 +2749,8 @@ var VisualText = class extends Visual {
 var VisualTypeDictionary = {
   image: VisualImage,
   text: VisualText,
-  callout: VisualCallout
+  callout: VisualCallout,
+  arrow: VisualArrow
 };
 var SceneObjectComponentVisual = class extends SceneObjectComponent {
   updateState() {
@@ -2823,6 +3072,21 @@ var Main = class {
                   position2: v2(450, 400),
                   size: 300,
                   size2: 30
+                }
+              }
+            ]
+          },
+          {
+            image: new Icon({ name: "east" }),
+            name: "Arrow",
+            key: "arrow",
+            content: [
+              {
+                name: "Arrow",
+                type: "arrow",
+                data: {
+                  position: v2(30, 30),
+                  position2: v2(450, 400)
                 }
               }
             ]

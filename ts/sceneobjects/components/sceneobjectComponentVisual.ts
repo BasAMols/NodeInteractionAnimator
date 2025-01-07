@@ -1,6 +1,7 @@
 import { DomElement } from '../../lib/dom/domElement';
 import { GraphicPanel } from '../../panels/graphic/graphicPanel';
 import { SceneObjectComponent } from './sceneobjectComponent';
+import { VisualArrow, VisualTypeDataArrow } from './visual/visualArrow';
 import { VisualCallout, VisualTypeDataCallout } from './visual/visualCallout';
 import { VisualImage, VisualTypeDataImage } from './visual/visualImage';
 import { VisualText, VisualTypeDataText } from './visual/visualText';
@@ -9,6 +10,7 @@ export type VisualTypeData = {
     'text': VisualTypeDataText,
     'image': VisualTypeDataImage;
     'callout': VisualTypeDataCallout;
+    'arrow': VisualTypeDataArrow;
 };
 
 export type VisualTypeKeys = keyof VisualTypeData;
@@ -17,7 +19,8 @@ export type VisualType = VisualTypeData[VisualTypeKeys];
 export const VisualTypeDictionary = {
     image: VisualImage,
     text: VisualText,
-    callout: VisualCallout
+    callout: VisualCallout,
+    arrow: VisualArrow,
 };
 
 export class SceneObjectComponentVisual<T extends VisualTypeKeys = VisualTypeKeys> extends SceneObjectComponent<'visual'> {
