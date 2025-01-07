@@ -111,7 +111,7 @@ var Icon = class extends DomElement {
   constructor(properties) {
     super("span", {
       text: properties.name,
-      className: "icon material-symbols-outlined ".concat(properties.classList || "")
+      className: "icon editorUi material-symbols-outlined ".concat(properties.classList || "")
     });
     this.fontVariation = {
       FILL: 0,
@@ -1001,7 +1001,6 @@ var Camera = class extends DomElement {
     this.draggerKey = $.mouse.registerDrag($.unique, {
       element: this,
       cursor: "grab",
-      initialTolerance: 100,
       move: (e) => {
         this.move(e.delta);
       }
@@ -1764,11 +1763,10 @@ var SceneObjectComponentOutline = class extends SceneObjectComponent {
     this.element = new DomElement("div", { className: "sceneline" });
     const head = this.element.child("div", { className: "sceneline_head" });
     head.append(new Button({
-      className: "sceneline_head_collapse",
-      icon: Icon.make("keyboard_arrow_down"),
+      className: "sceneline_head_drag",
+      icon: Icon.make("drag_indicator"),
       design: "icon",
       onClick: () => {
-        this.toggle = !this.toggle;
       }
     }));
     this.nameElement = head.child("div", { className: "sceneline_head_content", text: this.sceneObject.name || this.sceneObject.key });
@@ -1945,9 +1943,9 @@ var PropsInputVector = class extends PropsInput {
 
 // ts/sceneobjects/components/visual/mover.ts
 var Mover = class extends DomElement {
-  constructor(graphic, onChange) {
+  constructor(graphic, onChange, shape = "square") {
     super("div", {
-      className: "mover ui"
+      className: "mover editorUi ui ".concat(shape)
     });
     $.mouse.registerDrag($.unique, {
       element: this,
@@ -1972,9 +1970,9 @@ var Mover = class extends DomElement {
 
 // ts/sceneobjects/components/visual/sizer.ts
 var Sizer = class extends DomElement {
-  constructor({ graphic, reference, onChange, direction = "d" }) {
+  constructor({ graphic, reference, onChange, direction = "d", shape = "square" }) {
     super("div", {
-      className: "sizer ui"
+      className: "sizer editorUi ui ".concat(shape)
     });
     $.mouse.registerDrag($.unique, {
       element: this,
@@ -2001,7 +1999,7 @@ var Sizer = class extends DomElement {
 var Visual = class extends DomElement {
   constructor(type, sceneObject, component) {
     super("div", {
-      className: "SceneObjectVisual",
+      className: "SceneObjectVisual editorUi",
       onClick: () => {
         this.sceneObject.focus();
       }
@@ -2090,7 +2088,7 @@ var VisualCallout = class extends Visual {
       this.set({
         position: v
       });
-    }));
+    }, "circle"));
     this.sizer = this.circle.append(new Sizer({
       graphic: this.component.panel,
       reference: this.circle,
@@ -2098,13 +2096,14 @@ var VisualCallout = class extends Visual {
         this.set({
           size: v.x
         });
-      }
+      },
+      shape: "circle"
     }));
     this.mover2 = this.circle2.append(new Mover(this.component.panel, (v) => {
       this.set({
         position2: v
       });
-    }));
+    }, "circle"));
     this.sizer2 = this.circle2.append(new Sizer({
       graphic: this.component.panel,
       reference: this.circle2,
@@ -2112,7 +2111,8 @@ var VisualCallout = class extends Visual {
         this.set({
           size2: v.x
         });
-      }
+      },
+      shape: "circle"
     }));
     this.set(data);
   }
@@ -2349,6 +2349,8 @@ var VisualImage = class extends Visual {
     super.set(data);
     this.setStyle("left", "".concat(this.data.position[0], "px"));
     this.setStyle("top", "".concat(this.data.position[1], "px"));
+    this.setStyle("width", "".concat(this.data.size.x, "px"));
+    this.setStyle("height", "".concat(this.data.size.y, "px"));
     this.visual.setStyle("width", "".concat(this.data.size.x, "px"));
     this.visual.setStyle("height", "".concat(this.data.size.y, "px"));
     this.visual.setStyle("background-repeat", this.data.repeat ? "repeat" : "no-repeat");
@@ -2809,7 +2811,7 @@ var Main = class {
             ]
           },
           {
-            image: new Icon({ name: "fullscreen" }),
+            image: new Icon({ name: "hdr_strong" }),
             name: "Callout",
             key: "callout",
             content: [

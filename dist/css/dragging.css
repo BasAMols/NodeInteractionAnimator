@@ -67,7 +67,7 @@
     }
 }
 
-.mover {
+#graphic .mover {
     position: absolute;
     z-index: 9;
     left: -14px;
@@ -79,16 +79,16 @@
     font-size: 10px;
     padding: 0px;
     line-height: 1em;
-    
-    
 
     &>.icon {
         font-size: 20px;
         line-height: 20px;
         color: black;
     }
+
+    
 }
-.sizer {
+#graphic .sizer {
     position: absolute;
     z-index: 9;
     right: -14px;
@@ -106,5 +106,6 @@
         line-height: 20px;
         color: black;
     }
+
 }
 

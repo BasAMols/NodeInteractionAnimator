@@ -4,9 +4,9 @@ import { v2, Vector2 } from '../../../lib/utilities/vector2';
 import { GraphicPanel } from '../../../panels/graphic/graphicPanel';
 
 export class Mover extends DomElement<'div'> {
-    public constructor(graphic: GraphicPanel, onChange: (v: Vector2) => void) {
+    public constructor(graphic: GraphicPanel, onChange: (v: Vector2) => void, shape: 'square'|'circle' = 'square') {
         super('div', {
-            className: 'mover ui'
+            className: `mover editorUi ui ${shape}`
         });
 
         $.mouse.registerDrag($.unique, {

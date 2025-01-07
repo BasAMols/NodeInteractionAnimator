@@ -43,7 +43,6 @@ export class Camera extends DomElement<'div'> {
         this.draggerKey = $.mouse.registerDrag($.unique, {
             element: this,
             cursor: 'grab',
-            initialTolerance: 100,
             move: (e) => {
                 this.move(e.delta);
             },

@@ -85,7 +85,7 @@ export class Main {
                     ]
                 },
                 {
-                    image: new Icon({ name: 'fullscreen' }),
+                    image: new Icon({ name: 'hdr_strong' }),
                     name: 'Callout',
                     key: 'callout',
                     content: [

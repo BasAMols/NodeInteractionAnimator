@@ -111,28 +111,30 @@ export class VisualCallout extends Visual<'callout'> {
             this.set({
                 position: v
             });
-        }) as Mover);
+        }, 'circle') as Mover);
 
         this.sizer = this.circle.append(new Sizer({
             graphic: this.component.panel, reference: this.circle, onChange: (v) => {
                 this.set({
                     size: v.x
                 });
-            }
+            },
+            shape: 'circle'
         }) as Sizer);
 
         this.mover2 = this.circle2.append(new Mover(this.component.panel, (v) => {
             this.set({
                 position2: v
             });
-        }) as Mover);
+        }, 'circle') as Mover);
 
         this.sizer2 = this.circle2.append(new Sizer({
             graphic: this.component.panel, reference: this.circle2, onChange: (v) => {
                 this.set({
                     size2: v.x
                 });
-            }
+            },
+            shape: 'circle'
         }) as Sizer);
 
         this.set(data);

@@ -158,6 +158,9 @@ export class VisualImage extends Visual<'image'> {
         this.setStyle('left', `${this.data.position[0]}px`);
         this.setStyle('top', `${this.data.position[1]}px`);
 
+        this.setStyle('width', `${this.data.size.x}px`);
+        this.setStyle('height', `${this.data.size.y}px`);
+
         this.visual.setStyle('width', `${this.data.size.x}px`);
         this.visual.setStyle('height', `${this.data.size.y}px`);
         this.visual.setStyle('background-repeat', this.data.repeat ? 'repeat' : 'no-repeat');

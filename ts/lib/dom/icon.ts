@@ -21,7 +21,7 @@ export class Icon extends DomElement<'span'> {
     public constructor(properties: IconProperties) {
         super('span', {
             text: properties.name,
-            className: `icon material-symbols-outlined ${properties.classList || ''}`,
+            className: `icon editorUi material-symbols-outlined ${properties.classList || ''}`,
  
         });
         if (properties.weight) this.fontVariation.wght = properties.weight

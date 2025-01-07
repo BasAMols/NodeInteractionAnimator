@@ -4,9 +4,9 @@ import { Vector2 } from '../../../lib/utilities/vector2';
 import { GraphicPanel } from '../../../panels/graphic/graphicPanel';
 
 export class Sizer extends DomElement<'div'> {
-    public constructor({ graphic, reference, onChange, direction = 'd' }: { graphic: GraphicPanel; reference: DomElement; onChange: (v: Vector2) => void; direction?: 'x' | 'y' | 'd'; }) {
+    public constructor({ graphic, reference, onChange, direction = 'd', shape = 'square' }: { graphic: GraphicPanel; reference: DomElement; onChange: (v: Vector2) => void; direction?: 'x' | 'y' | 'd'; shape?: 'square' | 'circle'; }) {
         super('div', {
-            className: 'sizer ui'
+            className: `sizer editorUi ui ${shape}`
         });
 
         $.mouse.registerDrag($.unique, {

@@ -120,8 +120,8 @@
         background: #4f5157;
         width: 505px;
         height: 545px;
-        transition: background 0.2s, filter 0.2s;
-        filter: brightness(0.6);
+        transition: background 0.2s;
+        overflow: visible;
 
         &:after {
             content: '';
@@ -137,6 +137,7 @@
         }
 
         &>.SceneObjectVisual {
+            filter: brightness(0.6);
             width: max-content;
             height: max-content;
             cursor: pointer;
@@ -161,17 +162,37 @@
                 display: block;
             }
 
+            .circleBig,
+            .circleSmall {
+                border-radius: 100%;
+                border: 3px dashed black;
+                background-size: contain;
+                position: absolute;
+            }
+            .circleBig{
+                background-color: white;
+            }
+            .line {
+                position: absolute;
+                height: 0;
+                border-bottom: 3px dashed black;
+                transform-origin: top left;
+                pointer-events: none;
+            }
+        
+            .visual.visual_text{
+                position: relative;
+                display: block;
+            }
+
         }
-
-
-
     }
 
     &.light ._graphic {
         background: white;
-        filter: none;
-
+        
         &>.SceneObjectVisual {
+            filter: none;
             &.selected::after {
                 border: 4px dashed var(--color-blue2);
             }
@@ -256,25 +277,5 @@
                 }
             }
         }
-    }
-}
-
-.SceneObjectVisual {
-    .circleBig,
-    .circleSmall {
-        border-radius: 100%;
-        border: 3px dashed black;
-        background-size: contain;
-        position: absolute;
-    }
-    .circleBig{
-        background-color: white;
-    }
-    .line {
-        position: absolute;
-        height: 0;
-        border-bottom: 3px dashed black;
-        transform-origin: top left;
-        pointer-events: none;
     }
 }

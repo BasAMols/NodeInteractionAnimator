@@ -11,7 +11,7 @@ export class Visual<T extends VisualTypeKeys> extends DomElement<'div'> {
     protected component: SceneObjectComponentVisual;
     constructor(type: T, sceneObject: SceneObject, component: SceneObjectComponentVisual) {
         super('div', {
-            className: 'SceneObjectVisual',
+            className: 'SceneObjectVisual editorUi',
             onClick: ()=>{this.sceneObject.focus()}
         });
         this.visual = this.child('div', {

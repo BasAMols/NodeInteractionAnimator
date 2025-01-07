@@ -31,10 +31,15 @@ export class SceneObjectComponentOutline extends SceneObjectComponent<'outline'>
         this.element = new DomElement('div', { className: 'sceneline' });
         const head = this.element.child('div', { className: 'sceneline_head' });
         head.append(new Button({
-            className: 'sceneline_head_collapse', icon: Icon.make('keyboard_arrow_down'), design: 'icon', onClick: () => {
-                this.toggle = !this.toggle;
+            className: 'sceneline_head_drag', icon: Icon.make('drag_indicator'), design: 'icon', onClick: () => {
+                // this.toggle = !this.toggle;
             }
         }));
+        // head.append(new Button({
+        //     className: 'sceneline_head_collapse', icon: Icon.make('keyboard_arrow_down'), design: 'icon', onClick: () => {
+        //         this.toggle = !this.toggle;
+        //     }
+        // }));
         this.nameElement = head.child('div', { className: 'sceneline_head_content', text: this.sceneObject.name || this.sceneObject.key });
         const meta = head.child('div', { className: 'sceneline_head_meta' });
         meta.append(new Button({
