@@ -1,6 +1,7 @@
 /* Reset CSS */
 
 button,
+textarea,
 input {
     all: unset;
 }
