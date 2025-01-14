@@ -1,0 +1,48 @@
+button.button:not(.unset) {
+    cursor: pointer;
+    transition: background 0.1s, opacity 0.1s;
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    line-height: 1.2em;
+    margin-right: 5px;
+
+    &.default {
+        background: var(--color-blue2);
+        border-radius: var(--radius);
+        padding: 3px 8px;
+    }
+
+    &.icon {
+        padding: 3px 1px;
+    }
+
+    &.inline {
+        padding: 3px 6px;
+    }
+
+    &>.icon {
+        margin-left: 3px;
+        margin-right: 3px;
+        font-size: 20px;
+        font-variation-settings: 'FILL' 0, 'wght' 230, 'GRAD' 30, 'opsz' 20;
+
+        &:last-child {
+            margin-right: 0px;
+        }
+
+        &:first-child {
+            margin-left: 0px;
+        }
+    }
+
+    &:hover,
+    &.active {
+        background: var(--color-blue3);
+    }
+
+    &.disabled {
+        background: #525058;
+        opacity: 0.5;
+    }
+}

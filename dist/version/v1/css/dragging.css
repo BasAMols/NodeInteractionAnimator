@@ -1,0 +1,121 @@
+
+.section_dragger {
+    position: absolute;
+    z-index: 3;
+
+    &:after {
+        content: '';
+        background: repeating-linear-gradient(45deg, var(--color-blue3) 0px, var(--color-blue3) 4px, transparent 4px, transparent 8px);
+        width: 100%;
+        height: 100%;
+        transition: opacity 0.1s, width 0.1s, height 0.1s, margin 0.1s, filter 0.1s;
+        display: block;
+        opacity: 0;
+        filter: saturate(0);
+        border-radius: 10px;
+    }
+
+    &:hover:after {
+        opacity: 1;
+        filter: saturate(1);
+    }
+
+    .v>& {
+        width: calc(100% - 8px);
+        height: 20px;
+        margin-top: -7px;
+
+        &:after {
+            height: 6px;
+            margin: 7px 0;
+        }
+
+        &:hover:after {
+            height: 10px;
+            margin: 5px 0;
+        }
+    }
+
+    .h>& {
+        height: calc(100% - 6px);
+        width: 20px;
+        margin-left: -7px;
+
+        &:after {
+            width: 6px;
+            margin: 0 7px;
+        }
+
+        &:hover:after {
+            width: 10px;
+            margin: 0 5px;
+        }
+    }
+}
+
+.resizer.draggable {
+    width: 28px;
+    height: 23px;
+    display: block;
+    position: absolute;
+    bottom: 6px;
+    right: 5px;
+
+    &>.icon {
+        color: var(--color-grey);
+        font-size: 30px;
+    }
+}
+
+#graphic .mover {
+    position: absolute;
+    z-index: 9;
+    left: -14px;
+    top: -14px;
+    /* background: #ffffffb0; */
+    width: 20px;
+    height: 20px;
+    border-radius: 2px;
+    font-size: 10px;
+    padding: 0px;
+    line-height: 1em;
+    
+    &>.icon {
+        font-size: 20px;
+        line-height: 20px;
+        color: #eff2ff;
+        /* filter: drop-shadow(0px 0px 4px white); */
+        font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 30, "opsz" 10 !important;
+    }
+
+    
+}
+#graphic .sizer {
+    position: absolute;
+    z-index: 9;
+    right: -14px;
+    bottom: -14px;
+    /* background: #7999ca85; */
+    width: 20px;
+    height: 20px;
+    border-radius: 2px;
+    font-size: 10px;
+    padding: 0px;
+    line-height: 1em;
+    
+
+    &>.icon {
+        font-size: 20px;
+        line-height: 20px;
+        color: #eff2ff;
+        /* filter: drop-shadow(0px 0px 1px white); */
+        font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 30, "opsz" 10 !important;
+    }
+}
+
+
+#graphic.light .mover>.icon,
+#graphic.light .sizer>.icon {
+    color: #6273c2;
+}
+

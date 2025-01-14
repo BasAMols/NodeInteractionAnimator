@@ -1,0 +1,66 @@
+/* Reset CSS */
+
+button,
+input {
+    all: unset;
+}
+
+body * {
+    display: block;
+    box-sizing: border-box;
+    position: relative;
+    user-select: none;
+
+    /* width */
+    &::-webkit-scrollbar {
+        width: 7px;
+    }
+
+    /* Track */
+    &::-webkit-scrollbar-track {
+        background: transparent;
+        margin: 10px;
+    }
+
+    /* Handle */
+    &::-webkit-scrollbar-thumb {
+        background: var(--color-grey);
+        border-radius: var(--radius);
+        padding: 10px;
+    }
+
+}
+
+/* Rehide default hidden elements */
+script,
+style,
+title,
+head {
+    display: none;
+}
+
+/* Defauls */
+html{
+    background: var(--color-dark);
+
+    &>body{
+        height: 100vh;
+        margin: 0 !IMPORTANT;
+        overflow: hidden;
+        width: 100vw;
+
+        * {
+            font-family: "Noto Sans", sans-serif;
+            font-weight: 330;
+            font-size: 15px;
+            font-variation-settings: "wdth" 97;
+            color: var(--color-text);
+        }
+    }
+}
+
+input, select {
+    border-radius: 2px;
+    background: #4c4a53;
+    padding: 5px 10px;
+}

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Versions</title>
+    <script>
+        fetch('data.json')
+            .then((response) => response.json())
+            .then((json) => json.forEach(d => {
+                const el = document.createElement('div');
+                const link = document.createElement('a');
+                link.innerText = d.name;
+                link.href = d.folder
+                el.appendChild(link);
+                el.appendChild(document.createElement('div')).innerText = d.description
+                document.body.appendChild(el);
+            }));
+    </script>
+</head>
+
+<body>
+
+</body>
+
+</html>
